@@ -1,0 +1,19 @@
+{
+  "clientSlug": "cliente-exemplo",
+  "clientName": "Cliente Exemplo",
+  "whatsappNumber": "5599999999999",
+  "whatsappMessage": "Ola, vim pelo anuncio.",
+  "redirectUrl": "https://wa.me/5599999999999?text=teste",
+  "pageUrl": "https://zapfaturamento.com.br/w/cliente-exemplo?utm_source=facebook&utm_medium=cpc&utm_campaign=teste_ativacao&utm_content=criativo_teste&utm_term=publico_teste&fbclid=123",
+  "pagePath": "/w/cliente-exemplo",
+  "referrer": "https://facebook.com/",
+  "userAgent": "activation-test",
+  "timestamp": "2026-04-26T11:55:00-03:00",
+  "language": "pt-BR",
+  "utm_source": "facebook",
+  "utm_medium": "cpc",
+  "utm_campaign": "teste_ativacao",
+  "utm_content": "criativo_teste",
+  "utm_term": "publico_teste",
+  "fbclid": "123"
+}
