@@ -490,7 +490,7 @@ export default function HomePage() {
             </div>
 
             {/* Visual */}
-            <div style={{ background: "var(--bg)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "22px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div className="lp-visual-col" style={{ background: "var(--bg)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "22px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
               <p style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>Tráfego vindo de</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {["Meta Ads", "Google Ads", "Instagram", "YouTube"].map((src) => (
@@ -641,7 +641,7 @@ export default function HomePage() {
             </div>
 
             {/* Visual flow */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div className="lp-visual-col" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {/* Kanban card */}
               <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 20px" }}>
                 <div style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted)", marginBottom: 10 }}>Kanban</div>

@@ -3475,7 +3475,23 @@ code {
 
   .zf-hero__content h1 {
     max-width: 100%;
-    font-size: clamp(2.2rem, 8vw, 3.2rem);
+    font-size: clamp(1.9rem, 7.5vw, 2.8rem);
+    word-break: break-word;
+  }
+
+  .zf-nolp-visual,
+  .lp-visual-col {
+    display: none;
+  }
+
+  .zf-section {
+    padding: 48px 0;
+  }
+
+  .zf-section-heading h2,
+  .zf-pricing-card h2,
+  .zf-footer-cta h2 {
+    font-size: clamp(1.6rem, 6vw, 2.2rem);
   }
 
   .zf-hero__proof,
