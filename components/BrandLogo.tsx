@@ -15,7 +15,7 @@ export function BrandLogo({
 
   return (
     <Image
-      src={isIcon ? "/images/logo-perfil-whatsapp.png" : "/images/logo-horizontal.png"}
+      src={isIcon ? "/images/favicon.png" : "/images/logo-horizontal.png"}
       alt="Zap Faturamento"
       width={isIcon ? 52 : 440}
       height={isIcon ? 52 : 88}

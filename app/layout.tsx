@@ -27,13 +27,13 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/images/logo-perfil-whatsapp.png", sizes: "32x32", type: "image/png" },
-      { url: "/images/logo-perfil-whatsapp.png", sizes: "48x48", type: "image/png" },
-      { url: "/images/logo-perfil-whatsapp.png", sizes: "96x96", type: "image/png" }
+      { url: "/images/favicon.png", sizes: "32x32", type: "image/png" },
+      { url: "/images/favicon.png", sizes: "48x48", type: "image/png" },
+      { url: "/images/favicon.png", sizes: "96x96", type: "image/png" }
     ],
-    shortcut: "/images/logo-perfil-whatsapp.png",
+    shortcut: "/images/favicon.png",
     apple: [
-      { url: "/images/logo-perfil-whatsapp.png", sizes: "180x180", type: "image/png" }
+      { url: "/images/favicon.png", sizes: "180x180", type: "image/png" }
     ]
   }
 };
