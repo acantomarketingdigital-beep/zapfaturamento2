@@ -4,6 +4,8 @@ import { canAccessClient } from "@/lib/dashboard-auth";
 import { getUserPermissions } from "@/lib/permissions";
 import { listLeadForms, saveLeadForm, MAX_FORMS_PER_CLIENT } from "@/lib/lead-forms";
 import { slugifyClinicName } from "@/lib/clinic-shared";
+import { getCachedBillingStatus } from "@/lib/billing";
+import { checkFormLimit } from "@/lib/billing-usage";
 
 export const runtime = "nodejs";
 
@@ -45,6 +47,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Sem permissao para criar formularios." }, { status: 403 });
   }
 
+  // Workspace-level form limit check (skip for env_admin)
+  if (user.kind !== "env_admin") {
+    try {
+      const billing = await getCachedBillingStatus(user.id);
+      const planKey = billing?.subscriptionPlan ?? null;
+      const { allowed } = await checkFormLimit(user.clientSlug, planKey);
+      if (!allowed) {
+        return NextResponse.json(
+          {
+            error:
+              "Você atingiu a quantidade de formulários Lead Express incluídos no seu plano. Adicione formulários extras ou faça upgrade para continuar.",
+          },
+          { status: 403 }
+        );
+      }
+    } catch {
+      // fail-open: never block on billing check error
+    }
+  }
+
   const name = String(body.name || "").trim();
   const rawSlug = String(body.slug || "").trim();
   const slug = rawSlug || slugifyClinicName(name);
@@ -62,7 +84,9 @@ export async function POST(request: Request) {
       primaryColor: String(body.primaryColor || "#16a34a").trim() || "#16a34a",
       backgroundColor: String(body.backgroundColor || "#f0fdf4").trim() || "#f0fdf4",
       status: body.status === "inactive" ? "inactive" : "active",
-      successMessage: String(body.successMessage || "Cadastro enviado! Nossa equipe entrara em contato em breve.").trim(),
+      successMessage: String(
+        body.successMessage || "Cadastro enviado! Nossa equipe entrara em contato em breve."
+      ).trim(),
       showEmail: Boolean(body.showEmail),
       showProcedure: Boolean(body.showProcedure),
       showCity: Boolean(body.showCity),

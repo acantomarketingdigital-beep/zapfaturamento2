@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { canAccessClient, getCurrentUser } from "@/lib/dashboard-auth";
 import { createConnection, listConnections } from "@/lib/whatsapp-connections";
 import { createEvolutionInstance, isEvolutionConfigured } from "@/lib/evolution-api";
+import { getCachedBillingStatus } from "@/lib/billing";
+import { checkWhatsappLimit } from "@/lib/billing-usage";
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -32,6 +34,31 @@ export async function POST(request: Request) {
 
   if (!canAccessClient(user, clientSlug)) {
     return NextResponse.json({ error: "Sem permissao para este cliente." }, { status: 403 });
+  }
+
+  // Workspace-level WhatsApp connection limit check (skip for env_admin)
+  if (user.kind !== "env_admin") {
+    try {
+      const billing = await getCachedBillingStatus(user.id);
+      const planKey = billing?.subscriptionPlan ?? null;
+      const { allowed, whatsappsActive, totalWhatsappsAllowed } = await checkWhatsappLimit(
+        user.clientSlug,
+        planKey
+      );
+      if (!allowed) {
+        return NextResponse.json(
+          {
+            error:
+              "Você atingiu a quantidade de WhatsApps ativos incluídos no seu plano. Adicione WhatsApps extras ou faça upgrade para continuar.",
+            whatsappsActive,
+            totalWhatsappsAllowed,
+          },
+          { status: 403 }
+        );
+      }
+    } catch {
+      // fail-open: never block on billing check error
+    }
   }
 
   const connection = await createConnection({ clientSlug, connectionName });

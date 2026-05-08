@@ -1,10 +1,12 @@
 import { queryDb, hasDatabaseConfig } from "@/lib/db";
-import { PLANS, PlanId } from "@/lib/plans";
+import { PLANS, getPlanByKey, PlanKey } from "@/lib/plans";
 
 function currentBillingMonth(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
 }
+
+// ─── Record billable lead (called from all 3 lead creation points) ────────────
 
 export async function recordBillableLead(params: {
   clientSlug: string;
@@ -24,59 +26,216 @@ export async function recordBillableLead(params: {
   }
 }
 
-export type WorkspaceUsage = {
+// ─── Full workspace usage ─────────────────────────────────────────────────────
+
+export type WorkspaceBillingUsage = {
+  planKey: string | null;
+  planName: string;
+  // Clients
+  clientsUsed: number;
+  clientsIncluded: number | null;
+  // Leads
+  billableLeadsUsedThisMonth: number;
+  billableLeadsIncluded: number;
+  leadOverageCount: number;
+  estimatedLeadOverageAmount: number;
+  leadOveragePrice: number;
+  // Forms
+  formsUsed: number;
+  formsIncluded: number | null;
+  extraFormsActive: number;
+  totalFormsAllowed: number | null;
+  // WhatsApps
+  whatsappsActive: number;
+  whatsappsIncluded: number | null;
+  extraWhatsappsActive: number;
+  totalWhatsappsAllowed: number | null;
+  // Period
   billingMonth: string;
-  billableLeads: number;
-  clientsActive: number;
-  leadsLimit: number;
-  clientsLimit: number | null;
-  leadsPercent: number;
-  estimatedOverage: number;
-  overagePerLead: number;
 };
 
-export async function getWorkspaceUsage(
+export async function getWorkspaceBillingUsage(
   workspaceSlug: string | null,
-  planId: string | null
-): Promise<WorkspaceUsage> {
-  const plan = PLANS[planId as PlanId] ?? PLANS.starter;
+  planKey: string | null
+): Promise<WorkspaceBillingUsage> {
+  const plan = getPlanByKey(planKey) ?? PLANS.starter;
   const monthStr = currentBillingMonth();
 
-  let billableLeads = 0;
-  let clientsActive = 0;
+  let clientsUsed = 0;
+  let billableLeadsUsedThisMonth = 0;
+  let formsUsed = 0;
+  let whatsappsActive = 0;
+  let extraFormsActive = 0;
+  let extraWhatsappsActive = 0;
 
   if (hasDatabaseConfig()) {
     try {
-      const result = await queryDb<{ leads: string; clients: string }>(
-        `SELECT
-           COUNT(bue.id)                    AS leads,
-           COUNT(DISTINCT bue.client_slug)  AS clients
-         FROM billing_usage_events bue
-         JOIN clients c ON c.client_slug = bue.client_slug
-         WHERE c.workspace_slug IS NOT DISTINCT FROM $1
-           AND bue.billing_month = $2
-           AND bue.event_type = 'billable_lead'`,
-        [workspaceSlug, monthStr]
-      );
-      billableLeads = parseInt(result.rows[0]?.leads ?? "0", 10);
-      clientsActive = parseInt(result.rows[0]?.clients ?? "0", 10);
+      const [r1, r2, r3, r4, r5] = await Promise.all([
+        // Clients in workspace
+        queryDb<{ cnt: string }>(
+          `SELECT COUNT(*) AS cnt FROM clients
+           WHERE workspace_slug IS NOT DISTINCT FROM $1 AND is_active = true`,
+          [workspaceSlug]
+        ),
+        // Billable leads this month
+        queryDb<{ cnt: string }>(
+          `SELECT COUNT(bue.id) AS cnt
+           FROM billing_usage_events bue
+           JOIN clients c ON c.client_slug = bue.client_slug
+           WHERE c.workspace_slug IS NOT DISTINCT FROM $1
+             AND bue.billing_month = $2
+             AND bue.event_type = 'billable_lead'`,
+          [workspaceSlug, monthStr]
+        ),
+        // Forms in workspace (active or inactive — not deleted)
+        queryDb<{ cnt: string }>(
+          `SELECT COUNT(lf.id) AS cnt
+           FROM lead_forms lf
+           JOIN clients c ON c.client_slug = lf.client_slug
+           WHERE c.workspace_slug IS NOT DISTINCT FROM $1`,
+          [workspaceSlug]
+        ),
+        // Active WhatsApp connections
+        queryDb<{ cnt: string }>(
+          `SELECT COUNT(wc.id) AS cnt
+           FROM whatsapp_connections wc
+           JOIN clients c ON c.client_slug = wc.client_slug
+           WHERE c.workspace_slug IS NOT DISTINCT FROM $1
+             AND wc.is_active = true`,
+          [workspaceSlug]
+        ),
+        // Active add-ons
+        queryDb<{ addon_type: string; total_qty: string }>(
+          `SELECT addon_type, COALESCE(SUM(quantity), 0) AS total_qty
+           FROM billing_addons
+           WHERE workspace_slug = $1 AND status = 'active'
+           GROUP BY addon_type`,
+          [workspaceSlug ?? ""]
+        ),
+      ]);
+
+      clientsUsed                = parseInt(r1.rows[0]?.cnt ?? "0", 10);
+      billableLeadsUsedThisMonth = parseInt(r2.rows[0]?.cnt ?? "0", 10);
+      formsUsed                  = parseInt(r3.rows[0]?.cnt ?? "0", 10);
+      whatsappsActive            = parseInt(r4.rows[0]?.cnt ?? "0", 10);
+
+      for (const row of r5.rows) {
+        if (row.addon_type === "extra_form")
+          extraFormsActive = parseInt(row.total_qty ?? "0", 10);
+        else if (row.addon_type === "extra_whatsapp")
+          extraWhatsappsActive = parseInt(row.total_qty ?? "0", 10);
+      }
     } catch {
-      // ignore — non-critical display
+      // non-critical — return zeroes
     }
   }
 
-  const leadsPercent = Math.min(100, Math.round((billableLeads / plan.leadsLimit) * 100));
-  const overageLeads = Math.max(0, billableLeads - plan.leadsLimit);
-  const estimatedOverage = Math.round(overageLeads * plan.overagePerLead * 100) / 100;
+  const leadOverageCount = Math.max(0, billableLeadsUsedThisMonth - plan.billableLeadsIncluded);
+  const estimatedLeadOverageAmount =
+    Math.round(leadOverageCount * plan.leadOveragePrice * 100) / 100;
+
+  const totalFormsAllowed =
+    plan.leadFormsIncluded === null ? null : plan.leadFormsIncluded + extraFormsActive;
+  const totalWhatsappsAllowed =
+    plan.activeWhatsappsIncluded === null ? null : plan.activeWhatsappsIncluded + extraWhatsappsActive;
 
   return {
+    planKey: plan.key,
+    planName: plan.name,
+    clientsUsed,
+    clientsIncluded: plan.clientsIncluded,
+    billableLeadsUsedThisMonth,
+    billableLeadsIncluded: plan.billableLeadsIncluded,
+    leadOverageCount,
+    estimatedLeadOverageAmount,
+    leadOveragePrice: plan.leadOveragePrice,
+    formsUsed,
+    formsIncluded: plan.leadFormsIncluded,
+    extraFormsActive,
+    totalFormsAllowed,
+    whatsappsActive,
+    whatsappsIncluded: plan.activeWhatsappsIncluded,
+    extraWhatsappsActive,
+    totalWhatsappsAllowed,
     billingMonth: monthStr.slice(0, 7),
-    billableLeads,
-    clientsActive,
-    leadsLimit: plan.leadsLimit,
-    clientsLimit: plan.clientsLimit,
-    leadsPercent,
-    estimatedOverage,
-    overagePerLead: plan.overagePerLead,
   };
 }
+
+// ─── Limit checks (used in API routes) ───────────────────────────────────────
+
+export async function checkFormLimit(
+  workspaceSlug: string | null,
+  planKey: string | null
+): Promise<{ allowed: boolean; formsUsed: number; totalFormsAllowed: number | null }> {
+  const plan = getPlanByKey(planKey) ?? PLANS.starter;
+  if (plan.leadFormsIncluded === null) return { allowed: true, formsUsed: 0, totalFormsAllowed: null };
+
+  let formsUsed = 0;
+  let extraFormsActive = 0;
+
+  if (hasDatabaseConfig()) {
+    try {
+      const [r1, r2] = await Promise.all([
+        queryDb<{ cnt: string }>(
+          `SELECT COUNT(lf.id) AS cnt FROM lead_forms lf
+           JOIN clients c ON c.client_slug = lf.client_slug
+           WHERE c.workspace_slug IS NOT DISTINCT FROM $1`,
+          [workspaceSlug]
+        ),
+        queryDb<{ total_qty: string }>(
+          `SELECT COALESCE(SUM(quantity), 0) AS total_qty FROM billing_addons
+           WHERE workspace_slug = $1 AND addon_type = 'extra_form' AND status = 'active'`,
+          [workspaceSlug ?? ""]
+        ),
+      ]);
+      formsUsed = parseInt(r1.rows[0]?.cnt ?? "0", 10);
+      extraFormsActive = parseInt(r2.rows[0]?.total_qty ?? "0", 10);
+    } catch {
+      return { allowed: true, formsUsed: 0, totalFormsAllowed: null }; // fail-open
+    }
+  }
+
+  const totalFormsAllowed = plan.leadFormsIncluded + extraFormsActive;
+  return { allowed: formsUsed < totalFormsAllowed, formsUsed, totalFormsAllowed };
+}
+
+export async function checkWhatsappLimit(
+  workspaceSlug: string | null,
+  planKey: string | null
+): Promise<{ allowed: boolean; whatsappsActive: number; totalWhatsappsAllowed: number | null }> {
+  const plan = getPlanByKey(planKey) ?? PLANS.starter;
+  if (plan.activeWhatsappsIncluded === null)
+    return { allowed: true, whatsappsActive: 0, totalWhatsappsAllowed: null };
+
+  let whatsappsActive = 0;
+  let extraWhatsappsActive = 0;
+
+  if (hasDatabaseConfig()) {
+    try {
+      const [r1, r2] = await Promise.all([
+        queryDb<{ cnt: string }>(
+          `SELECT COUNT(wc.id) AS cnt FROM whatsapp_connections wc
+           JOIN clients c ON c.client_slug = wc.client_slug
+           WHERE c.workspace_slug IS NOT DISTINCT FROM $1 AND wc.is_active = true`,
+          [workspaceSlug]
+        ),
+        queryDb<{ total_qty: string }>(
+          `SELECT COALESCE(SUM(quantity), 0) AS total_qty FROM billing_addons
+           WHERE workspace_slug = $1 AND addon_type = 'extra_whatsapp' AND status = 'active'`,
+          [workspaceSlug ?? ""]
+        ),
+      ]);
+      whatsappsActive = parseInt(r1.rows[0]?.cnt ?? "0", 10);
+      extraWhatsappsActive = parseInt(r2.rows[0]?.total_qty ?? "0", 10);
+    } catch {
+      return { allowed: true, whatsappsActive: 0, totalWhatsappsAllowed: null }; // fail-open
+    }
+  }
+
+  const totalWhatsappsAllowed = plan.activeWhatsappsIncluded + extraWhatsappsActive;
+  return { allowed: whatsappsActive < totalWhatsappsAllowed, whatsappsActive, totalWhatsappsAllowed };
+}
+
+// ─── Legacy alias used by assinatura page ─────────────────────────────────────
+export type WorkspaceUsage = WorkspaceBillingUsage;
+export const getWorkspaceUsage = getWorkspaceBillingUsage;

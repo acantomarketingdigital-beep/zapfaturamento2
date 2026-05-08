@@ -514,11 +514,14 @@ export default function HomePage() {
         <div className="zf-container">
           <div className="zf-section-heading">
             <span className="zf-badge zf-badge--soft">Preços</span>
-            <h2>Do primeiro cliente à grande agência</h2>
-            <p>Planos por quantidade de clientes e leads — pague só pelo que usar. Cancele quando quiser.</p>
+            <h2>Planos para cada tamanho de operação</h2>
+            <p>
+              Todos os planos incluem o ZapFaturamento completo: CAPI, campanhas, criativos, Kanban, Pipeline, WhatsApp e Lead Express.
+              Você paga pela capacidade da sua operação.
+            </p>
           </div>
 
-          <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <div style={{ textAlign: "center", marginBottom: 40 }}>
             <a
               href="/register"
               className="zf-button zf-button--primary"
@@ -531,19 +534,74 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, maxWidth: 740, margin: "0 auto 32px" }}>
-            <div style={{ flex: 1, height: 1, background: "var(--border, #e5e7eb)" }} />
-            <span style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)", whiteSpace: "nowrap" }}>ou assine diretamente</span>
-            <div style={{ flex: 1, height: 1, background: "var(--border, #e5e7eb)" }} />
-          </div>
+          <SubscribePlansClient isLoggedIn={true} activePlan={null} />
 
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <SubscribePlansClient isLoggedIn={true} activePlan={null} />
-          </div>
-
-          <p style={{ textAlign: "center", marginTop: 20, fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
+          <p style={{ textAlign: "center", marginTop: 16, fontSize: "0.75rem", color: "var(--muted, #64748b)" }}>
+            Lead/conversa faturável é todo novo lead que entra no Kanban/Pipeline pela primeira vez.
+          </p>
+          <p style={{ textAlign: "center", marginTop: 6, fontSize: "0.75rem", color: "var(--muted, #64748b)" }}>
             Pagamento seguro via Stripe · Sem fidelidade · Cancele a qualquer momento
           </p>
+        </div>
+      </section>
+
+      {/* ── EXPANDA / ADD-ONS ─────────────────────────────────── */}
+      <section className="zf-section">
+        <div className="zf-container">
+          <div className="zf-section-heading">
+            <h2>Expanda quando precisar</h2>
+            <p>Precisa de mais formulários ou mais números de WhatsApp sem trocar de plano? Adicione recursos extras conforme sua operação cresce.</p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, maxWidth: 800, margin: "0 auto" }}>
+            {[
+              { icon: "📋", title: "Formulários extras", text: "A partir de R$10/mês por formulário Lead Express adicional." },
+              { icon: "📱", title: "WhatsApps extras", text: "A partir de R$20/mês por número de WhatsApp ativo adicional." },
+              { icon: "📈", title: "Leads excedentes", text: "Cobrados por uso conforme o valor por lead do seu plano. O sistema nunca bloqueia." },
+              { icon: "🔒", title: "Sistema sempre ativo", text: "Excedentes não interrompem o funcionamento. Tudo continua normalmente." },
+            ].map(({ icon, title, text }) => (
+              <div key={title} style={{ padding: "20px", background: "var(--surface, #fff)", border: "1.5px solid var(--border, #e5e7eb)", borderRadius: 12 }}>
+                <div style={{ fontSize: "1.6rem", marginBottom: 8 }}>{icon}</div>
+                <div style={{ fontWeight: 700, fontSize: "0.9rem", marginBottom: 6 }}>{title}</div>
+                <div style={{ fontSize: "0.82rem", color: "var(--muted, #64748b)", lineHeight: 1.5 }}>{text}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ──────────────────────────────────────────────── */}
+      <section className="zf-section zf-section--muted">
+        <div className="zf-container" style={{ maxWidth: 760 }}>
+          <div className="zf-section-heading">
+            <h2>Perguntas frequentes</h2>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {[
+              {
+                q: "As funcionalidades mudam entre os planos?",
+                a: "Não. Todos os planos incluem o sistema completo. A diferença está na quantidade de clientes, leads/conversas, formulários Lead Express e WhatsApps ativos incluídos.",
+              },
+              {
+                q: "O que conta como lead/conversa?",
+                a: "Conta quando um novo lead entra no Kanban/Pipeline pela primeira vez, seja pelo WhatsApp, campanha ou formulário Lead Express. Mensagens repetidas do mesmo lead não geram nova cobrança.",
+              },
+              {
+                q: "O que acontece se eu passar dos leads incluídos?",
+                a: "O sistema continua funcionando normalmente. O excedente é calculado conforme o valor por lead do seu plano e aparece no painel de uso.",
+              },
+              {
+                q: "Posso comprar mais formulários ou WhatsApps sem trocar de plano?",
+                a: "Sim. Você pode adicionar formulários Lead Express extras e WhatsApps ativos extras conforme a necessidade da sua operação.",
+              },
+            ].map(({ q, a }, i, arr) => (
+              <div key={q} style={{ padding: "20px 4px", borderBottom: i < arr.length - 1 ? "1px solid var(--border, #e5e7eb)" : "none" }}>
+                <div style={{ fontWeight: 700, fontSize: "0.95rem", marginBottom: 8 }}>{q}</div>
+                <div style={{ fontSize: "0.86rem", color: "var(--muted, #64748b)", lineHeight: 1.6 }}>{a}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

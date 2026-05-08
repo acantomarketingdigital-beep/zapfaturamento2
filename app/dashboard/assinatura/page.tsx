@@ -5,16 +5,18 @@ import { getCachedBillingStatus } from "@/lib/billing";
 import { isStripeConfigured } from "@/lib/stripe";
 import { hasDatabaseConfig } from "@/lib/db";
 import SubscribePlansClient from "@/app/billing/subscribe/SubscribePlansClient";
-import { getWorkspaceUsage } from "@/lib/billing-usage";
-import { getPlanById, PLAN_LIST } from "@/lib/plans";
+import { getWorkspaceBillingUsage, type WorkspaceBillingUsage } from "@/lib/billing-usage";
+import { getPlanById } from "@/lib/plans";
 
 const FEATURES = [
-  "Links rastreáveis para Meta e Google Ads",
-  "Campanhas ilimitadas por cliente",
-  "Kanban de leads e vendas",
-  "Exportação de públicos para Meta (Lookalike)",
+  "CAPI 100% de cobertura (Meta)",
+  "Campanhas e criativos ilimitados por cliente",
+  "Kanban e Pipeline de leads",
+  "Inbox WhatsApp nativo",
+  "Lead Express — formulários de captação",
   "Relatórios de performance, CPL e ROAS",
-  "Suporte prioritário via WhatsApp",
+  "Exportação de públicos para Meta (Lookalike)",
+  "Rastreamento Google Ads + GA4 automático",
 ];
 
 const SUB_STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
@@ -30,6 +32,38 @@ function CheckIcon() {
     <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 16, height: 16, flexShrink: 0, color: "var(--brand)" }}>
       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
     </svg>
+  );
+}
+
+function UsageTile({
+  label,
+  value,
+  total,
+  extra,
+}: {
+  label: string;
+  value: number;
+  total: number | null;
+  extra?: string;
+}) {
+  const pct = total === null ? 0 : Math.min(100, Math.round((value / total) * 100));
+  const over = total !== null && value > total;
+  return (
+    <div style={{ padding: "12px 14px", background: "var(--bg)", border: `1px solid ${over ? "rgba(239,68,68,0.3)" : "var(--border)"}`, borderRadius: 10 }}>
+      <div style={{ fontSize: "0.68rem", color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+      <div style={{ fontSize: "1.4rem", fontWeight: 900, color: over ? "#dc2626" : "var(--dark)", lineHeight: 1.2, marginTop: 4 }}>
+        {value.toLocaleString("pt-BR")}
+      </div>
+      <div style={{ fontSize: "0.7rem", color: "var(--muted)" }}>
+        {total === null ? "Ilimitado" : `de ${total.toLocaleString("pt-BR")}`}
+        {extra && <><br /><span style={{ color: "var(--brand)" }}>{extra}</span></>}
+      </div>
+      {total !== null && (
+        <div style={{ marginTop: 6, height: 4, borderRadius: 99, background: "var(--border)", overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${pct}%`, borderRadius: 99, background: over ? "#dc2626" : "var(--brand)" }} />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -64,20 +98,20 @@ export default async function DashboardAssinaturaPage() {
 
   const knownPlan = getPlanById(activePlan);
   const planLabel = knownPlan
-    ? `${knownPlan.name} — R$${knownPlan.monthlyPrice}/mês`
+    ? `${knownPlan.name} — R$${knownPlan.priceMonthly}/mês`
     : activePlan === "yearly" ? "Pro Anual (legado)"
     : activePlan === "monthly" ? "Pro Mensal (legado)"
     : "Zap Faturamento";
   const planPrice = knownPlan
-    ? `R$${knownPlan.monthlyPrice}/mês`
+    ? `R$${knownPlan.priceMonthly}/mês`
     : activePlan === "yearly" ? "R$997/ano"
     : activePlan === "monthly" ? "R$97/mês"
     : "—";
 
-  let usage = null;
+  let usage: WorkspaceBillingUsage | null = null;
   if (databaseReady && !isEnvAdmin) {
     try {
-      usage = await getWorkspaceUsage(user.clientSlug, activePlan);
+      usage = await getWorkspaceBillingUsage(user.clientSlug, activePlan);
     } catch {
       // non-critical
     }
@@ -192,64 +226,75 @@ export default async function DashboardAssinaturaPage() {
         {usage && (
           <article className="dashboard-card">
             <div className="dashboard-card__header">
-              <h3>Uso do mês atual</h3>
+              <h3>Uso do plano</h3>
               <p style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
                 {usage.billingMonth} · Reinicia todo dia 1º
               </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16, marginBottom: 20 }}>
-              <div style={{ padding: "14px 16px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 10 }}>
-                <div style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Leads faturáveis</div>
-                <div style={{ fontSize: "1.6rem", fontWeight: 900, color: "var(--dark)", lineHeight: 1.2, marginTop: 4 }}>
-                  {usage.billableLeads.toLocaleString("pt-BR")}
-                </div>
-                <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
-                  de {usage.leadsLimit.toLocaleString("pt-BR")} inclusos
-                </div>
-              </div>
-
-              <div style={{ padding: "14px 16px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 10 }}>
-                <div style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Clientes ativos</div>
-                <div style={{ fontSize: "1.6rem", fontWeight: 900, color: "var(--dark)", lineHeight: 1.2, marginTop: 4 }}>
-                  {usage.clientsActive}
-                </div>
-                <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
-                  {usage.clientsLimit === null ? "ilimitados no plano" : `de ${usage.clientsLimit} no plano`}
-                </div>
-              </div>
-
-              {usage.estimatedOverage > 0 && (
-                <div style={{ padding: "14px 16px", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10 }}>
-                  <div style={{ fontSize: "0.72rem", color: "#dc2626", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Excedente estimado</div>
-                  <div style={{ fontSize: "1.6rem", fontWeight: 900, color: "#dc2626", lineHeight: 1.2, marginTop: 4 }}>
-                    R${usage.estimatedOverage.toFixed(2).replace(".", ",")}
+            {/* Metric grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 20 }}>
+              {/* Clientes */}
+              <UsageTile
+                label="Clientes"
+                value={usage.clientsUsed}
+                total={usage.clientsIncluded}
+              />
+              {/* Leads */}
+              <UsageTile
+                label="Leads/mês"
+                value={usage.billableLeadsUsedThisMonth}
+                total={usage.billableLeadsIncluded}
+              />
+              {/* Formulários */}
+              <UsageTile
+                label="Formulários"
+                value={usage.formsUsed}
+                total={usage.totalFormsAllowed}
+                extra={usage.extraFormsActive > 0 ? `${usage.formsIncluded} incl. + ${usage.extraFormsActive} extras` : undefined}
+              />
+              {/* WhatsApps */}
+              <UsageTile
+                label="WhatsApps ativos"
+                value={usage.whatsappsActive}
+                total={usage.totalWhatsappsAllowed}
+                extra={usage.extraWhatsappsActive > 0 ? `${usage.whatsappsIncluded} incl. + ${usage.extraWhatsappsActive} extras` : undefined}
+              />
+              {/* Excedente */}
+              {usage.estimatedLeadOverageAmount > 0 && (
+                <div style={{ padding: "12px 14px", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10 }}>
+                  <div style={{ fontSize: "0.68rem", color: "#dc2626", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Excedente estimado</div>
+                  <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#dc2626", lineHeight: 1.2, marginTop: 4 }}>
+                    R${usage.estimatedLeadOverageAmount.toFixed(2).replace(".", ",")}
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#dc2626" }}>
-                    R${usage.overagePerLead.toFixed(2).replace(".", ",")}/lead excedente
+                  <div style={{ fontSize: "0.7rem", color: "#dc2626" }}>
+                    {usage.leadOverageCount.toLocaleString("pt-BR")} leads × R${usage.leadOveragePrice.toFixed(2).replace(".", ",")}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Progress bar */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--muted)", marginBottom: 6 }}>
-                <span>Leads utilizados</span>
-                <span style={{ fontWeight: 700, color: usage.leadsPercent >= 90 ? "#dc2626" : usage.leadsPercent >= 70 ? "#ca8a04" : "var(--brand)" }}>
-                  {usage.leadsPercent}%
-                </span>
-              </div>
-              <div style={{ height: 8, borderRadius: 99, background: "var(--border)", overflow: "hidden" }}>
-                <div style={{
-                  height: "100%",
-                  width: `${usage.leadsPercent}%`,
-                  borderRadius: 99,
-                  background: usage.leadsPercent >= 90 ? "#dc2626" : usage.leadsPercent >= 70 ? "#ca8a04" : "var(--brand)",
-                  transition: "width 0.4s ease",
-                }} />
-              </div>
-            </div>
+            {/* Leads progress bar */}
+            {(() => {
+              const pct = Math.min(100, Math.round((usage.billableLeadsUsedThisMonth / usage.billableLeadsIncluded) * 100));
+              const color = pct >= 90 ? "#dc2626" : pct >= 70 ? "#ca8a04" : "var(--brand)";
+              return (
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--muted)", marginBottom: 5 }}>
+                    <span>Leads utilizados no mês</span>
+                    <span style={{ fontWeight: 700, color }}>{pct}%</span>
+                  </div>
+                  <div style={{ height: 7, borderRadius: 99, background: "var(--border)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${pct}%`, borderRadius: 99, background: color, transition: "width 0.4s ease" }} />
+                  </div>
+                  {pct > 100 && (
+                    <p style={{ fontSize: "0.75rem", color: "#ca8a04", marginTop: 8 }}>
+                      Você ultrapassou os leads incluídos no plano. O sistema continua funcionando normalmente e o excedente será calculado conforme sua faixa.
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
           </article>
         )}
 
@@ -257,9 +302,10 @@ export default async function DashboardAssinaturaPage() {
         <article className="dashboard-card">
           <div className="dashboard-card__header">
             <h3>O que está incluído no plano</h3>
+            <p style={{ fontSize: "0.82rem", color: "var(--muted)" }}>Todos os planos incluem o ZapFaturamento completo. A diferença está na capacidade mensal da operação.</p>
           </div>
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-            {(knownPlan?.features ?? FEATURES).map((f) => (
+            {FEATURES.map((f) => (
               <li key={f} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "0.88rem", color: "var(--dark)" }}>
                 <CheckIcon />
                 {f}
