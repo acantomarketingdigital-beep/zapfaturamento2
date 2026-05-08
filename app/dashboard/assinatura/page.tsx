@@ -5,6 +5,8 @@ import { getCachedBillingStatus } from "@/lib/billing";
 import { isStripeConfigured } from "@/lib/stripe";
 import { hasDatabaseConfig } from "@/lib/db";
 import SubscribePlansClient from "@/app/billing/subscribe/SubscribePlansClient";
+import { getWorkspaceUsage } from "@/lib/billing-usage";
+import { getPlanById, PLAN_LIST } from "@/lib/plans";
 
 const FEATURES = [
   "Links rastreáveis para Meta e Google Ads",
@@ -60,8 +62,26 @@ export default async function DashboardAssinaturaPage() {
     ? (SUB_STATUS_LABELS[billing.subscriptionStatus] ?? null)
     : null;
 
-  const planLabel = activePlan === "yearly" ? "Pro Anual" : activePlan === "monthly" ? "Pro Mensal" : "Zap Faturamento Pro";
-  const planPrice = activePlan === "yearly" ? "R$997/ano" : activePlan === "monthly" ? "R$97/mês" : "—";
+  const knownPlan = getPlanById(activePlan);
+  const planLabel = knownPlan
+    ? `${knownPlan.name} — R$${knownPlan.monthlyPrice}/mês`
+    : activePlan === "yearly" ? "Pro Anual (legado)"
+    : activePlan === "monthly" ? "Pro Mensal (legado)"
+    : "Zap Faturamento";
+  const planPrice = knownPlan
+    ? `R$${knownPlan.monthlyPrice}/mês`
+    : activePlan === "yearly" ? "R$997/ano"
+    : activePlan === "monthly" ? "R$97/mês"
+    : "—";
+
+  let usage = null;
+  if (databaseReady && !isEnvAdmin) {
+    try {
+      usage = await getWorkspaceUsage(user.clientSlug, activePlan);
+    } catch {
+      // non-critical
+    }
+  }
 
   return (
     <main className="dashboard-shell">
@@ -168,13 +188,78 @@ export default async function DashboardAssinaturaPage() {
           </div>
         )}
 
+        {/* Usage block */}
+        {usage && (
+          <article className="dashboard-card">
+            <div className="dashboard-card__header">
+              <h3>Uso do mês atual</h3>
+              <p style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
+                {usage.billingMonth} · Reinicia todo dia 1º
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16, marginBottom: 20 }}>
+              <div style={{ padding: "14px 16px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 10 }}>
+                <div style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Leads faturáveis</div>
+                <div style={{ fontSize: "1.6rem", fontWeight: 900, color: "var(--dark)", lineHeight: 1.2, marginTop: 4 }}>
+                  {usage.billableLeads.toLocaleString("pt-BR")}
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                  de {usage.leadsLimit.toLocaleString("pt-BR")} inclusos
+                </div>
+              </div>
+
+              <div style={{ padding: "14px 16px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 10 }}>
+                <div style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Clientes ativos</div>
+                <div style={{ fontSize: "1.6rem", fontWeight: 900, color: "var(--dark)", lineHeight: 1.2, marginTop: 4 }}>
+                  {usage.clientsActive}
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                  {usage.clientsLimit === null ? "ilimitados no plano" : `de ${usage.clientsLimit} no plano`}
+                </div>
+              </div>
+
+              {usage.estimatedOverage > 0 && (
+                <div style={{ padding: "14px 16px", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10 }}>
+                  <div style={{ fontSize: "0.72rem", color: "#dc2626", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Excedente estimado</div>
+                  <div style={{ fontSize: "1.6rem", fontWeight: 900, color: "#dc2626", lineHeight: 1.2, marginTop: 4 }}>
+                    R${usage.estimatedOverage.toFixed(2).replace(".", ",")}
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#dc2626" }}>
+                    R${usage.overagePerLead.toFixed(2).replace(".", ",")}/lead excedente
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Progress bar */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--muted)", marginBottom: 6 }}>
+                <span>Leads utilizados</span>
+                <span style={{ fontWeight: 700, color: usage.leadsPercent >= 90 ? "#dc2626" : usage.leadsPercent >= 70 ? "#ca8a04" : "var(--brand)" }}>
+                  {usage.leadsPercent}%
+                </span>
+              </div>
+              <div style={{ height: 8, borderRadius: 99, background: "var(--border)", overflow: "hidden" }}>
+                <div style={{
+                  height: "100%",
+                  width: `${usage.leadsPercent}%`,
+                  borderRadius: 99,
+                  background: usage.leadsPercent >= 90 ? "#dc2626" : usage.leadsPercent >= 70 ? "#ca8a04" : "var(--brand)",
+                  transition: "width 0.4s ease",
+                }} />
+              </div>
+            </div>
+          </article>
+        )}
+
         {/* Features list */}
         <article className="dashboard-card">
           <div className="dashboard-card__header">
-            <h3>O que está incluído no plano Pro</h3>
+            <h3>O que está incluído no plano</h3>
           </div>
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-            {FEATURES.map((f) => (
+            {(knownPlan?.features ?? FEATURES).map((f) => (
               <li key={f} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "0.88rem", color: "var(--dark)" }}>
                 <CheckIcon />
                 {f}

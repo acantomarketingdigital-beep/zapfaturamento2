@@ -1,6 +1,38 @@
 import type { LeadEventRecord } from "@/lib/leads";
 import { buildWhatsAppWebUrl } from "@/lib/export-shared";
 
+const PLACEMENT_LABELS: Record<string, string> = {
+  // Audience Network
+  an:                        "Audience Network",
+  // Facebook
+  feed:                      "Feed (FB)",
+  facebook_feed:             "Feed (FB)",
+  right_hand_column:         "Coluna direita",
+  marketplace:               "Marketplace",
+  video_feeds:               "Videos (FB)",
+  groups_feed:               "Grupos (FB)",
+  facebook_reels:            "Reels (FB)",
+  facebook_reels_overlay:    "Reels Overlay (FB)",
+  facebook_stories:          "Stories (FB)",
+  instream_video:            "Video in-stream",
+  search:                    "Pesquisa",
+  // Instagram
+  instagram_feed:            "Feed (IG)",
+  instagram_stories:         "Stories (IG)",
+  instagram_reels:           "Reels (IG)",
+  instagram_explore:         "Explorar (IG)",
+  instagram_explore_grid_home: "Explorar Home (IG)",
+  instagram_profile_feed:    "Perfil (IG)",
+  // Messenger
+  messenger_inbox:           "Messenger Inbox",
+  messenger_stories:         "Messenger Stories",
+};
+
+function formatPlacement(raw: string | null): string {
+  if (!raw) return "-";
+  return PLACEMENT_LABELS[raw.toLowerCase()] ?? raw;
+}
+
 type LeadTableProps = {
   rows: LeadEventRecord[];
 };
@@ -89,14 +121,13 @@ export function LeadTable({ rows }: LeadTableProps) {
               <th>Cliente</th>
               <th>Origem</th>
               <th>Campanha</th>
-              <th>Criativo</th>
+              <th>Criativo / Local</th>
               <th>Publico</th>
               <th>WhatsApp do lead</th>
               <th>Kommo / CRM</th>
               <th>CAPI</th>
               <th>Flags</th>
               <th>Pagina</th>
-              <th>Posicionamento</th>
             </tr>
           </thead>
           <tbody>
@@ -114,7 +145,14 @@ export function LeadTable({ rows }: LeadTableProps) {
                     {row.utm_source || "-"} / {row.utm_medium || "-"}
                   </div>
                 </td>
-                <td>{row.utm_content || "-"}</td>
+                <td>
+                  <div>{row.utm_content || "-"}</div>
+                  {row.placement && (
+                    <div className="dashboard-table__sub" title={row.placement}>
+                      {formatPlacement(row.placement)}
+                    </div>
+                  )}
+                </td>
                 <td>{row.utm_term || "-"}</td>
                 <td>
                   {(row.lead_phone || row.whatsapp_number) ? (
@@ -149,7 +187,6 @@ export function LeadTable({ rows }: LeadTableProps) {
                   </a>
                   <div className="dashboard-table__sub">{row.referrer || "Direto"}</div>
                 </td>
-                <td>{row.placement || "-"}</td>
               </tr>
             ))}
           </tbody>

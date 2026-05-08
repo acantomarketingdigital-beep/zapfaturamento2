@@ -9,17 +9,12 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Nao autorizado." }, { status: 401 });
   if (!hasDatabaseConfig()) return NextResponse.json({ clients: [] });
 
-  let result;
-  if (user.role === "client_user" && user.clientSlug) {
-    result = await queryDb<ClientRow>(
-      `SELECT client_slug, client_name FROM clients WHERE client_slug = $1 AND is_active = TRUE ORDER BY client_name ASC`,
-      [user.clientSlug]
-    );
-  } else {
-    result = await queryDb<ClientRow>(
-      `SELECT client_slug, client_name FROM clients WHERE is_active = TRUE ORDER BY client_name ASC`
-    );
-  }
+  const result = await queryDb<ClientRow>(
+    `SELECT client_slug, client_name FROM clients
+     WHERE workspace_slug IS NOT DISTINCT FROM $1 AND is_active = TRUE
+     ORDER BY client_name ASC`,
+    [user.clientSlug ?? null]
+  );
 
   return NextResponse.json({
     clients: result.rows.map((r) => ({ slug: r.client_slug, name: r.client_name }))

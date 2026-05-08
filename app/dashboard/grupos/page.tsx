@@ -21,7 +21,7 @@ export default async function GruposPage() {
 
   const [campaigns, clientsRaw, perms] = await Promise.all([
     hasDatabaseConfig() ? listGroupCampaigns(scopeSlug) : Promise.resolve([]),
-    adminUser && hasDatabaseConfig() ? listManagedClinics() : Promise.resolve([]),
+    hasDatabaseConfig() ? listManagedClinics("", user.clientSlug ?? null) : Promise.resolve([]),
     getUserPermissions(user.id, user.role),
   ]);
 

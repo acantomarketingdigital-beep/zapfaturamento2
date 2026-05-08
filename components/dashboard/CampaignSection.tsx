@@ -13,6 +13,7 @@ type Campaign = {
   name: string;
   slug: string;
   defaultMessage: string;
+  whatsappNumber: string | null;
   isActive: boolean;
   dailyBudgetCents: number;
   currency: Currency;
@@ -20,11 +21,15 @@ type Campaign = {
   updatedAt: string;
 };
 
+type SavedNumber = { id: number; phone_number: string; label: string };
+
 type CampaignSectionProps = {
   initialCampaigns: Campaign[];
   clientSlug: string;
   baseUrl: string;
   canManage: boolean;
+  savedNumbers?: SavedNumber[];
+  hasGoogleAds?: boolean;
 };
 
 type ModalState = {
@@ -33,6 +38,7 @@ type ModalState = {
   name: string;
   slug: string;
   defaultMessage: string;
+  whatsappNumber: string;
   isActive: boolean;
   dailyBudget: string;
   currency: Currency;
@@ -45,20 +51,6 @@ const CURRENCY_OPTIONS: { value: Currency; label: string }[] = [
   { value: "EUR", label: "EUR — Euro" },
 ];
 
-function buildCampaignUrl(baseUrl: string, clientSlug: string, slug: string) {
-  return `${baseUrl}/w/${encodeURIComponent(clientSlug)}/${encodeURIComponent(slug)}`;
-}
-
-function buildCampaignMetaUrl(baseUrl: string, clientSlug: string, slug: string) {
-  const path = `${encodeURIComponent(clientSlug)}/${encodeURIComponent(slug)}`;
-  return `${baseUrl}/w/${path}?utm_source=facebook&utm_medium=cpc&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}&campaign_id={{campaign.id}}&adset_id={{adset.id}}&ad_id={{ad.id}}&placement={{placement}}`;
-}
-
-function buildCampaignGoogleUrl(baseUrl: string, clientSlug: string, slug: string) {
-  const path = `${encodeURIComponent(clientSlug)}/${encodeURIComponent(slug)}`;
-  return `${baseUrl}/w/${path}?utm_source=google&utm_medium=cpc&utm_campaign={campaignid}&utm_content={creative}&utm_term={keyword}&gclid={gclid}&device={device}&network={network}&matchtype={matchtype}`;
-}
-
 function formatBudgetBadge(cents: number, currency: Currency): string {
   return `${formatCurrency(cents / 100, currency)}/dia`;
 }
@@ -67,7 +59,9 @@ export function CampaignSection({
   initialCampaigns,
   clientSlug,
   baseUrl,
-  canManage
+  canManage,
+  savedNumbers = [],
+  hasGoogleAds = false,
 }: CampaignSectionProps) {
   const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
   const [query, setQuery] = useState("");
@@ -101,6 +95,7 @@ export function CampaignSection({
       name: "",
       slug: "",
       defaultMessage: "",
+      whatsappNumber: "",
       isActive: true,
       dailyBudget: "",
       currency: "BRL",
@@ -116,6 +111,7 @@ export function CampaignSection({
       name: campaign.name,
       slug: campaign.slug,
       defaultMessage: campaign.defaultMessage,
+      whatsappNumber: campaign.whatsappNumber ?? "",
       isActive: campaign.isActive,
       dailyBudget: campaign.dailyBudgetCents > 0
         ? (campaign.dailyBudgetCents / 100).toFixed(2)
@@ -158,6 +154,7 @@ export function CampaignSection({
           name: modal.name,
           slug: modal.slug,
           defaultMessage: modal.defaultMessage,
+          whatsappNumber: modal.whatsappNumber.replace(/\D/g, "") || null,
           isActive: modal.isActive,
           dailyBudgetCents: isNaN(dailyBudgetCents) ? 0 : dailyBudgetCents,
           currency: modal.currency,
@@ -264,10 +261,6 @@ export function CampaignSection({
       ) : (
         <div className="dashboard-link-list">
           {filtered.map((campaign) => {
-            const baseLink   = buildCampaignUrl(baseUrl, clientSlug, campaign.slug);
-            const metaLink   = buildCampaignMetaUrl(baseUrl, clientSlug, campaign.slug);
-            const googleLink = buildCampaignGoogleUrl(baseUrl, clientSlug, campaign.slug);
-
             return (
               <div key={campaign.id} className="dashboard-link-card">
                 <div className="dashboard-inline-actions">
@@ -286,6 +279,11 @@ export function CampaignSection({
                       {campaign.currency}
                     </span>
                   ) : null}
+                  {campaign.whatsappNumber ? (
+                    <span className="dashboard-pill dashboard-pill--neutral" title="WhatsApp especifico desta campanha">
+                      WA: {campaign.whatsappNumber}
+                    </span>
+                  ) : null}
                 </div>
 
                 {campaign.defaultMessage ? (
@@ -296,22 +294,6 @@ export function CampaignSection({
                   </p>
                 ) : null}
 
-                <div className="dashboard-link-card" style={{ marginTop: 4 }}>
-                  <span className="dashboard-table__sub">Link base</span>
-                  <code className="dashboard-code-block">{baseLink}</code>
-                  <CopyButton value={baseLink} label="Copiar link base" />
-                </div>
-                <div className="dashboard-link-card">
-                  <span className="dashboard-table__sub">Link para Meta Ads</span>
-                  <code className="dashboard-code-block">{metaLink}</code>
-                  <CopyButton value={metaLink} label="Copiar link Meta" />
-                </div>
-                <div className="dashboard-link-card">
-                  <span className="dashboard-table__sub">Link para Google Ads</span>
-                  <code className="dashboard-code-block">{googleLink}</code>
-                  <CopyButton value={googleLink} label="Copiar link Google" />
-                </div>
-
                 <CampaignCreativesSection
                   campaignId={campaign.id}
                   campaignName={campaign.name}
@@ -319,6 +301,7 @@ export function CampaignSection({
                   clientSlug={clientSlug}
                   baseUrl={baseUrl}
                   canManage={canManage}
+                  hasGoogleAds={hasGoogleAds}
                 />
 
                 {canManage ? (
@@ -374,6 +357,42 @@ export function CampaignSection({
                 />
                 <span className="dashboard-helper">
                   Esta mensagem sera enviada automaticamente ao abrir o WhatsApp.
+                </span>
+              </div>
+
+              <div className="dashboard-field">
+                <span>WhatsApp desta campanha</span>
+                <input
+                  type="text"
+                  value={modal.whatsappNumber}
+                  onChange={(e) => setModal({ ...modal, whatsappNumber: e.target.value })}
+                  placeholder="5511999999999 (deixe vazio para usar o padrao do cliente)"
+                />
+                {savedNumbers.length > 0 ? (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+                    <button
+                      type="button"
+                      className={`dashboard-button dashboard-button--ghost${!modal.whatsappNumber ? " dashboard-button--active" : ""}`}
+                      style={{ fontSize: "0.8rem", padding: "2px 10px" }}
+                      onClick={() => setModal({ ...modal, whatsappNumber: "" })}
+                    >
+                      Padrao do cliente
+                    </button>
+                    {savedNumbers.map((n) => (
+                      <button
+                        key={n.id}
+                        type="button"
+                        className={`dashboard-button dashboard-button--ghost${modal.whatsappNumber === n.phone_number ? " dashboard-button--active" : ""}`}
+                        style={{ fontSize: "0.8rem", padding: "2px 10px" }}
+                        onClick={() => setModal({ ...modal, whatsappNumber: n.phone_number })}
+                      >
+                        {n.label || n.phone_number}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                <span className="dashboard-helper">
+                  Deixe vazio para usar o numero padrao do cliente.
                 </span>
               </div>
 

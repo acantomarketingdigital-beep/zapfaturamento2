@@ -1,5 +1,6 @@
 import { hasDatabaseConfig, queryDb } from "@/lib/db";
 import type { LeadCapturePayload } from "@/lib/utm";
+import { recordBillableLead } from "@/lib/billing-usage";
 
 export type KommoLeadStatus = "pending" | "success" | "error" | "disabled";
 
@@ -145,7 +146,7 @@ const BOT_UA_PATTERNS = [
   /headlesschrome/i, /phantomjs/i, /prerender/i, /lighthouse/i,
 ];
 
-function isBot(userAgent: string | null | undefined): boolean {
+export function isBot(userAgent: string | null | undefined): boolean {
   if (!userAgent) return false;
   return BOT_UA_PATTERNS.some((pattern) => pattern.test(userAgent));
 }
@@ -331,7 +332,11 @@ export async function insertLeadEvent(
     ]
   );
 
-  return result.rows[0]?.id ?? null;
+  const leadId = result.rows[0]?.id ?? null;
+  if (leadId) {
+    recordBillableLead({ clientSlug: payload.clientSlug, leadId, source: "whatsapp" }).catch(() => {});
+  }
+  return leadId;
 }
 
 export async function linkLeadContact(

@@ -20,8 +20,11 @@ export async function POST(request: Request) {
   const name = String(body.name || "").trim() || null;
   const email = String(body.email || "").trim();
   const role = String(body.role || "client_owner");
-  const clientSlug = String(body.clientSlug || "").trim() || null;
+  const rawClientSlug = String(body.clientSlug || "").trim() || null;
   const phone = String(body.phone || "").trim() || null;
+
+  // Scoped users can only invite into their own workspace
+  const clientSlug = user.clientSlug !== null ? user.clientSlug : rawClientSlug;
   const permissions = (body.permissions ?? {}) as Partial<UserPermissions>;
 
   try {

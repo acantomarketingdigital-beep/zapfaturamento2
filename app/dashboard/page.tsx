@@ -1,3 +1,4 @@
+import { AutoRefresh } from "@/components/dashboard/AutoRefresh";
 import { ChartCard } from "@/components/dashboard/Charts";
 import { CleanTestLeadsButton } from "@/components/dashboard/CleanTestLeadsButton";
 import { DashboardFiltersPanel } from "@/components/dashboard/DashboardFilters";
@@ -93,6 +94,7 @@ export default async function DashboardPage({
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "flex-start", flexWrap: "wrap" }}>
+            <AutoRefresh intervalSeconds={30} />
             {user && user.role === "agency_admin" && data.databaseReady && (
               <CleanTestLeadsButton clients={data.filterOptions.clients} />
             )}
@@ -106,21 +108,29 @@ export default async function DashboardPage({
         </header>
 
         {!allDone && onboarding && (
-          <article className="dashboard-card" style={{ marginBottom: 20, padding: "1.25rem" }}>
-            <h3 style={{ fontWeight: 700, fontSize: "0.92rem", marginBottom: 12 }}>Configuracao inicial</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <article className="dashboard-card" style={{ marginBottom: 20, padding: "1.25rem", borderLeft: "3px solid var(--brand)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <h3 style={{ fontWeight: 700, fontSize: "0.92rem", margin: 0 }}>Primeiros passos</h3>
+              <a href="/dashboard/academia" style={{ fontSize: "0.78rem", color: "var(--brand)", textDecoration: "none", fontWeight: 600 }}>Ver tutoriais →</a>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
-                { done: onboarding.has_connection, label: "Conectar WhatsApp", href: "/dashboard/configuracoes/whatsapp" },
-                { done: onboarding.has_message, label: "Receber primeira mensagem" },
-                { done: onboarding.has_attended, label: "Iniciar atendimento", href: "/dashboard/inbox" },
+                { done: onboarding.has_connection, label: "Conectar WhatsApp", href: "/dashboard/configuracoes/whatsapp", desc: "Configure a conexao via QR Code ou API Oficial" },
+                { done: onboarding.has_message, label: "Receber primeira mensagem", href: "/dashboard/academia/conectar-whatsapp", desc: "Aguardando o primeiro lead enviar mensagem" },
+                { done: onboarding.has_attended, label: "Iniciar atendimento", href: "/dashboard/inbox", desc: "Abra a conversa no Inbox e responda o lead" },
               ].map((step) => (
-                <div key={step.label} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "0.85rem" }}>
-                  <span style={{ fontSize: 16, width: 20, textAlign: "center" }}>{step.done ? "✅" : "⬜"}</span>
-                  {step.done || !step.href ? (
-                    <span style={{ color: step.done ? "var(--muted)" : "var(--dark)", textDecoration: step.done ? "line-through" : "none" }}>{step.label}</span>
-                  ) : (
-                    <a href={step.href} style={{ color: "var(--brand)", textDecoration: "none", fontWeight: 600 }}>{step.label} →</a>
-                  )}
+                <div key={step.label} style={{ display: "flex", alignItems: "flex-start", gap: 12, fontSize: "0.85rem" }}>
+                  <span style={{ fontSize: 16, marginTop: 1, flexShrink: 0 }}>{step.done ? "✅" : "⬜"}</span>
+                  <div>
+                    {step.done ? (
+                      <span style={{ color: "var(--muted)", textDecoration: "line-through" }}>{step.label}</span>
+                    ) : (
+                      <a href={step.href} style={{ color: "var(--brand)", textDecoration: "none", fontWeight: 600 }}>{step.label} →</a>
+                    )}
+                    {!step.done && (
+                      <div style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: 1 }}>{step.desc}</div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

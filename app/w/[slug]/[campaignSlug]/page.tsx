@@ -81,9 +81,11 @@ export default async function CampaignRedirectPage({ params }: PageProps) {
     );
   }
 
+  const effectiveNumber = campaign.whatsappNumber || client.whatsappNumber;
+
   return (
     <WhatsAppRedirectFlow
-      client={client}
+      client={{ ...client, whatsappNumber: effectiveNumber }}
       campaign={{
         id: campaign.id,
         slug: campaign.slug,

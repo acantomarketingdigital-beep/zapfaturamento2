@@ -47,7 +47,7 @@ export default async function EditClinicPage({ params }: EditClinicPageProps) {
   const { id } = await params;
   const clinic = await getClinicByIdOrSlug(id);
 
-  if (!clinic || !canAccessClient(user, clinic.clientSlug)) {
+  if (!clinic || !canAccessClient(user, clinic.clientSlug, clinic.workspaceSlug)) {
     return (
       <main className="dashboard-shell">
         <DashboardSidebar
@@ -64,7 +64,7 @@ export default async function EditClinicPage({ params }: EditClinicPageProps) {
     );
   }
 
-  const clinics = await listManagedClinics();
+  const clinics = await listManagedClinics("", user.clientSlug ?? null);
 
   return (
     <main className="dashboard-shell">

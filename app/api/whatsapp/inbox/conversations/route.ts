@@ -8,8 +8,9 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const connectionId = searchParams.get("connection_id") ?? undefined;
+  const trafficOnly = searchParams.get("traffic_only") === "1";
   const clientSlug = user.clientSlug;
 
-  const conversations = await listConversations(clientSlug, connectionId);
+  const conversations = await listConversations(clientSlug, connectionId, trafficOnly);
   return NextResponse.json({ conversations });
 }

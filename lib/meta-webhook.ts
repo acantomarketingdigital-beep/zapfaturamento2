@@ -1,4 +1,5 @@
 import { hasDatabaseConfig, queryDb } from "@/lib/db";
+import { recordBillableLead } from "@/lib/billing-usage";
 
 // ─── WhatsApp Cloud API ───────────────────────────────────────────────────────
 
@@ -252,7 +253,7 @@ export async function upsertMetaLead(msg: NormalizedMetaMessage): Promise<void> 
   const sourcePlatform = msg.channel === "instagram" ? "Instagram Direct" : "Facebook Messenger";
 
   try {
-    await queryDb(
+    const upsertResult = await queryDb<{ id: number; is_new: boolean }>(
       `INSERT INTO whatsapp_leads
          (channel, lead_external_id, page_id, lead_name, lead_username,
           message_text, last_message_at, source_payload,
@@ -266,7 +267,8 @@ export async function upsertMetaLead(msg: NormalizedMetaMessage): Promise<void> 
          last_message_at = EXCLUDED.last_message_at,
          source_payload  = EXCLUDED.source_payload,
          lead_name       = COALESCE(whatsapp_leads.lead_name, EXCLUDED.lead_name),
-         lead_username   = COALESCE(whatsapp_leads.lead_username, EXCLUDED.lead_username)`,
+         lead_username   = COALESCE(whatsapp_leads.lead_username, EXCLUDED.lead_username)
+       RETURNING id, (xmax = 0) AS is_new`,
       [
         msg.channel,
         msg.leadExternalId,
@@ -281,6 +283,10 @@ export async function upsertMetaLead(msg: NormalizedMetaMessage): Promise<void> 
         sourcePlatform,
       ]
     );
+    const row = upsertResult.rows[0];
+    if (row?.is_new && row.id) {
+      recordBillableLead({ clientSlug, leadId: row.id, source: "meta" }).catch(() => {});
+    }
   } catch (err) {
     console.error("[meta-webhook] upsertMetaLead error:", err);
   }

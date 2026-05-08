@@ -99,7 +99,7 @@ async function getUserByEmail(email: string) {
   return result.rows[0] || null;
 }
 
-export async function listUsers() {
+export async function listUsers(scopeClientSlug?: string | null) {
   if (!hasDatabaseConfig()) {
     return [];
   }
@@ -122,8 +122,13 @@ export async function listUsers() {
       SELECT id, email, name, phone, role, client_slug, created_at, plan_type,
              trial_expires_at, status, invite_token, invite_expires_at
       FROM users
+      WHERE (client_slug IS NOT DISTINCT FROM $1)
+         OR ($1 IS NOT NULL AND client_slug IN (
+               SELECT client_slug FROM clients WHERE workspace_slug = $1
+             ))
       ORDER BY email ASC
-    `
+    `,
+    [scopeClientSlug ?? null]
   );
 
   return result.rows;
@@ -264,10 +269,12 @@ export function isAgencyAdmin(user: AppSession | null) {
   return user?.role === "agency_admin";
 }
 
-export function canAccessClient(user: AppSession | null, clientSlug: string) {
+export function canAccessClient(user: AppSession | null, clientSlug: string, workspaceSlug?: string | null) {
   if (!user) return false;
   if (user.clientSlug === null) return true; // super-admin: null clientSlug = see everything
-  return user.clientSlug === clientSlug;
+  if (user.clientSlug === clientSlug) return true;
+  if (workspaceSlug != null && user.clientSlug === workspaceSlug) return true;
+  return false;
 }
 
 export function createDashboardLoginResponse(

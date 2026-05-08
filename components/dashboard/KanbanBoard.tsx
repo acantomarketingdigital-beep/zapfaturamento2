@@ -164,6 +164,7 @@ export function KanbanBoard({ leads }: KanbanBoardProps) {
   const [now, setNow] = useState(() => new Date());
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>("all");
+  const [filterClient, setFilterClient] = useState("");
   const [followUpLead, setFollowUpLead] = useState<KanbanLead | null>(null);
   const [followUpAt, setFollowUpAt] = useState("");
   const [followUpNote, setFollowUpNote] = useState("");
@@ -176,10 +177,24 @@ export function KanbanBoard({ leads }: KanbanBoardProps) {
     return () => clearInterval(id);
   }, []);
 
+  // ── client list ────────────────────────────────────────────────────────────
+
+  const clients = useMemo(() => Array.from(
+    new Map(
+      leads
+        .filter((l) => l.client_name)
+        .map((l) => [l.client_slug, l.client_name])
+    ).entries()
+  ).map(([slug, name]) => ({ slug, name: name! })), [leads]);
+
   // ── filtered leads ─────────────────────────────────────────────────────────
 
   const filteredLeads = useMemo(() => {
     let result = leads;
+
+    if (filterClient) {
+      result = result.filter((l) => l.client_slug === filterClient);
+    }
 
     if (channelFilter !== "all") {
       result = result.filter((l) => (l.channel || "whatsapp") === channelFilter);
@@ -226,12 +241,13 @@ export function KanbanBoard({ leads }: KanbanBoardProps) {
       case "follow_up_pending":  return result.filter((l) => isFollowUpPending(l, now));
       default:                   return result;
     }
-  }, [leads, query, activeFilter, channelFilter, now]);
+  }, [leads, query, activeFilter, channelFilter, filterClient, now]);
 
   const filterCounts = useMemo(() => {
+    const clientScoped = filterClient ? leads.filter((l) => l.client_slug === filterClient) : leads;
     const channelScoped = channelFilter === "all"
-      ? leads
-      : leads.filter((l) => (l.channel || "whatsapp") === channelFilter);
+      ? clientScoped
+      : clientScoped.filter((l) => (l.channel || "whatsapp") === channelFilter);
     const base = query.trim() ? filteredLeads : channelScoped;
     return {
       all:              channelScoped.length,
@@ -241,7 +257,7 @@ export function KanbanBoard({ leads }: KanbanBoardProps) {
       urgent:           base.filter((l) => getStaleness(l, now) === "urgent").length,
       follow_up_pending:base.filter((l) => isFollowUpPending(l, now)).length,
     };
-  }, [leads, filteredLeads, query, channelFilter, now]);
+  }, [leads, filteredLeads, query, channelFilter, filterClient, now]);
 
   const columns = useMemo(
     () => STATUS_ORDER.map((s) => ({ status: s, label: LEAD_STATUS_LABELS[s], leads: filteredLeads.filter((l) => l.lead_status === s) })),
@@ -369,6 +385,42 @@ export function KanbanBoard({ leads }: KanbanBoardProps) {
           Messenger — <span className="kanban-channel-soon">Em breve</span>
         </span>
       </div>
+
+      {/* ── client filter ── */}
+      {clients.length > 1 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Cliente:</span>
+          <button
+            type="button"
+            onClick={() => setFilterClient("")}
+            style={{
+              fontSize: "0.72rem", padding: "3px 12px", borderRadius: 20,
+              border: "1px solid var(--border)", cursor: "pointer",
+              background: filterClient === "" ? "var(--brand)" : "transparent",
+              color: filterClient === "" ? "#fff" : "var(--muted)",
+              fontWeight: filterClient === "" ? 600 : 400,
+            }}
+          >
+            Todos
+          </button>
+          {clients.map(({ slug, name }) => (
+            <button
+              key={slug}
+              type="button"
+              onClick={() => setFilterClient(slug)}
+              style={{
+                fontSize: "0.72rem", padding: "3px 12px", borderRadius: 20,
+                border: "1px solid var(--border)", cursor: "pointer",
+                background: filterClient === slug ? "var(--brand)" : "transparent",
+                color: filterClient === slug ? "#fff" : "var(--muted)",
+                fontWeight: filterClient === slug ? 600 : 400,
+              }}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── filter bar ── */}
       <div className="kanban-filters">

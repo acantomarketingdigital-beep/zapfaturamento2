@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
   try {
     const { token, phone } = await createMagicLoginToken(userId);
-    const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? "https://zapfaturamento.com.br").replace(/\/$/, "");
+    const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? "https://zapfaturamento.com.br").trim().replace(/\/$/, "");
     const magicUrl = `${baseUrl}/login/magic/${token}`;
     return NextResponse.json({ magicUrl, phone });
   } catch (err) {

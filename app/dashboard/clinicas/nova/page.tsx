@@ -35,7 +35,7 @@ export default async function NewClinicPage() {
     );
   }
 
-  const clinics = await listManagedClinics();
+  const clinics = await listManagedClinics("", user.clientSlug ?? null);
   const values = toClinicFormValues(null);
 
   return (

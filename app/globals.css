@@ -791,12 +791,14 @@ code {
 
 .dashboard-clinic-card__logo,
 .dashboard-clinic-hero__logo {
-  width: 48px;
   height: 48px;
-  object-fit: cover;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
   border-radius: 11px;
   border: 1px solid var(--border);
   background: white;
+  padding: 4px 6px;
   flex-shrink: 0;
 }
 
@@ -1478,16 +1480,19 @@ code {
 }
 
 .wzap-logo {
-  width: 68px;
   height: 68px;
+  width: auto;
+  max-width: 200px;
   border-radius: 18px;
-  object-fit: cover;
+  object-fit: contain;
   border: 1px solid #E2E8F0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+  background: white;
+  padding: 6px 10px;
 }
 
 .wzap-logo--placeholder {
-  width: 68px;
+  width: 72px;
   height: 68px;
   border-radius: 18px;
   border: 1px solid rgba(37, 211, 102, 0.2);
@@ -5316,4 +5321,267 @@ code {
 }
 .meta-status-grid > div:last-child {
   border-bottom: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LEAD EXPRESS — Public form page (.lf-*)
+   ═══════════════════════════════════════════════════════════════ */
+
+.lf-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem 4rem;
+}
+
+.lf-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.10);
+  padding: 2rem 1.75rem 2.25rem;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Logo */
+.lf-logo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+.lf-logo {
+  height: 56px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+}
+
+/* Banner image */
+.lf-banner-wrap {
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+.lf-banner {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Headlines */
+.lf-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0;
+  color: #0f172a;
+  text-align: center;
+}
+.lf-subtitle {
+  font-size: 0.95rem;
+  color: #475569;
+  margin: 0;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Form */
+.lf-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 0.25rem;
+}
+.lf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.lf-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+}
+.lf-input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #0f172a;
+  background: #f8fafc;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+  font-family: inherit;
+}
+.lf-input:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+  background: #fff;
+}
+.lf-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* CTA button */
+.lf-btn {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+  margin-top: 0.25rem;
+}
+.lf-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.lf-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.lf-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Ghost (back) button */
+.lf-btn-ghost {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border: 1.5px solid;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: 0.5rem;
+}
+.lf-btn-ghost:hover {
+  background: rgba(0,0,0,0.04);
+}
+
+/* Inline error */
+.lf-error {
+  font-size: 0.84rem;
+  color: #dc2626;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  background: #fef2f2;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+}
+
+/* Trust text */
+.lf-trust {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-align: center;
+  margin: 0.25rem 0 0;
+}
+
+/* Success screen */
+.lf-success-icon {
+  display: flex;
+  justify-content: center;
+  margin: 0.5rem 0;
+}
+.lf-success-icon svg {
+  width: 56px;
+  height: 56px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LEAD EXPRESS — Admin area (.lf-admin-*)
+   ═══════════════════════════════════════════════════════════════ */
+
+.lf-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.lf-admin-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.lf-admin-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.lf-admin-card__name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.lf-admin-card__title {
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.lf-admin-card__url {
+  font-size: 0.78rem;
+  font-family: var(--font-mono), monospace;
+  color: var(--brand-dark);
+  word-break: break-all;
+  background: var(--bg);
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+}
+
+.lf-admin-card__optional-fields {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.lf-admin-card__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+/* Toggles grid inside form modal */
+.lf-toggles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1rem;
+}
+
+.lf-toggle-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+.lf-toggle-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--brand);
 }

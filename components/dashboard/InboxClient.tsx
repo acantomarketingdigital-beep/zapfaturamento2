@@ -112,11 +112,26 @@ export function InboxClient({ isAgencyAdmin }: Props) {
   // Stage update
   const [updatingStage, setUpdatingStage] = useState(false);
 
+  // Connection filter
+  const [filterConnection, setFilterConnection] = useState<string | null>(null);
+
+  const connections = Array.from(
+    new Map(
+      conversations
+        .filter((c) => c.client_name)
+        .map((c) => [c.client_slug, c.client_name])
+    ).entries()
+  ).map(([slug, name]) => ({ slug, name: name ?? slug }));
+
+  const visibleConversations = filterConnection
+    ? conversations.filter((c) => c.client_slug === filterConnection)
+    : conversations;
+
   const selectedConv = conversations.find((c) => c.id === selectedId) ?? null;
 
   const loadConversations = useCallback(async () => {
     try {
-      const res = await fetch("/api/whatsapp/inbox/conversations");
+      const res = await fetch("/api/whatsapp/inbox/conversations?traffic_only=1");
       const data = (await res.json()) as { conversations?: WhatsappConversation[] };
       if (data.conversations) setConversations(data.conversations);
     } catch {}
@@ -250,14 +265,48 @@ export function InboxClient({ isAgencyAdmin }: Props) {
       <div className="inbox-panel-left">
         <div className="inbox-panel-left__header">
           <span>Conversas</span>
-          <span className="inbox-panel-left__count">{conversations.length}</span>
+          <span className="inbox-panel-left__count">{visibleConversations.length}</span>
         </div>
 
+        {connections.length > 1 && (
+          <div style={{ display: "flex", gap: 4, padding: "6px 10px", borderBottom: "1px solid var(--border)", flexWrap: "wrap" }}>
+            <button
+              onClick={() => setFilterConnection(null)}
+              style={{
+                fontSize: "0.7rem", padding: "3px 10px", borderRadius: 20,
+                border: "1px solid var(--border)", cursor: "pointer",
+                background: filterConnection === null ? "var(--brand)" : "transparent",
+                color: filterConnection === null ? "#fff" : "var(--muted)",
+                fontWeight: filterConnection === null ? 600 : 400,
+              }}
+            >
+              Todas
+            </button>
+            {connections.map(({ slug, name }) => (
+              <button
+                key={slug}
+                onClick={() => setFilterConnection(slug)}
+                style={{
+                  fontSize: "0.7rem", padding: "3px 10px", borderRadius: 20,
+                  border: "1px solid var(--border)", cursor: "pointer",
+                  background: filterConnection === slug ? "var(--brand)" : "transparent",
+                  color: filterConnection === slug ? "#fff" : "var(--muted)",
+                  fontWeight: filterConnection === slug ? 600 : 400,
+                  maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}
+                title={name}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="inbox-convs">
-          {conversations.length === 0 && (
+          {visibleConversations.length === 0 && (
             <p className="inbox-convs__empty">Nenhuma conversa ainda.</p>
           )}
-          {conversations.map((conv) => {
+          {visibleConversations.map((conv) => {
             const name = conv.contact_name ?? conv.contact_phone;
             const active = conv.id === selectedId;
             return (

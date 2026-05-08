@@ -66,7 +66,7 @@ export type ResolvedClientConfig = Required<
     metaCapiConfigured: boolean;
   };
 
-export const DEFAULT_REDIRECT_DELAY = 4000;
+export const DEFAULT_REDIRECT_DELAY = 2000;
 
 export const DEFAULT_KOMMO_CUSTOM_FIELDS: KommoCustomFieldMap = {
   clientName: null,

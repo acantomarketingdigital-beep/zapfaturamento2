@@ -83,7 +83,7 @@ export function WhatsAppRedirectFlow({ client, campaign, creative }: WhatsAppRed
 
   const stableDelay = useMemo(() => {
     const candidate = client.redirectDelay;
-    if (candidate < 3000) return 3000;
+    if (candidate < 1500) return 1500;
     if (candidate > 5000) return 5000;
     return candidate;
   }, [client.redirectDelay]);
@@ -105,6 +105,9 @@ export function WhatsAppRedirectFlow({ client, campaign, creative }: WhatsAppRed
       campaign,
       creative
     });
+
+    // Clean URL bar so the lead doesn't see UTMs — data already captured above
+    history.replaceState(null, "", window.location.pathname);
 
     const resolvedWhatsappUrl = buildWhatsAppUrl(
       client.whatsappNumber,
@@ -170,15 +173,15 @@ export function WhatsAppRedirectFlow({ client, campaign, creative }: WhatsAppRed
 
     const midTimer = window.setTimeout(() => {
       if (!cancelled) {
-        setStatusText("Estamos preparando seu atendimento...");
+        setStatusText("Quase la! Abrindo o WhatsApp...");
       }
-    }, 1000);
+    }, 700);
 
     const lateTimer = window.setTimeout(() => {
       if (!cancelled) {
-        setStatusText("Quase la! Abrindo a conversa no WhatsApp...");
+        setStatusText("Abrindo a conversa...");
       }
-    }, Math.max(stableDelay - 1000, 1800));
+    }, Math.max(stableDelay - 500, 1000));
 
     return () => {
       cancelled = true;

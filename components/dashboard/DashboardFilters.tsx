@@ -37,7 +37,7 @@ export function DashboardFiltersPanel({
         </label>
 
         <label className="dashboard-field">
-          <span>Clinica</span>
+          <span>Cliente</span>
           <select name="client" defaultValue={filters.clientSlug}>
             <option value="">Todas</option>
             {options.clients.map((client) => (

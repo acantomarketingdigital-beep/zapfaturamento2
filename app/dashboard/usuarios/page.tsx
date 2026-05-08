@@ -14,7 +14,7 @@ import { hasDatabaseConfig } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 function getBaseUrl() {
-  return (process.env.NEXT_PUBLIC_BASE_URL ?? "https://zapfaturamento.com.br").replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_BASE_URL ?? "https://zapfaturamento.com.br").trim().replace(/\/$/, "");
 }
 
 function InviteStatusBadge({ status, inviteExpired }: { status: string | null; inviteExpired: boolean }) {
@@ -67,7 +67,8 @@ export default async function UsersPage() {
     );
   }
 
-  const [users, clients] = await Promise.all([listUsers(), listManagedClinics()]);
+  const scopeSlug = user.clientSlug ?? null;
+  const [users, clients] = await Promise.all([listUsers(scopeSlug), listManagedClinics("", scopeSlug)]);
   const baseUrl = getBaseUrl();
 
   return (

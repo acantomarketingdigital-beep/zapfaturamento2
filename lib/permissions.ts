@@ -24,6 +24,11 @@ export type UserPermissions = {
   grupos_view: boolean;
   grupos_create: boolean;
   grupos_edit: boolean;
+  // Bulk messaging (disparos em massa)
+  disparos: boolean;
+  // Lead Express (formularios)
+  formularios_view: boolean;
+  formularios_create: boolean;
 };
 
 export const MODULE_LABELS: Record<keyof UserPermissions, string> = {
@@ -46,6 +51,9 @@ export const MODULE_LABELS: Record<keyof UserPermissions, string> = {
   grupos_view:      "Grupos WA - Ver",
   grupos_create:    "Grupos WA - Criar",
   grupos_edit:      "Grupos WA - Editar",
+  disparos:          "Disparos em Massa",
+  formularios_view:  "Lead Express - Ver",
+  formularios_create: "Lead Express - Criar",
 };
 
 export function allTruePermissions(): UserPermissions {
@@ -69,6 +77,8 @@ export function defaultPermissions(role: string): UserPermissions {
       campanhas_view: true, campanhas_create: true, campanhas_edit: true,
       criativos_view: true, criativos_create: true, criativos_edit: true,
       grupos_view: true, grupos_create: true, grupos_edit: true,
+      disparos: true,
+      formularios_view: true, formularios_create: true,
     };
   }
 

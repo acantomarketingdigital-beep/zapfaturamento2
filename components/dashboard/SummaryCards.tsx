@@ -47,7 +47,7 @@ const cardItems = (summary: SummaryMetrics) => [
   },
   { label: "Agendados", value: summary.leadsAgendados, tone: "success" as Tone },
   { label: "Fechados", value: summary.leadsFechados, tone: "brand" as Tone },
-  { label: "Exportaveis", value: summary.leadsExportaveis, tone: "google" as Tone }
+  { label: "Enviaram WA", value: summary.leadsExportaveis, tone: "google" as Tone }
 ];
 
 export function SummaryCards({ summary }: SummaryCardsProps) {

@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   try {
     const intent = String(formData.get("intent") || "save");
     const input = parseClinicFormData(formData);
-    const clinic = await saveClinic(input);
+    const clinic = await saveClinic(input, user.clientSlug ?? null);
     const redirectPath =
       intent === "save-copy"
         ? `/dashboard/clinicas/${encodeURIComponent(clinic.clientSlug)}?copy=base`

@@ -24,6 +24,7 @@ export type ManagedClinicRecord = ResolvedClientConfig & {
   updatedAt?: string;
   isActive: boolean;
   source: "database" | "static";
+  workspaceSlug?: string | null;
 };
 
 export type ManagedClinicServerRecord = ManagedClinicRecord & {
@@ -87,6 +88,7 @@ type DatabaseClinicRow = {
   kommo_status_id: string | number | null;
   kommo_custom_fields: KommoCustomFieldMap | string | null;
   is_active: boolean;
+  workspace_slug: string | null;
 };
 
 type ClinicMetricsRow = {
@@ -234,14 +236,16 @@ function mapDatabaseRow(
     }
   );
 
+  const withWorkspace = { ...resolved, workspaceSlug: row.workspace_slug ?? null };
+
   if (options?.includeSecrets) {
     return {
-      ...resolved,
+      ...withWorkspace,
       metaCapiAccessToken: cleanText(row.meta_capi_access_token)
     };
   }
 
-  return resolved;
+  return withWorkspace;
 }
 
 async function fetchDatabaseClinicBySlug(
@@ -275,7 +279,8 @@ async function fetchDatabaseClinicBySlug(
         kommo_pipeline_id,
         kommo_status_id,
         kommo_custom_fields,
-        is_active
+        is_active,
+        workspace_slug
       FROM clients
       WHERE client_slug = $1
       LIMIT 1
@@ -314,7 +319,8 @@ async function fetchDatabaseClinicByIdOrSlug(value: string) {
         kommo_pipeline_id,
         kommo_status_id,
         kommo_custom_fields,
-        is_active
+        is_active,
+        workspace_slug
       FROM clients
       WHERE id::text = $1 OR client_slug = $1
       ORDER BY CASE WHEN client_slug = $1 THEN 0 ELSE 1 END
@@ -337,7 +343,8 @@ function getStaticClinicRecord(slug: string) {
     ...clinic,
     id: clinic.clientSlug,
     isActive: true,
-    source: "static" as const
+    source: "static" as const,
+    workspaceSlug: null as string | null
   };
 }
 
@@ -463,10 +470,13 @@ export async function listManagedClinics(query = "", scopeClientSlug?: string | 
             kommo_pipeline_id,
             kommo_status_id,
             kommo_custom_fields,
-            is_active
+            is_active,
+            workspace_slug
           FROM clients
+          WHERE workspace_slug IS NOT DISTINCT FROM $1
           ORDER BY client_name ASC, client_slug ASC
-        `
+        `,
+        [scopeClientSlug ?? null]
       );
 
       for (const row of result.rows) {
@@ -481,7 +491,6 @@ export async function listManagedClinics(query = "", scopeClientSlug?: string | 
   const normalizedQuery = query.trim().toLowerCase();
 
   return Array.from(merged.values())
-    .filter((clinic) => (scopeClientSlug ? clinic.clientSlug === scopeClientSlug : true))
     .map<ManagedClinicListItem>((clinic) => {
       const metric = metrics.get(clinic.clientSlug);
 
@@ -510,7 +519,7 @@ export async function listManagedClinics(query = "", scopeClientSlug?: string | 
     .sort((left, right) => left.clientName.localeCompare(right.clientName));
 }
 
-export async function saveClinic(input: ManagedClinicInput) {
+export async function saveClinic(input: ManagedClinicInput, workspaceSlug?: string | null) {
   if (!hasDatabaseConfig()) {
     throw new Error("DATABASE_URL nao configurada.");
   }
@@ -576,10 +585,11 @@ export async function saveClinic(input: ManagedClinicInput) {
         kommo_pipeline_id,
         kommo_status_id,
         kommo_custom_fields,
-        is_active
+        is_active,
+        workspace_slug
       )
       VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, $18
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, $18, $19
       )
       ON CONFLICT (client_slug)
       DO UPDATE SET
@@ -599,7 +609,8 @@ export async function saveClinic(input: ManagedClinicInput) {
         kommo_pipeline_id = EXCLUDED.kommo_pipeline_id,
         kommo_status_id = EXCLUDED.kommo_status_id,
         kommo_custom_fields = EXCLUDED.kommo_custom_fields,
-        is_active = EXCLUDED.is_active
+        is_active = EXCLUDED.is_active,
+        workspace_slug = COALESCE(clients.workspace_slug, EXCLUDED.workspace_slug)
       RETURNING
         id,
         created_at,
@@ -645,7 +656,8 @@ export async function saveClinic(input: ManagedClinicInput) {
           ? normalizeCustomFieldMap(input.kommoCustomFields)
           : DEFAULT_KOMMO_CUSTOM_FIELDS
       ),
-      input.isActive
+      input.isActive,
+      workspaceSlug ?? null
     ]
   );
 

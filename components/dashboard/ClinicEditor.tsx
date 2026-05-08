@@ -282,20 +282,6 @@ export function ClinicEditor({
                 </small>
               </label>
 
-              <label className="dashboard-field">
-                <span>Delay do redirect (ms)</span>
-                <input
-                  type="number"
-                  min="3000"
-                  max="5000"
-                  step="100"
-                  name="redirectDelay"
-                  defaultValue={values.redirectDelay}
-                />
-                <small className="dashboard-field__help">
-                  Entre 3000 e 5000 ms. Tempo antes de abrir o WhatsApp.
-                </small>
-              </label>
             </div>
           </section>
 
@@ -313,16 +299,6 @@ export function ClinicEditor({
               <label className="dashboard-field">
                 <span>Meta Pixel ID</span>
                 <input type="text" name="metaPixelId" defaultValue={values.metaPixelId} />
-              </label>
-
-              <label className="dashboard-field">
-                <span>Test Event Code</span>
-                <input
-                  type="text"
-                  name="metaTestEventCode"
-                  defaultValue={values.metaTestEventCode}
-                  placeholder="TEST12345"
-                />
               </label>
 
               <label className="dashboard-field dashboard-field--full">

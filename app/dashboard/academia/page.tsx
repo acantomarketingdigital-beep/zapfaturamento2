@@ -251,10 +251,10 @@ export default async function AcademyPage() {
 
           <article className="dashboard-card">
             <div className="dashboard-card__header">
-              <h3>Google Ads — Sem landing page</h3>
+              <h3>Google Ads — Link Direto (sem landing page)</h3>
             </div>
             <p className="dashboard-helper">
-              Anuncio aponta direto para o WhatsApp, sem pagina intermediaria.
+              Anuncio aponta direto para o link do Zap Faturamento. O sistema captura as UTMs e redireciona para o WhatsApp.
             </p>
             <ol className="guide-steps">
               <li className="guide-step">
@@ -263,11 +263,11 @@ export default async function AcademyPage() {
               </li>
               <li className="guide-step">
                 <span className="guide-step__num">2</span>
-                <span className="guide-step__text">No campo <strong>URL final</strong>, cole o link do Zap Faturamento com UTMs.</span>
+                <span className="guide-step__text">No campo <strong>URL final</strong>, cole o link abaixo. As UTMs e o <code>gclid</code> ja estao incluidos.</span>
               </li>
               <li className="guide-step">
                 <span className="guide-step__num">3</span>
-                <span className="guide-step__text">As UTMs ja estao incluidas no link — nao e necessario adicionar manualmente.</span>
+                <span className="guide-step__text"><strong>Obrigatorio:</strong> cadastre o GTM ID e o GA4 ID no painel do cliente para o Google nao rodar cego.</span>
               </li>
             </ol>
             <div style={{ marginTop: 12 }}>
@@ -278,27 +278,27 @@ export default async function AcademyPage() {
 
           <article className="dashboard-card">
             <div className="dashboard-card__header">
-              <h3>Google Ads — Com landing page</h3>
+              <h3>Google Ads — Lead Express (formulario proprio)</h3>
             </div>
             <p className="dashboard-helper">
-              Anuncio aponta para uma landing page; o botao da landing leva ao WhatsApp.
+              Anuncio aponta para o formulario do sistema. O lead preenche, e cadastrado e o Google recebe o evento de conversao.
             </p>
             <ol className="guide-steps">
               <li className="guide-step">
                 <span className="guide-step__num">1</span>
-                <span className="guide-step__text">O anuncio aponta para a <strong>landing page</strong>.</span>
+                <span className="guide-step__text">Crie o formulario em <strong>Lead Express</strong> no menu lateral e copie o link publico.</span>
               </li>
               <li className="guide-step">
                 <span className="guide-step__num">2</span>
-                <span className="guide-step__text">O botao &ldquo;Falar no WhatsApp&rdquo; da landing deve usar o <strong>link do Zap Faturamento</strong>.</span>
+                <span className="guide-step__text">Use esse link como <strong>URL final</strong> no Google Ads (adicione <code>?utm_source=google&utm_medium=cpc&gclid={"{gclid}"}</code>).</span>
               </li>
               <li className="guide-step">
                 <span className="guide-step__num">3</span>
-                <span className="guide-step__text">Certifique-se de que as UTMs do Google estao no link do botao do WhatsApp.</span>
+                <span className="guide-step__text">Ao enviar o form, o sistema dispara <code>generate_lead</code> para o GA4 e a conversao para o Google Ads automaticamente.</span>
               </li>
             </ol>
-            <div className="guide-tip guide-tip--warn" style={{ marginTop: 12 }}>
-              Sem as UTMs no link do botao, o lead aparece como direto e perde a referencia da campanha.
+            <div className="guide-tip" style={{ marginTop: 12 }}>
+              Vantagem sobre o link direto: o Google coleta mais dados de comportamento antes de converter, melhorando a otimizacao da campanha.
             </div>
           </article>
 
@@ -308,9 +308,9 @@ export default async function AcademyPage() {
         <article className="dashboard-card" style={{ marginTop: 0, border: "1px solid #bfdbfe" }}>
           <div className="dashboard-card__header">
             <div>
-              <h3>Google Ads — Rastreamento de leads</h3>
+              <h3>Google Ads — Rastreamento de conversoes</h3>
               <p className="dashboard-helper" style={{ marginBottom: 0 }}>
-                Configure Google Analytics, Tag Manager e conversao para campanhas com landing page.
+                Com ou sem landing page, GTM e GA4 sao obrigatorios para o Google nao rodar cego.
               </p>
             </div>
             <a
@@ -322,8 +322,39 @@ export default async function AcademyPage() {
             </a>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
-            {["Sem site: nao precisa de Tag Manager", "Com site: precisa de GTM + Analytics", "Passo critico: marcar evento como conversao no GA4"].map((tip) => (
+            {[
+              "Todos os cenarios precisam de GTM + GA4",
+              "Cadastre os IDs no painel do cliente",
+              "O sistema injeta GTM automaticamente",
+              "Passo critico: marcar generate_lead como conversao no GA4",
+            ].map((tip) => (
               <span key={tip} style={{ fontSize: "0.78rem", background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1d4ed8", borderRadius: 6, padding: "2px 10px" }}>
+                {tip}
+              </span>
+            ))}
+          </div>
+        </article>
+
+        {/* Disparos em Massa */}
+        <article className="dashboard-card" style={{ marginTop: 0, border: "1px solid #c4b5fd" }}>
+          <div className="dashboard-card__header">
+            <div>
+              <h3>Disparos em Massa via WhatsApp Oficial</h3>
+              <p className="dashboard-helper" style={{ marginBottom: 0 }}>
+                Envie mensagens em massa usando a Meta Cloud API com delay automatico, rastreamento de entrega e historico completo.
+              </p>
+            </div>
+            <a
+              href="/dashboard/academia/disparos"
+              className="dashboard-button"
+              style={{ textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}
+            >
+              Ver guia completo
+            </a>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+            {["Por que usar a API oficial", "Como obter Phone Number ID e Access Token", "Importar contatos via CSV", "Delay automatico 2-3s entre mensagens", "Acompanhar entrega em tempo real"].map((tip) => (
+              <span key={tip} style={{ fontSize: "0.78rem", background: "#f5f3ff", border: "1px solid #c4b5fd", color: "#6d28d9", borderRadius: 6, padding: "2px 10px" }}>
                 {tip}
               </span>
             ))}

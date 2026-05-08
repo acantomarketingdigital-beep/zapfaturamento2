@@ -23,9 +23,13 @@ export default async function PipelinePage() {
       <section className="dashboard-main" style={{ overflow: "auto" }}>
         <header className="dashboard-topbar">
           <div>
-            <span className="dashboard-eyebrow">Vendas</span>
+            <span className="dashboard-eyebrow">Leads</span>
             <h2>Pipeline</h2>
             <p>Acompanhe o progresso de cada conversa pelo funil de vendas.</p>
+          </div>
+          <div style={{ display: "flex", gap: 4, alignSelf: "center" }}>
+            <a href="/dashboard/kanban" className="dashboard-button dashboard-button--ghost" style={{ textDecoration: "none" }}>Kanban</a>
+            <a href="/dashboard/pipeline" className="dashboard-button" style={{ textDecoration: "none", background: "var(--brand)", color: "#fff" }}>Pipeline</a>
           </div>
         </header>
 

@@ -19,9 +19,18 @@ export const STRIPE_PRICE_MONTHLY  = (process.env.STRIPE_PRICE_MONTHLY ?? "").tr
 export const STRIPE_PRICE_YEARLY   = (process.env.STRIPE_PRICE_YEARLY  ?? "").trim();
 export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 
-export type StripePlan = "monthly" | "yearly";
+// TODO: add per-plan Stripe price IDs when migrating to new pricing structure
+// STRIPE_PRICE_STARTER_MONTHLY, STRIPE_PRICE_AGENCY_MONTHLY, STRIPE_PRICE_SCALE_MONTHLY, STRIPE_PRICE_ENTERPRISE_MONTHLY
+// Env vars needed: STRIPE_PRICE_STARTER, STRIPE_PRICE_AGENCY, STRIPE_PRICE_SCALE, STRIPE_PRICE_ENTERPRISE
+
+export type StripePlan = "monthly" | "yearly" | "starter" | "agency" | "scale" | "enterprise";
 
 export function getPriceIdForPlan(plan: string): string {
+  // TODO: map new plan IDs to their Stripe price IDs
+  // case "starter": return process.env.STRIPE_PRICE_STARTER ?? "";
+  // case "agency":  return process.env.STRIPE_PRICE_AGENCY  ?? "";
+  // case "scale":   return process.env.STRIPE_PRICE_SCALE   ?? "";
+  // case "enterprise": return process.env.STRIPE_PRICE_ENTERPRISE ?? "";
   if (plan === "yearly") return STRIPE_PRICE_YEARLY;
   return STRIPE_PRICE_MONTHLY;
 }

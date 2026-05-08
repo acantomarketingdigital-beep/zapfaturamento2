@@ -7,6 +7,7 @@ import {
 import { createKommoLead } from "@/lib/kommo";
 import {
   insertLeadEvent,
+  isBot,
   updateLeadEventStatus,
   type KommoLeadStatus
 } from "@/lib/leads";
@@ -213,6 +214,13 @@ export async function POST(request: Request) {
       );
     }
 
+    // Rejeita bots antes de salvar no banco ou enviar CAPI
+    const requestHeaders = await headers();
+    const userAgent = payload.userAgent || requestHeaders.get("user-agent") || "";
+    if (isBot(userAgent)) {
+      return NextResponse.json({ success: false, error: "Bot detectado." }, { status: 400 });
+    }
+
     const normalizedPayload: LeadCapturePayload = {
       ...payload,
       clientName: client.clientName,
@@ -247,7 +255,6 @@ export async function POST(request: Request) {
       }
     }
 
-    const requestHeaders = await headers();
     const cookieStore = await cookies();
 
     let metaCapiSuccess: boolean | null = null;

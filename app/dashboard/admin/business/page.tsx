@@ -19,6 +19,7 @@ import {
   type BusinessMetrics,
   type BusinessAlerts,
 } from "@/lib/admin-business";
+import { getSystemStatus, type SystemStatus } from "@/lib/system-status";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -151,6 +152,176 @@ function ActionBtn({
         {label}
       </button>
     </form>
+  );
+}
+
+// ─── System status section ────────────────────────────────────────────────
+
+const REGION_LABELS: Record<string, string> = {
+  gru1: "São Paulo",
+  iad1: "Washington DC",
+  sfo1: "San Francisco",
+  cdg1: "Paris",
+  sin1: "Singapura",
+  local: "Local (dev)",
+};
+
+function StatusDot({ ok }: { ok: boolean }) {
+  return (
+    <span style={{
+      display: "inline-block",
+      width: 8, height: 8,
+      borderRadius: "50%",
+      background: ok ? "#16a34a" : "#dc2626",
+      marginRight: 6,
+      flexShrink: 0,
+    }} />
+  );
+}
+
+function EnvBadge({ status }: { status: "ok" | "missing" }) {
+  return status === "ok"
+    ? <span style={{ color: "#15803d", fontWeight: 700, fontSize: "0.8rem" }}>✓</span>
+    : <span style={{ color: "#dc2626", fontWeight: 700, fontSize: "0.8rem" }}>✗</span>;
+}
+
+function SystemStatusSection({ status }: { status: SystemStatus }) {
+  const groups = Array.from(new Set(status.envs.map((e) => e.group)));
+  const missingCount = status.envs.filter((e) => e.status === "missing").length;
+
+  const integrationSummary = [
+    { label: "Banco",        ok: status.db.ok,                                          detail: status.db.ok ? `${status.db.latencyMs}ms` : (status.db.error ?? "offline") },
+    { label: "Vercel",       ok: status.vercel.env === "production",                    detail: REGION_LABELS[status.vercel.region] ?? status.vercel.region },
+    { label: "Stripe",       ok: status.envs.filter(e => e.group === "Stripe"  && e.status === "ok").length >= 2,  detail: status.envs.filter(e => e.group === "Stripe"  && e.status === "ok").length + "/4 vars" },
+    { label: "Evolution API",ok: status.envs.filter(e => e.group === "Evolution API" && e.status === "ok").length >= 2, detail: status.envs.filter(e => e.group === "Evolution API" && e.status === "ok").length + "/3 vars" },
+    { label: "Meta",         ok: status.envs.filter(e => e.group === "Meta"    && e.status === "ok").length >= 2,  detail: status.envs.filter(e => e.group === "Meta"    && e.status === "ok").length + "/3 vars" },
+    { label: "Kommo",        ok: status.envs.filter(e => e.group === "Kommo"   && e.status === "ok").length >= 1,  detail: status.envs.filter(e => e.group === "Kommo"   && e.status === "ok").length + "/2 vars" },
+  ];
+
+  return (
+    <article className="dashboard-card" style={{ marginBottom: 0 }}>
+      <div className="dashboard-card__header">
+        <h3>Status da Infraestrutura</h3>
+        <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+          Verificado em {status.checkedAt}
+        </span>
+      </div>
+
+      {/* Summary pills */}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 20 }}>
+        {integrationSummary.map((item) => (
+          <div key={item.label} style={{
+            display: "flex", alignItems: "center", gap: 0,
+            background: item.ok ? "#f0fdf4" : "#fef2f2",
+            border: `1px solid ${item.ok ? "#bbf7d0" : "#fecaca"}`,
+            borderRadius: 8, padding: "6px 12px",
+            fontSize: "0.82rem",
+          }}>
+            <StatusDot ok={item.ok} />
+            <div>
+              <strong style={{ color: item.ok ? "#15803d" : "#dc2626" }}>{item.label}</strong>
+              <span style={{ color: "var(--muted)", marginLeft: 6 }}>{item.detail}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* DB + Vercel row */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+
+        {/* Banco */}
+        <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 8, padding: "12px 14px" }}>
+          <div style={{ fontWeight: 700, marginBottom: 8, fontSize: "0.85rem", display: "flex", alignItems: "center" }}>
+            <StatusDot ok={status.db.ok} />
+            Banco — Neon PostgreSQL
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {[
+              ["Status",            status.db.ok ? "Online" : `Offline — ${status.db.error}`],
+              ["Latência",          status.db.ok ? `${status.db.latencyMs}ms` : "—"],
+              ["Migrations",        `${status.totalMigrations} aplicadas`],
+              ["Última migration",  status.lastMigration.replace(".sql", "")],
+            ].map(([k, v]) => (
+              <div key={k} style={{ display: "flex", gap: 8, fontSize: "0.81rem" }}>
+                <span style={{ color: "var(--muted)", minWidth: 120, flexShrink: 0 }}>{k}</span>
+                <span style={{ fontWeight: 500, wordBreak: "break-all" }}>{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Vercel */}
+        <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 8, padding: "12px 14px" }}>
+          <div style={{ fontWeight: 700, marginBottom: 8, fontSize: "0.85rem", display: "flex", alignItems: "center" }}>
+            <StatusDot ok={status.vercel.env === "production"} />
+            Vercel
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {[
+              ["Ambiente",  status.vercel.env],
+              ["Região",    `${REGION_LABELS[status.vercel.region] ?? status.vercel.region} (${status.vercel.region})`],
+              ["Commit",    status.vercel.commitSha || "—"],
+              ["URL",       status.vercel.url],
+            ].map(([k, v]) => (
+              <div key={k} style={{ display: "flex", gap: 8, fontSize: "0.81rem" }}>
+                <span style={{ color: "var(--muted)", minWidth: 80, flexShrink: 0 }}>{k}</span>
+                <span style={{ fontWeight: 500, wordBreak: "break-all" }}>{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Env vars */}
+      <div>
+        <div style={{ fontWeight: 700, fontSize: "0.85rem", marginBottom: 10, display: "flex", alignItems: "center", gap: 10 }}>
+          Variáveis de Ambiente
+          {missingCount > 0
+            ? <span style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626", borderRadius: 6, padding: "2px 8px", fontSize: "0.75rem", fontWeight: 600 }}>
+                {missingCount} ausente{missingCount > 1 ? "s" : ""}
+              </span>
+            : <span style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#15803d", borderRadius: 6, padding: "2px 8px", fontSize: "0.75rem", fontWeight: 600 }}>
+                Todas configuradas
+              </span>
+          }
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+          {groups.map((group) => {
+            const items = status.envs.filter((e) => e.group === group);
+            const groupOk = items.every((e) => e.status === "ok");
+            return (
+              <div key={group} style={{
+                background: "var(--bg)",
+                border: `1px solid ${groupOk ? "var(--border)" : "#fecaca"}`,
+                borderRadius: 8,
+                padding: "10px 12px",
+              }}>
+                <div style={{ fontWeight: 600, fontSize: "0.78rem", marginBottom: 8, color: groupOk ? "var(--text)" : "#dc2626" }}>
+                  {group}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  {items.map((e) => (
+                    <div key={e.key} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.78rem" }}>
+                      <EnvBadge status={e.status} />
+                      <code style={{
+                        fontSize: "0.74rem",
+                        color: e.status === "ok" ? "var(--text)" : "#dc2626",
+                        background: "transparent",
+                        padding: 0,
+                      }}>
+                        {e.label}
+                      </code>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -384,10 +555,11 @@ export default async function AdminBusinessPage({ searchParams }: PageProps) {
   const period    = param(params.period) || "30d";
   const dbReady   = hasDatabaseConfig();
 
-  const [metrics, trials, subs] = await Promise.all([
+  const [metrics, trials, subs, sysStatus] = await Promise.all([
     getBusinessMetrics(period),
     getTrials(),
     getSubscriptions(),
+    getSystemStatus(),
   ]);
 
   const alerts = await getAlerts(trials, subs);
@@ -469,6 +641,10 @@ export default async function AdminBusinessPage({ searchParams }: PageProps) {
             small={metrics.churnRate === "Dados insuficientes"}
           />
         </div>
+
+        {/* System status */}
+        <div className="dashboard-section-divider"><span>Infraestrutura</span></div>
+        <SystemStatusSection status={sysStatus} />
 
         {/* Alerts */}
         <AlertsSection alerts={alerts} />

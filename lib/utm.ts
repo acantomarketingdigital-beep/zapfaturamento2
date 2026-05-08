@@ -103,40 +103,12 @@ export function inferSourcePlatform(params: CampaignParams): SourcePlatform {
 }
 
 export function buildCampaignAwareWhatsAppMessage(
-  clientName: string,
+  _clientName: string,
   baseMessage: string,
-  params: CampaignParams,
-  sourcePlatform: SourcePlatform
+  _params: CampaignParams,
+  _sourcePlatform: SourcePlatform
 ) {
-  const parts = [baseMessage.trim()];
-  const originLabel = params.utm_source
-    ? `${sourcePlatform} (${params.utm_source})`
-    : sourcePlatform;
-  const details = [`Cliente: ${clientName}`, `Origem: ${originLabel}`];
-
-  if (params.utm_campaign) {
-    details.push(`Campanha: ${params.utm_campaign}`);
-  }
-
-  if (params.utm_content) {
-    details.push(`Criativo: ${params.utm_content}`);
-  }
-
-  if (params.utm_term) {
-    details.push(`Publico: ${params.utm_term}`);
-  }
-
-  if (params.gclid) {
-    details.push(`gclid: ${params.gclid}`);
-  }
-
-  if (params.fbclid) {
-    details.push(`fbclid: ${params.fbclid}`);
-  }
-
-  parts.push(details.join("\n"));
-
-  return parts.filter(Boolean).join("\n\n");
+  return baseMessage.trim();
 }
 
 export function buildWhatsAppUrl(number: string, message: string) {

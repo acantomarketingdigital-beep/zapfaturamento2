@@ -217,6 +217,84 @@ function buildMetaLeadPayload(payload: LeadCapturePayload) {
   };
 }
 
+export type TrackingConfig = {
+  gtmId?: string;
+  metaPixelId?: string;
+  ga4Id?: string;
+  googleAdsId?: string;
+  googleAdsConversionLabel?: string;
+};
+
+export function trackFormLead(config: TrackingConfig, data: {
+  formName: string;
+  clientSlug: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
+  utmTerm?: string;
+  gclid?: string;
+  fbclid?: string;
+}) {
+  try {
+    ensureDataLayer();
+
+    // Standard GA4 generate_lead event — can be imported as conversion in Google Ads
+    window.dataLayer.push({
+      event: "generate_lead",
+      form_name: data.formName,
+      client_slug: data.clientSlug,
+      utm_source: data.utmSource,
+      utm_medium: data.utmMedium,
+      utm_campaign: data.utmCampaign,
+      utm_content: data.utmContent,
+      utm_term: data.utmTerm,
+      gclid: data.gclid,
+    });
+
+    if (config.ga4Id && window.gtag) {
+      window.gtag("event", "generate_lead", {
+        form_name: data.formName,
+        client_slug: data.clientSlug,
+        utm_source: data.utmSource,
+        utm_medium: data.utmMedium,
+        utm_campaign: data.utmCampaign,
+        utm_content: data.utmContent,
+        utm_term: data.utmTerm,
+        gclid: data.gclid,
+      });
+    }
+
+    if (config.googleAdsId && config.googleAdsConversionLabel && window.gtag) {
+      window.gtag("event", "conversion", {
+        send_to: `${config.googleAdsId}/${config.googleAdsConversionLabel}`,
+      });
+    }
+
+    if (config.metaPixelId && window.fbq) {
+      window.fbq("track", "Lead", {
+        form_name: data.formName,
+        utm_source: data.utmSource,
+        utm_campaign: data.utmCampaign,
+        fbclid: data.fbclid,
+      });
+    }
+  } catch {
+    // Tracking é sempre best-effort.
+  }
+}
+
+export function initializeTrackingConfig(config: TrackingConfig) {
+  try {
+    ensureDataLayer();
+    bootstrapGtm(config.gtmId);
+    bootstrapMetaPixel(config.metaPixelId);
+    bootstrapGoogleTag({ ga4Id: config.ga4Id, googleAdsId: config.googleAdsId });
+  } catch {
+    // Falhas de scripts externos não podem bloquear o fluxo.
+  }
+}
+
 export function initializeTracking(client: ResolvedClientConfig) {
   try {
     ensureDataLayer();

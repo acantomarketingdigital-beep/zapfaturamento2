@@ -7,14 +7,18 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const user = await getCurrentUser();
 
-  if (!user || !isAgencyAdmin(user)) {
+  if (!user || (!isAgencyAdmin(user) && user.clientSlug !== null)) {
     return NextResponse.redirect(new URL("/dashboard/usuarios", request.url), 303);
   }
 
   const formData = await request.formData();
   const email = String(formData.get("email") || "").trim();
   const role = String(formData.get("role") || "client_owner");
-  const clientSlug = String(formData.get("clientSlug") || "").trim() || null;
+  const rawClientSlug = String(formData.get("clientSlug") || "").trim() || null;
+
+  // Scoped users can only invite into their own workspace
+  const clientSlug =
+    user.clientSlug !== null ? user.clientSlug : rawClientSlug;
   const phone = String(formData.get("phone") || "").trim() || null;
 
   const permKeys: (keyof UserPermissions)[] = [
@@ -23,6 +27,7 @@ export async function POST(request: Request) {
     "campanhas_view", "campanhas_create", "campanhas_edit",
     "criativos_view", "criativos_create", "criativos_edit",
     "grupos_view", "grupos_create", "grupos_edit",
+    "disparos",
   ];
   const permissions: Partial<UserPermissions> = {};
   for (const key of permKeys) {

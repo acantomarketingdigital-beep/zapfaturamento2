@@ -35,6 +35,7 @@ type Props = {
   clientSlug: string;
   baseUrl: string;
   canManage: boolean;
+  hasGoogleAds?: boolean;
 };
 
 function buildCreativeUrl(baseUrl: string, clientSlug: string, campaignSlug: string, creativeSlug: string) {
@@ -51,7 +52,7 @@ function buildCreativeGoogleUrl(baseUrl: string, clientSlug: string, campaignSlu
   return `${base}?utm_source=google&utm_medium=cpc&utm_campaign={campaignid}&utm_content={creative}&utm_term={keyword}&gclid={gclid}&device={device}&network={network}&matchtype={matchtype}`;
 }
 
-export function CampaignCreativesSection({ campaignId, campaignName, campaignSlug, clientSlug, baseUrl, canManage }: Props) {
+export function CampaignCreativesSection({ campaignId, campaignName, campaignSlug, clientSlug, baseUrl, canManage, hasGoogleAds = false }: Props) {
   const [creatives, setCreatives] = useState<Creative[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalState | null>(null);
@@ -205,20 +206,17 @@ export function CampaignCreativesSection({ campaignId, campaignName, campaignSlu
 
                 <div className="dashboard-creative-links">
                   <div className="dashboard-creative-link-row">
-                    <span className="dashboard-table__sub">Link base</span>
-                    <code className="dashboard-code-block">{baseLink}</code>
-                    <CopyButton value={baseLink} label="Copiar" />
-                  </div>
-                  <div className="dashboard-creative-link-row">
                     <span className="dashboard-table__sub">Meta Ads</span>
                     <code className="dashboard-code-block">{metaLink}</code>
-                    <CopyButton value={metaLink} label="Copiar Meta" />
+                    <CopyButton value={metaLink} label="Copiar" />
                   </div>
-                  <div className="dashboard-creative-link-row">
-                    <span className="dashboard-table__sub">Google Ads</span>
-                    <code className="dashboard-code-block">{googleLink}</code>
-                    <CopyButton value={googleLink} label="Copiar Google" />
-                  </div>
+                  {hasGoogleAds ? (
+                    <div className="dashboard-creative-link-row">
+                      <span className="dashboard-table__sub">Google Ads</span>
+                      <code className="dashboard-code-block">{googleLink}</code>
+                      <CopyButton value={googleLink} label="Copiar Google" />
+                    </div>
+                  ) : null}
                 </div>
 
                 {canManage ? (

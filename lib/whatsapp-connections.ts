@@ -43,6 +43,7 @@ export type WhatsappConversation = {
   utm_content: string | null;
   utm_term: string | null;
   connection_name: string | null;
+  client_name: string | null;
   temperature: "cold" | "warm" | "hot";
   hot_reason: string | null;
   hot_marked_at: string | null;
@@ -297,7 +298,8 @@ export async function countConnectionsByStatus(clientSlug?: string | null): Prom
 
 export async function listConversations(
   clientSlug: string | null,
-  connectionId?: string
+  connectionId?: string,
+  trafficOnly?: boolean
 ): Promise<WhatsappConversation[]> {
   if (!hasDatabaseConfig()) return [];
   const params: unknown[] = [];
@@ -313,10 +315,20 @@ export async function listConversations(
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+
+  // When trafficOnly, restrict to conversations whose contact phone
+  // has a matching whatsapp_leads record (i.e. came from a redirect hub click).
+  if (trafficOnly) {
+    conditions.push(
+      `EXISTS (SELECT 1 FROM whatsapp_leads wl WHERE wl.client_slug = wconv.client_slug AND wl.lead_phone = wconv.contact_phone)`
+    );
+  }
+
   const result = await queryDb<WhatsappConversation>(
-    `SELECT wconv.*, wc.connection_name
+    `SELECT wconv.*, wc.connection_name, cl.client_name
      FROM whatsapp_conversations wconv
      LEFT JOIN whatsapp_connections wc ON wc.id = wconv.connection_id
+     LEFT JOIN clients cl ON cl.client_slug = wconv.client_slug
      ${where}
      ORDER BY wconv.last_message_at DESC NULLS LAST, wconv.created_at DESC`,
     params
@@ -621,9 +633,10 @@ export async function listConversationsByStage(
   }
   const where = `WHERE ${conditions.join(" AND ")}`;
   const result = await queryDb<WhatsappConversation>(
-    `SELECT wconv.*, wc.connection_name
+    `SELECT wconv.*, wc.connection_name, cl.client_name
      FROM whatsapp_conversations wconv
      LEFT JOIN whatsapp_connections wc ON wc.id = wconv.connection_id
+     LEFT JOIN clients cl ON cl.client_slug = wconv.client_slug
      ${where}
      ORDER BY wconv.last_message_at DESC NULLS LAST`,
     params

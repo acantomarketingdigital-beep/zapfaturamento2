@@ -5,6 +5,7 @@ import { ChartCard } from "@/components/dashboard/Charts";
 import { DashboardLogin } from "@/components/dashboard/DashboardLogin";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { LeadTable } from "@/components/dashboard/LeadTable";
+import { WhatsAppNumbersManager } from "@/components/dashboard/WhatsAppNumbersManager";
 import { getBaseUrlFromHeaders } from "@/lib/app-url";
 import { listCampaigns } from "@/lib/campaigns";
 import { getClinicByIdOrSlug } from "@/lib/clinics";
@@ -14,7 +15,7 @@ import {
   isAgencyAdmin,
   isDashboardConfigured
 } from "@/lib/dashboard-auth";
-import { hasDatabaseConfig } from "@/lib/db";
+import { hasDatabaseConfig, queryDb } from "@/lib/db";
 import { getDashboardData } from "@/lib/leads";
 
 type ClinicDetailsPageProps = {
@@ -46,7 +47,7 @@ export default async function ClinicDetailsPage({
   const baseUrl = await getBaseUrlFromHeaders();
   const databaseReady = hasDatabaseConfig();
 
-  if (!clinic || !canAccessClient(user, clinic.clientSlug)) {
+  if (!clinic || !canAccessClient(user, clinic.clientSlug, clinic.workspaceSlug)) {
     return (
       <main className="dashboard-shell">
         <DashboardSidebar
@@ -63,7 +64,7 @@ export default async function ClinicDetailsPage({
     );
   }
 
-  const [dashboardData, campaigns] = await Promise.all([
+  const [dashboardData, campaigns, savedNumbersResult] = await Promise.all([
     getDashboardData(
       {
         period: "all",
@@ -78,7 +79,13 @@ export default async function ClinicDetailsPage({
       },
       user.role === "client_user" ? user.clientSlug : null
     ),
-    listCampaigns(clinic.clientSlug)
+    listCampaigns(clinic.clientSlug),
+    hasDatabaseConfig()
+      ? queryDb<{ id: number; phone_number: string; label: string }>(
+          `SELECT id, phone_number, label FROM client_whatsapp_numbers WHERE client_slug = $1 ORDER BY id`,
+          [clinic.clientSlug]
+        ).then((r) => r.rows).catch(() => [])
+      : Promise.resolve([]),
   ]);
 
   const status = readParam(resolvedSearchParams, "status");
@@ -210,12 +217,21 @@ export default async function ClinicDetailsPage({
           </article>
         </section>
 
+        {isAgencyAdmin(user) || user.clientSlug === null ? (
+          <WhatsAppNumbersManager
+            clientSlug={clinic.clientSlug}
+            initialNumbers={savedNumbersResult}
+          />
+        ) : null}
+
         <Suspense fallback={null}>
           <CampaignSection
             initialCampaigns={campaigns}
             clientSlug={clinic.clientSlug}
             baseUrl={baseUrl}
             canManage={isAgencyAdmin(user) || canAccessClient(user, clinic.clientSlug)}
+            savedNumbers={savedNumbersResult}
+            hasGoogleAds={!!(clinic.googleAdsId)}
           />
         </Suspense>
 

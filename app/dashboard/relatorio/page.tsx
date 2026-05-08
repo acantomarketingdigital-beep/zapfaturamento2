@@ -1,5 +1,6 @@
 import { DashboardLogin } from "@/components/dashboard/DashboardLogin";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { RelatorioTable } from "@/components/dashboard/RelatorioTable";
 import { getCurrentUser, isDashboardConfigured } from "@/lib/dashboard-auth";
 import { hasDatabaseConfig } from "@/lib/db";
 import { formatCurrencyFromCents, formatPercent, type Currency } from "@/lib/format";
@@ -36,11 +37,25 @@ export default async function RelatorioPage({ searchParams }: PageProps) {
     return (Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "BRL") as Currency;
   }
 
-  const [clients, { rows, summary }, creativeBreakdown] = await Promise.all([
-    listManagedClinics("", scopeClientSlug),
-    getRelatorioData({ clientSlug, dateStart, dateEnd, groupByBaseName }),
-    getCreativeLeadsBreakdown({ clientSlug, dateStart, dateEnd })
-  ]);
+  let clients: Awaited<ReturnType<typeof listManagedClinics>> = [];
+  let rows: Awaited<ReturnType<typeof getRelatorioData>>["rows"] = [];
+  let summary: Awaited<ReturnType<typeof getRelatorioData>>["summary"] = {
+    total_investment_cents: 0, total_leads: 0, total_leads_com_mensagem: 0,
+    total_agendados: 0, total_fechados: 0, total_faturamento_cents: 0,
+    cpl_cents: 0, taxa_agendamento: 0, taxa_fechamento: 0, roas: 0
+  };
+  let creativeBreakdown: Awaited<ReturnType<typeof getCreativeLeadsBreakdown>> = [];
+  let fetchError = "";
+
+  try {
+    [clients, { rows, summary }, creativeBreakdown] = await Promise.all([
+      listManagedClinics("", scopeClientSlug),
+      getRelatorioData({ clientSlug, dateStart, dateEnd, groupByBaseName }),
+      getCreativeLeadsBreakdown({ clientSlug, dateStart, dateEnd })
+    ]);
+  } catch (err) {
+    fetchError = err instanceof Error ? err.message : "Erro ao carregar dados.";
+  }
 
   const summCurrency = dominantCurrency(rows);
 
@@ -64,6 +79,12 @@ export default async function RelatorioPage({ searchParams }: PageProps) {
           </div>
         </header>
 
+        {fetchError && (
+          <div className="dashboard-notice dashboard-notice--error" style={{ marginBottom: 16 }}>
+            <strong>Erro ao carregar dados:</strong> {fetchError}
+          </div>
+        )}
+
         {/* Filters */}
         <article className="dashboard-card">
           <div className="dashboard-card__header">
@@ -86,29 +107,16 @@ export default async function RelatorioPage({ searchParams }: PageProps) {
 
             <label className="dashboard-field">
               <span>Data inicio</span>
-              <input
-                type="date"
-                name="dateStart"
-                defaultValue={dateStart || ""}
-              />
+              <input type="date" name="dateStart" defaultValue={dateStart || ""} />
             </label>
 
             <label className="dashboard-field">
               <span>Data fim</span>
-              <input
-                type="date"
-                name="dateEnd"
-                defaultValue={dateEnd || ""}
-              />
+              <input type="date" name="dateEnd" defaultValue={dateEnd || ""} />
             </label>
 
             <label className={`compact-checkbox-card${groupByBaseName ? " compact-checkbox-card--active" : ""}`}>
-              <input
-                type="checkbox"
-                name="groupByBaseName"
-                value="1"
-                defaultChecked={groupByBaseName}
-              />
+              <input type="checkbox" name="groupByBaseName" value="1" defaultChecked={groupByBaseName} />
               <div>
                 <div className="compact-checkbox-card__label">Agrupar campanhas pelo nome base</div>
                 <div className="compact-checkbox-card__desc">Unifica variacoes como &ldquo;vasinhos A&rdquo;, &ldquo;vasinhos B&rdquo; em apenas &ldquo;vasinhos&rdquo;.</div>
@@ -116,9 +124,7 @@ export default async function RelatorioPage({ searchParams }: PageProps) {
             </label>
 
             <div className="dashboard-actions dashboard-field--full">
-              <button type="submit" className="dashboard-button">
-                Aplicar filtros
-              </button>
+              <button type="submit" className="dashboard-button">Aplicar filtros</button>
             </div>
           </form>
         </article>
@@ -171,76 +177,9 @@ export default async function RelatorioPage({ searchParams }: PageProps) {
 
         <div className="dashboard-section-divider"><span>Por campanha</span></div>
 
-        {/* Campaign breakdown table */}
-        <article className="dashboard-card">
-          <div className="dashboard-card__header">
-            <h2>Detalhamento por campanha</h2>
-          </div>
-          <div className="dashboard-table-wrap">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>Campanha</th>
-                  <th>Investimento</th>
-                  <th>Leads</th>
-                  <th title="Leads que enviaram mensagem no WhatsApp">Leads msg.</th>
-                  <th title="Custo por lead que enviou mensagem">CPL real</th>
-                  <th>Agendados</th>
-                  <th>Taxa ag.</th>
-                  <th>Compareceram</th>
-                  <th>Taxa comp.</th>
-                  <th>Fechados</th>
-                  <th>Taxa fech.</th>
-                  <th>Faturamento</th>
-                  <th>Ticket medio</th>
-                  <th>ROAS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={14} style={{ textAlign: "center", opacity: 0.5 }}>
-                      Nenhum dado encontrado para os filtros selecionados.
-                    </td>
-                  </tr>
-                ) : (
-                  rows.map((row) => {
-                    const cur = (row.currency || "BRL") as Currency;
-                    return (
-                      <tr key={`${row.client_slug}-${row.campaign_key}`}>
-                        <td>
-                          <strong>{row.campaign_name || row.campaign_key || "Sem campanha"}</strong>
-                          {row.campaign_name && row.campaign_key !== row.campaign_name ? (
-                            <div className="dashboard-table__sub">{row.campaign_key}</div>
-                          ) : null}
-                          {user.role === "agency_admin" ? (
-                            <div className="dashboard-table__sub">{row.client_slug}</div>
-                          ) : null}
-                          {cur !== "BRL" ? (
-                            <div className="dashboard-table__sub">{cur}</div>
-                          ) : null}
-                        </td>
-                        <td>{formatCurrencyFromCents(row.investment_cents, cur)}</td>
-                        <td>{row.leads}</td>
-                        <td>{row.leads_com_mensagem}</td>
-                        <td>{formatCurrencyFromCents(row.cpl_cents, cur)}</td>
-                        <td>{row.agendados}</td>
-                        <td>{formatPercent(row.taxa_agendamento)}</td>
-                        <td>{row.compareceram}</td>
-                        <td>{formatPercent(row.taxa_comparecimento)}</td>
-                        <td>{row.fechados}</td>
-                        <td>{formatPercent(row.taxa_conversao)}</td>
-                        <td>{formatCurrencyFromCents(row.faturamento_cents, cur)}</td>
-                        <td>{formatCurrencyFromCents(row.ticket_medio_cents, cur)}</td>
-                        <td>{row.roas.toFixed(2)}x</td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </article>
+        {/* Sortable table with CSV export — client component */}
+        <RelatorioTable rows={rows} isAgencyAdmin={user.role === "agency_admin"} />
+
         {creativeBreakdown.length > 0 ? (
           <>
             <div className="dashboard-section-divider"><span>Por criativo</span></div>

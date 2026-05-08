@@ -30,6 +30,19 @@ export function PipelineClient({ initialConversations }: Props) {
   const [movingId, setMovingId] = useState<string | null>(null);
   const [dealModal, setDealModal] = useState<DealModal | null>(null);
   const [savingDeal, setSavingDeal] = useState(false);
+  const [filterClient, setFilterClient] = useState<string>("");
+
+  const clients = Array.from(
+    new Map(
+      initialConversations
+        .filter((c) => c.client_name)
+        .map((c) => [c.client_slug, c.client_name!])
+    ).entries()
+  ).map(([slug, name]) => ({ slug, name }));
+
+  const visibleConversations = filterClient
+    ? conversations.filter((c) => c.client_slug === filterClient)
+    : conversations;
 
   async function moveStage(convId: string, stage: StageKey) {
     setMovingId(convId);
@@ -152,9 +165,42 @@ export function PipelineClient({ initialConversations }: Props) {
         </div>
       )}
 
+      {clients.length > 1 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Cliente:</span>
+          <button
+            onClick={() => setFilterClient("")}
+            style={{
+              fontSize: "0.72rem", padding: "3px 12px", borderRadius: 20,
+              border: "1px solid var(--border)", cursor: "pointer",
+              background: filterClient === "" ? "var(--brand)" : "transparent",
+              color: filterClient === "" ? "#fff" : "var(--muted)",
+              fontWeight: filterClient === "" ? 600 : 400,
+            }}
+          >
+            Todos
+          </button>
+          {clients.map(({ slug, name }) => (
+            <button
+              key={slug}
+              onClick={() => setFilterClient(slug)}
+              style={{
+                fontSize: "0.72rem", padding: "3px 12px", borderRadius: 20,
+                border: "1px solid var(--border)", cursor: "pointer",
+                background: filterClient === slug ? "var(--brand)" : "transparent",
+                color: filterClient === slug ? "#fff" : "var(--muted)",
+                fontWeight: filterClient === slug ? 600 : 400,
+              }}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 16, alignItems: "flex-start" }}>
         {STAGES.map((stage) => {
-          const cards = conversations.filter((c) => c.pipeline_stage === stage.key);
+          const cards = visibleConversations.filter((c) => c.pipeline_stage === stage.key);
           const wonCount = cards.filter((c) => c.deal_status === "won").length;
           return (
             <div

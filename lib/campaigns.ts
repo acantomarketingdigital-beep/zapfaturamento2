@@ -9,6 +9,7 @@ export type CampaignRecord = {
   name: string;
   slug: string;
   defaultMessage: string;
+  whatsappNumber: string | null;
   isActive: boolean;
   dailyBudgetCents: number;
   currency: Currency;
@@ -23,6 +24,7 @@ export type CampaignInput = {
   name: string;
   slug: string;
   defaultMessage: string;
+  whatsappNumber?: string | null;
   isActive: boolean;
   dailyBudgetCents?: number;
   currency?: Currency;
@@ -45,6 +47,7 @@ type CampaignRow = {
   name: string;
   slug: string;
   default_message: string;
+  whatsapp_number: string | null;
   is_active: boolean;
   daily_budget_cents: string | number;
   currency: string | null;
@@ -53,7 +56,7 @@ type CampaignRow = {
   updated_at: string;
 };
 
-const SELECT_COLS = `id, client_id, client_slug, name, slug, default_message, is_active,
+const SELECT_COLS = `id, client_id, client_slug, name, slug, default_message, whatsapp_number, is_active,
   daily_budget_cents, COALESCE(currency, 'BRL') AS currency, creative_url, created_at, updated_at`;
 
 function mapRow(row: CampaignRow): CampaignRecord {
@@ -64,6 +67,7 @@ function mapRow(row: CampaignRow): CampaignRecord {
     name: row.name,
     slug: row.slug,
     defaultMessage: row.default_message,
+    whatsappNumber: row.whatsapp_number ?? null,
     isActive: row.is_active,
     dailyBudgetCents: Number(row.daily_budget_cents ?? 0),
     currency: normalizeCurrency(row.currency),
@@ -140,15 +144,17 @@ export async function saveCampaign(input: CampaignInput): Promise<CampaignRecord
   const currency = normalizeCurrency(input.currency);
   const creativeUrl = input.creativeUrl?.trim() || null;
 
+  const whatsappNumber = input.whatsappNumber?.trim().replace(/\D/g, "") || null;
+
   if (input.id) {
     const result = await queryDb<CampaignRow>(
       `UPDATE client_campaigns
        SET name = $2, slug = $3, default_message = $4, is_active = $5,
-           daily_budget_cents = $6, currency = $8, creative_url = $9
+           daily_budget_cents = $6, currency = $8, creative_url = $9, whatsapp_number = $10
        WHERE id = $1 AND client_slug = $7
        RETURNING ${SELECT_COLS}`,
       [input.id, input.name.trim(), slug, input.defaultMessage.trim(),
-       input.isActive, dailyBudgetCents, input.clientSlug, currency, creativeUrl]
+       input.isActive, dailyBudgetCents, input.clientSlug, currency, creativeUrl, whatsappNumber]
     );
     if (!result.rows[0]) throw new Error("Campanha nao encontrada.");
     return mapRow(result.rows[0]);
@@ -162,8 +168,8 @@ export async function saveCampaign(input: CampaignInput): Promise<CampaignRecord
 
   const result = await queryDb<CampaignRow>(
     `INSERT INTO client_campaigns
-       (client_id, client_slug, name, slug, default_message, is_active, daily_budget_cents, currency, creative_url)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       (client_id, client_slug, name, slug, default_message, is_active, daily_budget_cents, currency, creative_url, whatsapp_number)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING ${SELECT_COLS}`,
     [
       clientResult.rows[0].id,
@@ -175,6 +181,7 @@ export async function saveCampaign(input: CampaignInput): Promise<CampaignRecord
       dailyBudgetCents,
       currency,
       creativeUrl,
+      whatsappNumber,
     ]
   );
   if (!result.rows[0]) throw new Error("Ja existe uma campanha com este slug para este cliente.");

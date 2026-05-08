@@ -42,6 +42,7 @@ const PERM_GROUPS = [
       { key: "grupos_view",      label: "Grupos WA - Ver" },
       { key: "grupos_create",    label: "Grupos WA - Criar" },
       { key: "grupos_edit",      label: "Grupos WA - Editar" },
+      { key: "disparos",         label: "Disparos em Massa" },
     ]
   },
   {

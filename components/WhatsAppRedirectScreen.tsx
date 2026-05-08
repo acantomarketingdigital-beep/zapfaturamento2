@@ -114,7 +114,7 @@ export function WhatsAppRedirectScreen({
 
         {/* Dynamic status */}
         <p className="wzap-status-line">
-          {statusText ?? "Isso pode levar ate 3 segundos..."}
+          {statusText ?? "Abrindo o WhatsApp..."}
         </p>
 
         {/* Support text */}

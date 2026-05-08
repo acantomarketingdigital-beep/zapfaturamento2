@@ -85,19 +85,6 @@ export function ClinicForm({
         </label>
 
         <label className="dashboard-field">
-          <span>Delay do redirect (ms)</span>
-          <input
-            type="number"
-            min="3000"
-            max="5000"
-            step="100"
-            name="redirectDelay"
-            defaultValue={values.redirectDelay}
-            disabled={!databaseReady}
-          />
-        </label>
-
-        <label className="dashboard-field">
           <span>Meta Pixel ID</span>
           <input
             type="text"

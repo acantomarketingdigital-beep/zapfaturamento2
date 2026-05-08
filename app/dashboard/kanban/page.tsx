@@ -12,7 +12,13 @@ export default async function KanbanPage() {
     return <DashboardLogin configured={isDashboardConfigured()} error="" />;
   }
 
-  const leads = await listKanbanLeads(user.clientSlug);
+  let leads: Awaited<ReturnType<typeof listKanbanLeads>> = [];
+  let kanbanError = "";
+  try {
+    leads = await listKanbanLeads(user.clientSlug);
+  } catch (err) {
+    kanbanError = err instanceof Error ? err.message : "Erro ao carregar leads.";
+  }
 
   return (
     <main className="dashboard-shell">
@@ -25,15 +31,21 @@ export default async function KanbanPage() {
       <section className="dashboard-main">
         <header className="dashboard-topbar">
           <div>
-            <span className="dashboard-eyebrow">Kanban CRM</span>
+            <span className="dashboard-eyebrow">Leads</span>
             <h2>Pipeline de leads e vendas</h2>
-            <p>
-              Mova leads manualmente quando nao usar Kommo. Leads com Kommo ficam
-              prontos para atualizacao automatica por webhook.
-            </p>
+            <p>Mova leads pelo funil. Leads com Kommo ficam prontos para atualizacao automatica.</p>
+          </div>
+          <div style={{ display: "flex", gap: 4, alignSelf: "center" }}>
+            <a href="/dashboard/kanban" className="dashboard-button" style={{ textDecoration: "none", background: "var(--brand)", color: "#fff" }}>Kanban</a>
+            <a href="/dashboard/pipeline" className="dashboard-button dashboard-button--ghost" style={{ textDecoration: "none" }}>Pipeline</a>
           </div>
         </header>
 
+        {kanbanError && (
+          <div className="dashboard-notice dashboard-notice--error">
+            <strong>Erro ao carregar leads:</strong> {kanbanError}
+          </div>
+        )}
         <KanbanBoard leads={leads} />
       </section>
     </main>

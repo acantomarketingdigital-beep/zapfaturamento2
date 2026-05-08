@@ -3,46 +3,96 @@ import { SiteHeader } from "@/components/marketing/SiteHeader";
 import SubscribePlansClient from "@/app/billing/subscribe/SubscribePlansClient";
 
 const metrics = [
-  { label: "Conversas",    value: "1.248",     growth: "+18%" },
-  { label: "Faturamento",  value: "R$ 48.750", growth: "+22%" },
-  { label: "Clientes",     value: "532",       growth: "+15%" }
+  { label: "Conversas",   value: "1.248",     growth: "+18%" },
+  { label: "Faturamento", value: "R$ 48.750", growth: "+22%" },
+  { label: "Leads hoje",  value: "37",        growth: "+15%" }
 ];
 
 const features = [
   {
+    icon: (
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" width="22" height="22">
+        <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
+        <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"/>
+      </svg>
+    ),
+    title: "Inbox e Pipeline nativos",
+    text: "Leia e responda conversas do WhatsApp direto no painel, sem abrir o celular. Organize leads no funil e mova oportunidades de etapa com um clique."
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" width="22" height="22">
+        <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7zm-3 1a1 1 0 10-2 0v3a1 1 0 102 0V8zM8 9a1 1 0 00-2 0v2a1 1 0 102 0V9z" clipRule="evenodd"/>
+      </svg>
+    ),
+    title: "Criativo campeão identificado",
+    text: "Veja em tempo real qual anúncio, público e criativo gera mais leads e fechamentos. Pare de adivinhar — corte o que não converte e escale o que funciona."
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" width="22" height="22">
+        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 14.094A5.973 5.973 0 004 17v1H1v-1a3 3 0 013.75-2.906z"/>
+      </svg>
+    ),
+    title: "Múltiplos WhatsApp por campanha",
+    text: "Cada anúncio pode apontar para um número diferente do mesmo cliente. Implante vai pro Dr. João, estética pra Dra. Ana — tudo rastreado separadamente."
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" width="22" height="22">
+        <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd"/>
+      </svg>
+    ),
     title: "Rastreamento que não se perde no clique",
-    text: "Capture UTMs, criativos, públicos e IDs de campanha antes do usuário sair para o WhatsApp. Sem landing page, sem perda de dados."
+    text: "Capture UTMs, criativos, públicos e IDs de campanha antes do usuário sair para o WhatsApp. Sem landing page, sem perda de dados — Meta CAPI + GA4 + GTM."
   },
   {
-    title: "Kanban e operação comercial no mesmo lugar",
-    text: "Transforme clique em lead, lead em atendimento e atendimento em receita com visão clara do funil de vendas."
+    icon: (
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" width="22" height="22">
+        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+        <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd"/>
+      </svg>
+    ),
+    title: "Kanban e operação comercial",
+    text: "Transforme clique em lead, lead em atendimento e atendimento em receita. Visão clara do funil com follow-up, temperatura do lead e fechamentos registrados."
   },
   {
-    title: "ROI e ROAS calculados com dados reais",
-    text: "Cruze investimento, leads e fechamentos para saber exatamente quanto cada campanha está retornando de verdade."
+    icon: (
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" width="22" height="22">
+        <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+      </svg>
+    ),
+    title: "ROI e ROAS com dados reais",
+    text: "Cruze investimento, leads e fechamentos para saber exatamente quanto cada campanha retorna. CPL real, ticket médio e receita por criativo em um só lugar."
   }
 ];
 
 const resources = [
-  "Meta Pixel + CAPI",
+  "Inbox nativo (WhatsApp conectado)",
+  "Pipeline de conversas",
+  "Múltiplos números por campanha",
+  "Criativo campeão em tempo real",
+  "Filtro por cliente (multi-agência)",
+  "Meta Pixel + CAPI 100%",
   "GA4 e Google Ads",
   "Google Tag Manager",
-  "Kommo opcional",
   "Kanban manual ou automático",
-  "Dashboard por cliente"
+  "Dashboard por cliente",
+  "Follow-up agendado",
+  "Kommo CRM opcional"
 ];
 
 const nolpBenefits = [
-  "Menos custo com páginas e ferramentas",
+  "Sem custo com páginas e ferramentas extras",
   "Mais rápido para subir campanhas",
   "Rastreio completo via GA4 e GTM",
-  "Funciona com Google Ads e Meta Ads"
+  "Funciona com Google Ads e Meta Ads",
+  "CAPI com 100% de cobertura"
 ];
 
 const integrations = [
   {
     name: "Google Ads",
-    abbr: "G Ads",
     icon: (
       <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
@@ -51,7 +101,6 @@ const integrations = [
   },
   {
     name: "Meta Ads",
-    abbr: "Meta",
     icon: (
       <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
@@ -60,7 +109,6 @@ const integrations = [
   },
   {
     name: "Google Tag Manager",
-    abbr: "GTM",
     icon: (
       <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
@@ -69,13 +117,34 @@ const integrations = [
   },
   {
     name: "Google Analytics 4",
-    abbr: "GA4",
     icon: (
       <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
         <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
       </svg>
     )
+  }
+];
+
+const inboxFeatures = [
+  { label: "Conversas do tráfego pago apenas", desc: "Sem misturar com conversas particulares" },
+  { label: "Filtro por cliente", desc: "Separe UNIK Beauty de Águia Tech com um clique" },
+  { label: "Pipeline por etapa", desc: "Novo Lead → Atendimento → Fechado → Ganho" },
+  { label: "Lead quente marcado", desc: "🔴 Priorize quem está pronto para fechar" },
+];
+
+const agencyFeatures = [
+  {
+    title: "Múltiplos clientes, uma visão",
+    text: "Gerencie todos os seus clientes em um único painel com visão separada por cliente no Kanban, Pipeline e Inbox."
+  },
+  {
+    title: "Múltiplos WhatsApp por cliente",
+    text: "Cadastre até 3 números por cliente. Cada campanha aponta para o número certo — implante, botox, clareamento, cada um com seu vendedor."
+  },
+  {
+    title: "Criativo que gera mais lead",
+    text: "Cruze anúncio, conjunto e criativo com os leads que vieram de cada um. Identifique o campeão e pare de gastar em criativos que não convertem."
   }
 ];
 
@@ -89,29 +158,29 @@ export default function HomePage() {
         <div className="zf-container zf-hero__grid">
           <div className="zf-hero__content">
             <span className="zf-badge">Zap Faturamento</span>
-            <h1>Automatize seu atendimento. Fature mais.</h1>
+            <h1>Do clique no anúncio ao fechamento no WhatsApp.</h1>
             <p className="zf-hero__sub">
-              Crie campanhas no Meta e Google com rastreamento completo, sem precisar de landing page.
+              Rastreamento completo, inbox nativo, criativo campeão identificado e múltiplos números por campanha — tudo em um único painel.
             </p>
             <p>
-              Conecte seu WhatsApp, organize leads e calcule ROI, CPL e ROAS com dados reais de cada campanha.
+              Conecte seus WhatsApps, organize leads no funil e calcule ROI, CPL e ROAS com dados reais de cada anúncio.
             </p>
 
             <div className="zf-hero__actions">
               <a href="/register" className="zf-button zf-button--primary">
                 Começar teste grátis
               </a>
-              <a href="#sem-landing-page" className="zf-button zf-button--secondary">
-                Como funciona
+              <a href="#inbox" className="zf-button zf-button--secondary">
+                Ver como funciona
               </a>
             </div>
 
             <div className="zf-hero__proof">
               <div>
-                <strong>Redirect + tracking + CRM</strong>
-                <span>Centralize campanha, lead e venda em uma só operação.</span>
+                <strong>Sem landing page necessária</strong>
+                <span>Anúncio → Link Zap → WhatsApp direto, com rastreio completo.</span>
               </div>
-              <code>/w/minha-clinica?utm_source=facebook&utm_medium=cpc</code>
+              <code>/w/minha-clinica/botox?utm_source=facebook&utm_medium=cpc</code>
             </div>
           </div>
 
@@ -119,7 +188,7 @@ export default function HomePage() {
             <div className="zf-dashboard-mockup">
               <div className="zf-dashboard-mockup__header">
                 <div>
-                  <span className="zf-dashboard-mockup__eyebrow">Revenue intelligence</span>
+                  <span className="zf-dashboard-mockup__eyebrow">Atualizado agora</span>
                   <h2>Visão unificada do seu WhatsApp</h2>
                 </div>
                 <div className="zf-dashboard-mockup__pulse">
@@ -141,10 +210,10 @@ export default function HomePage() {
               <div className="zf-growth-card">
                 <div className="zf-growth-card__top">
                   <div>
-                    <span className="zf-growth-card__label">Crescimento semanal</span>
-                    <strong>+27,4%</strong>
+                    <span className="zf-growth-card__label">Criativo campeão</span>
+                    <strong>Botox — 05/05</strong>
                   </div>
-                  <span className="zf-growth-card__tag">ROAS em alta</span>
+                  <span className="zf-growth-card__tag">CPL R$ 4,20</span>
                 </div>
 
                 <div className="zf-growth-chart" aria-hidden="true">
@@ -180,19 +249,123 @@ export default function HomePage() {
       {/* ── TRUST STRIP ──────────────────────────────────────── */}
       <section className="zf-trust-strip">
         <div className="zf-container zf-trust-strip__inner">
-          <span>Feito para agências, prestadores e operações que vendem por conversa sem depender de landing pages.</span>
+          <span>Feito para agências, prestadores e operações que vendem por conversa.</span>
           <div className="zf-trust-strip__chips">
-            <span>Rastreamento</span>
-            <span>WhatsApp Direto</span>
-            <span>CRM Kanban</span>
-            <span>ROAS</span>
-            <span>Performance</span>
+            <span>Inbox nativo</span>
+            <span>Pipeline de vendas</span>
+            <span>Criativo campeão</span>
+            <span>Multi WhatsApp</span>
+            <span>CAPI 100%</span>
+            <span>ROI real</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── INBOX & PIPELINE ─────────────────────────────────── */}
+      <section id="inbox" className="zf-section">
+        <div className="zf-container">
+          <div className="zf-section-heading">
+            <span className="zf-badge zf-badge--soft">Inbox + Pipeline</span>
+            <h2>Conversas e funil de vendas direto no painel</h2>
+            <p>
+              Sem abrir o celular. Leia mensagens, responda leads e mova oportunidades pelo funil — tudo no mesmo sistema que rastreia seus anúncios.
+            </p>
+          </div>
+
+          <div className="zf-feature-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+            {inboxFeatures.map((f) => (
+              <article key={f.label} className="zf-feature-card" style={{ gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{
+                    width: 10, height: 10, borderRadius: "50%",
+                    background: "var(--brand, #0066cc)", flexShrink: 0, marginTop: 2
+                  }} />
+                  <h3 style={{ margin: 0, fontSize: "0.95rem" }}>{f.label}</h3>
+                </div>
+                <p style={{ margin: 0, fontSize: "0.83rem", color: "var(--muted)" }}>{f.desc}</p>
+              </article>
+            ))}
+          </div>
+
+          {/* Pipeline stages visual */}
+          <div style={{
+            marginTop: 40, display: "flex", gap: 8, overflowX: "auto",
+            padding: "4px 0 12px", justifyContent: "center", flexWrap: "wrap"
+          }}>
+            {["Novo Lead", "Primeiro Contato", "Em Atendimento", "Orçamento Enviado", "Agendamento", "Fechado ✅"].map((stage, i, arr) => (
+              <div key={stage} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{
+                  padding: "8px 16px", borderRadius: 20, fontSize: "0.78rem", fontWeight: 600,
+                  background: i === arr.length - 1 ? "var(--brand, #0066cc)" : "var(--surface, #f1f5f9)",
+                  color: i === arr.length - 1 ? "#fff" : "var(--muted)",
+                  border: "1px solid var(--border, #e2e8f0)", whiteSpace: "nowrap"
+                }}>
+                  {stage}
+                </div>
+                {i < arr.length - 1 && (
+                  <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12" style={{ color: "var(--muted)", flexShrink: 0 }}>
+                    <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 01.708 0l6 6a.5.5 0 010 .708l-6 6a.5.5 0 01-.708-.708L10.293 8 4.646 2.354a.5.5 0 010-.708z" clipRule="evenodd"/>
+                  </svg>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PARA AGÊNCIAS ─────────────────────────────────────── */}
+      <section className="zf-section zf-section--muted">
+        <div className="zf-container">
+          <div className="zf-section-heading">
+            <span className="zf-badge zf-badge--soft">Para Agências</span>
+            <h2>Um painel para todos os seus clientes</h2>
+            <p>
+              Gerencie múltiplos clientes, múltiplos WhatsApps e descubra qual criativo traz mais resultado — sem planilha, sem confusão.
+            </p>
+          </div>
+
+          <div className="zf-feature-grid">
+            {agencyFeatures.map((f) => (
+              <article key={f.title} className="zf-feature-card">
+                <div className="zf-feature-card__icon" />
+                <h3>{f.title}</h3>
+                <p>{f.text}</p>
+              </article>
+            ))}
+          </div>
+
+          {/* Multi WhatsApp visual */}
+          <div style={{
+            marginTop: 40, background: "var(--bg, #fff)", borderRadius: 14,
+            border: "1px solid var(--border, #e2e8f0)", padding: "24px 28px",
+            maxWidth: 560, margin: "40px auto 0"
+          }}>
+            <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 16px" }}>
+              Exemplo: Clínica com 3 especialidades
+            </p>
+            {[
+              { campanha: "Campanha — Botox",    numero: "Dra. Ana · (11) 9 9999-0001", cor: "#dcfce7", border: "#86efac", text: "#166534" },
+              { campanha: "Campanha — Implante", numero: "Dr. João · (11) 9 9999-0002",  cor: "#dbeafe", border: "#93c5fd", text: "#1e40af" },
+              { campanha: "Campanha — Clareamento", numero: "Dra. Carla · (11) 9 9999-0003", cor: "#fef3c7", border: "#fcd34d", text: "#92400e" },
+            ].map((row) => (
+              <div key={row.campanha} style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "10px 14px", borderRadius: 8, marginBottom: 8,
+                background: row.cor, border: `1px solid ${row.border}`
+              }}>
+                <span style={{ fontSize: "0.82rem", fontWeight: 600, color: row.text }}>{row.campanha}</span>
+                <span style={{ fontSize: "0.76rem", color: row.text, opacity: 0.85 }}>{row.numero}</span>
+              </div>
+            ))}
+            <p style={{ fontSize: "0.72rem", color: "var(--muted)", margin: "12px 0 0", textAlign: "center" }}>
+              Cada campanha rastreia separadamente. Você vê o CPL de cada número.
+            </p>
           </div>
         </div>
       </section>
 
       {/* ── SEM LANDING PAGE ─────────────────────────────────── */}
-      <section id="sem-landing-page" className="zf-section zf-section--muted">
+      <section id="sem-landing-page" className="zf-section">
         <div className="zf-container zf-nolp-layout">
           <div className="zf-nolp-content">
             <span className="zf-badge zf-badge--soft">Sem Landing Page</span>
@@ -253,7 +426,7 @@ export default function HomePage() {
               </div>
 
               <code className="zf-nolp-url">
-                /w/minha-clinica?utm_source=facebook&amp;campaign_id=12345
+                /w/clinica/botox?utm_source=facebook&amp;ad_id=12345
               </code>
 
               <div className="zf-nolp-tags">
@@ -285,23 +458,29 @@ export default function HomePage() {
       </div>
 
       {/* ── SOLUÇÕES ─────────────────────────────────────────── */}
-      <section id="solucoes" className="zf-section">
+      <section id="solucoes" className="zf-section zf-section--muted">
         <div className="zf-container">
           <div className="zf-section-heading">
             <span className="zf-badge zf-badge--soft">Soluções</span>
-            <h2>Um sistema para rastrear, organizar e provar resultado</h2>
+            <h2>Tudo que uma operação de WhatsApp precisa para crescer</h2>
             <p>
-              O Zap Faturamento conecta o clique do anúncio ao fechamento da
-              venda com rastreamento completo, CRM e relatórios de performance.
+              Do rastreamento ao fechamento, com inbox nativo, múltiplos números e criativo campeão — em um único sistema.
             </p>
           </div>
 
-          <div className="zf-feature-grid">
+          <div className="zf-feature-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
             {features.map((feature) => (
-              <article key={feature.title} className="zf-feature-card">
-                <div className="zf-feature-card__icon" />
-                <h3>{feature.title}</h3>
-                <p>{feature.text}</p>
+              <article key={feature.title} className="zf-feature-card" style={{ gap: 10 }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 10,
+                  background: "rgba(0,102,204,0.08)", display: "flex",
+                  alignItems: "center", justifyContent: "center",
+                  color: "var(--brand, #0066cc)", flexShrink: 0
+                }}>
+                  {feature.icon}
+                </div>
+                <h3 style={{ margin: 0 }}>{feature.title}</h3>
+                <p style={{ margin: 0 }}>{feature.text}</p>
               </article>
             ))}
           </div>
@@ -309,14 +488,13 @@ export default function HomePage() {
       </section>
 
       {/* ── RECURSOS ─────────────────────────────────────────── */}
-      <section id="recursos" className="zf-section zf-section--muted">
+      <section id="recursos" className="zf-section">
         <div className="zf-container zf-resource-layout">
           <div className="zf-section-heading zf-section-heading--left">
             <span className="zf-badge zf-badge--soft">Recursos</span>
-            <h2>Stack pronto para operações que exigem controle e performance</h2>
+            <h2>Stack completo para quem vende por WhatsApp</h2>
             <p>
-              Da captura do lead ao fechamento no Kanban, tudo foi pensado para
-              funcionar como produto SaaS premium com rastreamento e ROI real.
+              Inbox, Pipeline, múltiplos números, CAPI com 100% de cobertura, GA4 e Kanban. Tudo pronto, sem configuração complicada.
             </p>
           </div>
 
@@ -332,15 +510,14 @@ export default function HomePage() {
       </section>
 
       {/* ── PREÇOS ───────────────────────────────────────────── */}
-      <section id="precos" className="zf-section">
+      <section id="precos" className="zf-section zf-section--muted">
         <div className="zf-container">
           <div className="zf-section-heading">
             <span className="zf-badge zf-badge--soft">Preços</span>
-            <h2>Plano simples, sem surpresas</h2>
-            <p>Cancele quando quiser. Sem fidelidade.</p>
+            <h2>Do primeiro cliente à grande agência</h2>
+            <p>Planos por quantidade de clientes e leads — pague só pelo que usar. Cancele quando quiser.</p>
           </div>
 
-          {/* Trial CTA above plans */}
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <a
               href="/register"
@@ -354,7 +531,6 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Divider */}
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, maxWidth: 740, margin: "0 auto 32px" }}>
             <div style={{ flex: 1, height: 1, background: "var(--border, #e5e7eb)" }} />
             <span style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)", whiteSpace: "nowrap" }}>ou assine diretamente</span>
@@ -375,20 +551,19 @@ export default function HomePage() {
       <section id="contato" className="zf-section zf-section--footer">
         <div className="zf-container zf-footer-cta">
           <div>
-            <span className="zf-badge zf-badge--soft">Contato</span>
+            <span className="zf-badge zf-badge--soft">Comece agora</span>
             <h2>Descubra quanto seu WhatsApp está faturando de verdade.</h2>
             <p>
-              Rastreamento, campanhas, ROI e performance em um único sistema
-              com cara de produto pronto para crescer.
+              Inbox nativo, múltiplos números, criativo campeão e ROI real — tudo em um sistema que cresce com sua operação.
             </p>
           </div>
           <div className="zf-footer-cta__actions">
-            <Link href="/login" className="zf-button zf-button--primary">
-              Entrar no Zap Faturamento
-            </Link>
-            <a href="mailto:contato@zapfaturamento.com" className="zf-button zf-button--ghost">
-              Falar com o time
+            <a href="/register" className="zf-button zf-button--primary">
+              Teste grátis por 7 dias
             </a>
+            <Link href="/login" className="zf-button zf-button--ghost">
+              Já tenho conta
+            </Link>
           </div>
         </div>
       </section>

@@ -12,7 +12,7 @@ export type { UserPermissions };
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getBaseUrl() {
-  return (process.env.NEXT_PUBLIC_BASE_URL ?? "https://zapfaturamento.com.br").replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_BASE_URL ?? "https://zapfaturamento.com.br").trim().replace(/\/$/, "");
 }
 
 function generateToken() {
@@ -316,7 +316,7 @@ export async function requestMagicLogin(emailOrPhone: string): Promise<{
   if (!user) return { found: false };
 
   const { token, phone } = await createMagicLoginToken(user.id);
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? "https://zapfaturamento.com.br").replace(/\/$/, "");
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? "https://zapfaturamento.com.br").trim().replace(/\/$/, "");
   const magicUrl = `${baseUrl}/login/magic/${token}`;
 
   return { found: true, token, magicUrl, phone };

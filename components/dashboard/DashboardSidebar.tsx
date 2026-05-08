@@ -20,6 +20,8 @@ type ActivePath =
   | "/dashboard/admin/business"
   | "/dashboard/respostas-rapidas"
   | "/dashboard/pipeline"
+  | "/dashboard/disparos"
+  | "/dashboard/formularios"
   | "/dashboard/suporte";
 
 type DashboardSidebarProps = {
@@ -93,6 +95,16 @@ const NAV_GROUPS: NavGroup[] = [
             <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.001z" />
           </svg>
         )
+      },
+      {
+        href: "/dashboard/formularios",
+        label: "Lead Express",
+        permission: "formularios_view",
+        icon: (
+          <svg viewBox="0 0 20 20" fill="currentColor" className="nav-icon">
+            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+          </svg>
+        )
       }
     ]
   },
@@ -109,16 +121,6 @@ const NAV_GROUPS: NavGroup[] = [
           </svg>
         )
       },
-      {
-        href: "/dashboard/pipeline",
-        label: "Pipeline",
-        permission: "kanban",
-        icon: (
-          <svg viewBox="0 0 20 20" fill="currentColor" className="nav-icon">
-            <path fillRule="evenodd" d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zm0 4a1 1 0 000 2h7a1 1 0 100-2H3zm0 4a1 1 0 100 2h4a1 1 0 100-2H3z" clipRule="evenodd" />
-          </svg>
-        )
-      }
     ]
   },
   {
@@ -152,6 +154,17 @@ const NAV_GROUPS: NavGroup[] = [
         icon: (
           <svg viewBox="0 0 20 20" fill="currentColor" className="nav-icon">
             <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+          </svg>
+        )
+      },
+      {
+        href: "/dashboard/disparos",
+        label: "Disparos",
+        permission: "disparos",
+        icon: (
+          <svg viewBox="0 0 20 20" fill="currentColor" className="nav-icon">
+            <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+            <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
           </svg>
         )
       }
