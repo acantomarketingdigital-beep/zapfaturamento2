@@ -2362,8 +2362,8 @@ code {
 
 .zf-site-header__logo--mobile {
   display: none;
-  width: 84px;
-  height: 84px;
+  width: 52px;
+  height: 52px;
 }
 
 .zf-site-header__nav,
@@ -2524,6 +2524,9 @@ code {
 
 .zf-hero__proof code {
   white-space: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
+  display: block;
   padding: 10px 12px;
   border-radius: 12px;
   background: #f3f4f6;
