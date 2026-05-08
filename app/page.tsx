@@ -74,6 +74,8 @@ const resources = [
   "Criativo campeão em tempo real",
   "Filtro por cliente (multi-agência)",
   "Meta Pixel + CAPI 100%",
+  "CAPI Purchase automático ao fechar lead",
+  "Lead Express (formulário sem landing page)",
   "GA4 e Google Ads",
   "Google Tag Manager",
   "Kanban manual ou automático",
@@ -253,9 +255,11 @@ export default function HomePage() {
           <div className="zf-trust-strip__chips">
             <span>Inbox nativo</span>
             <span>Pipeline de vendas</span>
+            <span>Lead Express</span>
             <span>Criativo campeão</span>
             <span>Multi WhatsApp</span>
             <span>CAPI 100%</span>
+            <span>Purchase automático</span>
             <span>ROI real</span>
           </div>
         </div>
@@ -442,6 +446,102 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── LEAD EXPRESS ─────────────────────────────────────── */}
+      <section className="zf-section zf-section--muted">
+        <div className="zf-container">
+          <div className="zf-section-heading">
+            <span className="zf-badge zf-badge--soft">Lead Express</span>
+            <h2>Formulário de captação que recebe tráfego direto do Meta e do Google</h2>
+            <p>
+              Crie formulários hospedados no ZapFaturamento e aponte seus anúncios direto para eles — sem Unbounce, sem Elementor, sem ferramenta extra. O lead entra no Kanban com rastreamento completo e CAPI automático.
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 40, alignItems: "start" }}>
+            {/* Steps */}
+            <div>
+              <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 20px" }}>Como funciona</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                {[
+                  { step: "1", label: "Crie o formulário", desc: "Configure campos, cor, logo e mensagem de sucesso em menos de 2 minutos no painel." },
+                  { step: "2", label: "Copie o link", desc: "Cada formulário tem URL própria: zapfaturamento.com.br/f/clinica/botox" },
+                  { step: "3", label: "Cole no anúncio", desc: "No Meta Ads ou Google Ads, use o link como destino da campanha." },
+                  { step: "4", label: "Lead entra no Kanban", desc: "Nome, telefone, interesse e todos os UTMs capturados automaticamente." },
+                ].map(({ step, label, desc }, i, arr) => (
+                  <div key={step} style={{ display: "flex", gap: 14, paddingBottom: i < arr.length - 1 ? 0 : 0 }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: "50%",
+                        background: "var(--brand)", color: "#fff",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "0.75rem", fontWeight: 800, flexShrink: 0,
+                      }}>{step}</div>
+                      {i < arr.length - 1 && (
+                        <div style={{ width: 1, height: 28, background: "rgba(22,163,74,0.25)", margin: "4px 0" }} />
+                      )}
+                    </div>
+                    <div style={{ paddingBottom: i < arr.length - 1 ? 4 : 0, paddingTop: 3 }}>
+                      <div style={{ fontWeight: 700, fontSize: "0.88rem", marginBottom: 2 }}>{label}</div>
+                      <div style={{ fontSize: "0.78rem", color: "var(--muted)", lineHeight: 1.5 }}>{desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Visual */}
+            <div style={{ background: "var(--bg)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "22px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+              <p style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>Tráfego vindo de</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {["Meta Ads", "Google Ads", "Instagram", "YouTube"].map((src) => (
+                  <div key={src} style={{ padding: "4px 10px", borderRadius: 20, background: "rgba(22,163,74,0.08)", border: "1px solid rgba(22,163,74,0.2)", fontSize: "0.72rem", fontWeight: 600, color: "var(--brand)" }}>{src}</div>
+                ))}
+              </div>
+              <div style={{ textAlign: "center", fontSize: "0.8rem", color: "var(--muted)" }}>↓ vai direto para</div>
+              {/* Form preview */}
+              <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "14px 16px" }}>
+                <div style={{ fontSize: "0.65rem", fontWeight: 700, color: "var(--brand)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Lead Express · Clínica Botox</div>
+                <div style={{ fontSize: "0.82rem", fontWeight: 700, marginBottom: 10 }}>Interesse em Botox?</div>
+                {["Nome completo", "WhatsApp", "Procedimento de interesse"].map((field) => (
+                  <div key={field} style={{ height: 28, borderRadius: 6, background: "var(--bg)", border: "1px solid var(--border)", marginBottom: 6, display: "flex", alignItems: "center", paddingLeft: 10 }}>
+                    <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>{field}</span>
+                  </div>
+                ))}
+                <div style={{ height: 32, borderRadius: 7, background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 8 }}>
+                  <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#fff" }}>Quero saber mais</span>
+                </div>
+              </div>
+              <div style={{ textAlign: "center", fontSize: "0.8rem", color: "var(--muted)" }}>↓ lead entra automaticamente</div>
+              <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 10, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: "0.65rem", color: "var(--muted)", fontWeight: 600, textTransform: "uppercase" }}>Kanban · Novo Lead</div>
+                  <div style={{ fontWeight: 700, fontSize: "0.82rem" }}>Maria Santos</div>
+                </div>
+                <div style={{ fontSize: "0.65rem", color: "var(--muted)", textAlign: "right", lineHeight: 1.6 }}>
+                  <div>utm_source: meta</div>
+                  <div>ad_id: 120483</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Benefits grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginTop: 32 }}>
+            {[
+              { title: "Sem ferramenta externa", text: "Formulário hospedado no ZapFaturamento. Sem Unbounce, Webflow ou Elementor." },
+              { title: "Rastreamento completo", text: "UTMs, ad_id e gclid capturados com cada lead automaticamente." },
+              { title: "CAPI automático", text: "Evento Lead enviado para o Meta via API de Conversões sem configuração manual." },
+              { title: "Funciona no Google Ads", text: "Use o link do formulário como URL de destino. Gclid capturado automaticamente." },
+            ].map(({ title, text }) => (
+              <div key={title} style={{ padding: "14px 16px", background: "var(--bg)", border: "1.5px solid var(--border)", borderRadius: 10 }}>
+                <div style={{ fontWeight: 700, fontSize: "0.83rem", marginBottom: 4 }}>{title}</div>
+                <div style={{ fontSize: "0.77rem", color: "var(--muted)", lineHeight: 1.5 }}>{text}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── INTEGRATIONS ─────────────────────────────────────── */}
       <div className="zf-integrations-strip">
         <div className="zf-container">
@@ -505,6 +605,88 @@ export default function HomePage() {
                 <strong>{resource}</strong>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CAPI PURCHASE ────────────────────────────────────── */}
+      <section className="zf-section">
+        <div className="zf-container">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 52, alignItems: "center" }}>
+            {/* Content */}
+            <div>
+              <span className="zf-badge zf-badge--soft">Meta CAPI · Público automático</span>
+              <h2 style={{ marginTop: 14 }}>Lead fechado no Kanban cria público de Purchase na Meta automaticamente</h2>
+              <p style={{ color: "var(--muted)", lineHeight: 1.7, marginBottom: 20 }}>
+                Quando você marca um lead como <strong>Pago</strong> no Kanban, o ZapFaturamento dispara um evento de Purchase para a Meta via CAPI — sem pixel, sem tag manager, sem configuração manual.
+              </p>
+              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", display: "flex", flexDirection: "column", gap: 10 }}>
+                {[
+                  "Público de compradores reais criado automaticamente no Meta Ads",
+                  "Lookalike de Purchase com maior precisão e escala",
+                  "Campanha otimiza para quem realmente fecha — não só clica",
+                  "100% via API de Conversões — funciona com iOS 14+ e bloqueadores de pixel",
+                ].map((item) => (
+                  <li key={item} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: "0.86rem", color: "var(--dark)", lineHeight: 1.5 }}>
+                    <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 16, height: 16, color: "var(--brand)", flexShrink: 0, marginTop: 2 }}>
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div style={{ padding: "14px 18px", background: "rgba(22,163,74,0.06)", border: "1px solid rgba(22,163,74,0.2)", borderRadius: 10, fontSize: "0.82rem", color: "var(--dark)", lineHeight: 1.6 }}>
+                <strong>Sem configuração:</strong> o evento é disparado automaticamente quando você arrasta o card para a coluna <em>Pago</em> no Kanban. Nenhum código, nenhum webhook manual.
+              </div>
+            </div>
+
+            {/* Visual flow */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {/* Kanban card */}
+              <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 20px" }}>
+                <div style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted)", marginBottom: 10 }}>Kanban</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>Maria Santos</div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Botox · R$ 1.200,00</div>
+                  </div>
+                  <div style={{ padding: "6px 14px", borderRadius: 20, background: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.35)", color: "var(--brand)", fontSize: "0.73rem", fontWeight: 700, whiteSpace: "nowrap" }}>
+                    ✓ Marcar como Pago
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ textAlign: "center", fontSize: "1.3rem", color: "var(--brand)", lineHeight: 1 }}>↓</div>
+
+              {/* CAPI event */}
+              <div style={{ background: "rgba(22,163,74,0.04)", border: "1.5px solid rgba(22,163,74,0.25)", borderRadius: 14, padding: "16px 20px" }}>
+                <div style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--brand)", marginBottom: 10 }}>Meta CAPI — Evento disparado</div>
+                <div style={{ fontFamily: "monospace", fontSize: "0.72rem", color: "var(--dark)", lineHeight: 1.8 }}>
+                  <div><span style={{ color: "var(--brand)", fontWeight: 700 }}>event_name: </span>Purchase</div>
+                  <div><span style={{ color: "var(--brand)", fontWeight: 700 }}>value: </span>1200.00</div>
+                  <div><span style={{ color: "var(--brand)", fontWeight: 700 }}>currency: </span>BRL</div>
+                  <div><span style={{ color: "var(--brand)", fontWeight: 700 }}>phone: </span>[hash SHA256]</div>
+                </div>
+              </div>
+
+              <div style={{ textAlign: "center", fontSize: "1.3rem", color: "#3b82f6", lineHeight: 1 }}>↓</div>
+
+              {/* Meta audience */}
+              <div style={{ background: "rgba(59,130,246,0.05)", border: "1.5px solid rgba(59,130,246,0.2)", borderRadius: 14, padding: "16px 20px" }}>
+                <div style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#2563eb", marginBottom: 8 }}>Meta Ads — Público atualizado</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: "0.86rem", color: "#1e40af" }}>Compradores · Botox 2025</div>
+                    <div style={{ fontSize: "0.72rem", color: "#3b82f6", marginTop: 2 }}>Lookalike disponível em 24h</div>
+                  </div>
+                  <span style={{ fontSize: "1.6rem" }}>🎯</span>
+                </div>
+              </div>
+
+              <p style={{ fontSize: "0.72rem", color: "var(--muted)", margin: "4px 0 0", textAlign: "center", lineHeight: 1.5 }}>
+                Cada lead pago alimenta o público de Purchase na Meta.<br />Sua campanha aprende com quem realmente converte.
+              </p>
+            </div>
           </div>
         </div>
       </section>
