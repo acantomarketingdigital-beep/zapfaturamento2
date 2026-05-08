@@ -3469,14 +3469,19 @@ code {
     padding-top: 42px;
   }
 
-  .zf-hero__mockup {
+  .zf-hero__mockup,
+  .zf-hero__proof {
     display: none;
   }
 
   .zf-hero__content h1 {
     max-width: 100%;
-    font-size: clamp(1.9rem, 7.5vw, 2.8rem);
-    word-break: break-word;
+    font-size: clamp(1.85rem, 7vw, 2.6rem);
+    overflow-wrap: break-word;
+  }
+
+  .zf-hero__content p {
+    overflow-wrap: break-word;
   }
 
   .zf-nolp-visual,
