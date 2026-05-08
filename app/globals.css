@@ -2357,13 +2357,13 @@ code {
 
 .zf-site-header__logo--desktop {
   width: auto;
-  height: 44px;
+  height: 88px;
 }
 
 .zf-site-header__logo--mobile {
   display: none;
-  width: 42px;
-  height: 42px;
+  width: 84px;
+  height: 84px;
 }
 
 .zf-site-header__nav,
