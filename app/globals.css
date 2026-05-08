@@ -2329,6 +2329,7 @@ code {
 .zf-site {
   min-height: 100vh;
   color: var(--dark);
+  overflow-x: hidden;
 }
 
 .zf-site-header {
@@ -3468,8 +3469,13 @@ code {
     padding-top: 42px;
   }
 
+  .zf-hero__mockup {
+    display: none;
+  }
+
   .zf-hero__content h1 {
-    max-width: 12ch;
+    max-width: 100%;
+    font-size: clamp(2.2rem, 8vw, 3.2rem);
   }
 
   .zf-hero__proof,
