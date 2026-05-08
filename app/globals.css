@@ -3459,11 +3459,11 @@ code {
   }
 
   .zf-site-header__logo--desktop {
-    display: none;
+    height: 44px;
   }
 
   .zf-site-header__logo--mobile {
-    display: block;
+    display: none;
   }
 
   .zf-hero {
