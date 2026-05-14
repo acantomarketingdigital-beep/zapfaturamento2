@@ -304,6 +304,64 @@ export default async function AcademyPage() {
 
         </div>
 
+        {/* Sitelinks Google Ads */}
+        <article className="dashboard-card" style={{ marginTop: 0 }}>
+          <div className="dashboard-card__header">
+            <div>
+              <h3>Sitelinks Google Ads</h3>
+              <p className="dashboard-helper" style={{ marginBottom: 0 }}>
+                Sitelinks sao links adicionais que aparecem abaixo do seu anuncio principal no Google Ads. Cada sitelink tem uma URL propria — o sistema gera automaticamente com as UTMs do Google para rastreamento correto.
+              </p>
+            </div>
+          </div>
+          <ol className="guide-steps">
+            <li className="guide-step">
+              <span className="guide-step__num">1</span>
+              <div className="guide-step__text">
+                <div>Acesse <strong>Clientes &rarr; [cliente] &rarr; Links de campanha</strong>.</div>
+                <div className="guide-step__sub">Dentro de cada campanha existe a secao &ldquo;Sitelinks Google Ads&rdquo; logo abaixo dos criativos normais.</div>
+              </div>
+            </li>
+            <li className="guide-step">
+              <span className="guide-step__num">2</span>
+              <div className="guide-step__text">
+                <div>Clique em <strong>+ Adicionar sitelink</strong> e preencha:</div>
+                <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                    <span className="guide-step__sub" style={{ margin: 0, minWidth: 140 }}>Titulo:</span>
+                    <span><strong>max. 25 caracteres</strong> &mdash; aparece como link clicavel no anuncio</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                    <span className="guide-step__sub" style={{ margin: 0, minWidth: 140 }}>Descricao 1 e 2:</span>
+                    <span><strong>max. 35 caracteres cada</strong> &mdash; aparecem abaixo do titulo (opcional)</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                    <span className="guide-step__sub" style={{ margin: 0, minWidth: 140 }}>Slug:</span>
+                    <span>gerado automaticamente a partir do titulo &mdash; define a URL unica do sitelink</span>
+                  </div>
+                </div>
+              </div>
+            </li>
+            <li className="guide-step">
+              <span className="guide-step__num">3</span>
+              <div className="guide-step__text">
+                <div>Copie a <strong>URL Final</strong> gerada para cada sitelink.</div>
+                <div className="guide-step__sub">A URL ja inclui todas as UTMs do Google (<code>utm_source=google</code>, <code>gclid</code>, <code>device</code>, etc.). Use essa URL no campo &ldquo;URL Final&rdquo; do sitelink dentro do Google Ads.</div>
+              </div>
+            </li>
+            <li className="guide-step">
+              <span className="guide-step__num">4</span>
+              <div className="guide-step__text">
+                <div>No Google Ads, va em <strong>Recursos &rarr; Sitelinks &rarr; + Sitelink</strong>.</div>
+                <div className="guide-step__sub">Cole o Titulo, as descricoes e a URL Final gerada pelo sistema. Repita para cada sitelink criado (limite de 6 por campanha).</div>
+              </div>
+            </li>
+          </ol>
+          <div className="guide-tip guide-tip--info" style={{ marginTop: 12 }}>
+            <strong>Exemplo de sitelinks uteis:</strong> &ldquo;Entre em contato&rdquo; &middot; &ldquo;Ver servicos&rdquo; &middot; &ldquo;Agendar consulta&rdquo; &middot; &ldquo;Como funciona&rdquo; &mdash; cada um gera uma URL diferente com tracking individual, entao voce ve qual sitelink gerou mais cliques e leads.
+          </div>
+        </article>
+
         {/* Google Ads — Rastreamento */}
         <article className="dashboard-card" style={{ marginTop: 0, border: "1px solid #bfdbfe" }}>
           <div className="dashboard-card__header">
