@@ -56,7 +56,7 @@ export default async function DashboardPage({
   const data = await getDashboardData(filters, scopedClientSlug);
 
   // Onboarding state detection
-  type OnboardRow = { has_connection: boolean; has_message: boolean; has_attended: boolean };
+  type OnboardRow = { has_client: boolean; has_connection: boolean; has_message: boolean; has_attended: boolean };
   let onboarding: OnboardRow | null = null;
   if (hasDatabaseConfig()) {
     try {
@@ -65,15 +65,16 @@ export default async function DashboardPage({
       const slugParam = slug ? [slug] : [];
       const ob = await queryDb<OnboardRow>(
         `SELECT
+           (SELECT COUNT(*) FROM clinics WHERE TRUE ${slug ? "AND slug = $1" : ""}) > 0 AS has_client,
            (SELECT COUNT(*) FROM whatsapp_connections WHERE TRUE ${slugWhere}) > 0 AS has_connection,
-           (SELECT COUNT(*) FROM whatsapp_messages WHERE TRUE ${slugWhere.replace("client_slug", "client_slug")}) > 0 AS has_message,
+           (SELECT COUNT(*) FROM whatsapp_messages WHERE TRUE ${slugWhere}) > 0 AS has_message,
            (SELECT COUNT(*) FROM whatsapp_conversations WHERE pipeline_stage != 'novo_lead' ${slugWhere}) > 0 AS has_attended`,
         slugParam
       );
       onboarding = ob.rows[0] ?? null;
     } catch {}
   }
-  const allDone = onboarding?.has_connection && onboarding?.has_message && onboarding?.has_attended;
+  const allDone = onboarding?.has_client && onboarding?.has_connection && onboarding?.has_message && onboarding?.has_attended;
 
   return (
     <main className="dashboard-shell">
@@ -108,29 +109,50 @@ export default async function DashboardPage({
         </header>
 
         {!allDone && onboarding && (
-          <article className="dashboard-card" style={{ marginBottom: 20, padding: "1.25rem", borderLeft: "3px solid var(--brand)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <h3 style={{ fontWeight: 700, fontSize: "0.92rem", margin: 0 }}>Primeiros passos</h3>
-              <a href="/dashboard/academia" style={{ fontSize: "0.78rem", color: "var(--brand)", textDecoration: "none", fontWeight: 600 }}>Ver tutoriais →</a>
+          <article className="dashboard-card" style={{ marginBottom: 20, padding: "1.5rem", border: "1px solid rgba(var(--brand-rgb, 22,163,74),0.25)", background: "rgba(var(--brand-rgb, 22,163,74),0.03)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div>
+                <span style={{ display: "inline-block", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--brand)", marginBottom: 4 }}>
+                  Configuração inicial
+                </span>
+                <h3 style={{ fontWeight: 800, fontSize: "1rem", margin: 0, color: "var(--dark)" }}>
+                  Primeiros passos para colocar em funcionamento
+                </h3>
+              </div>
+              <a href="/dashboard/academia" style={{ fontSize: "0.78rem", color: "var(--brand)", textDecoration: "none", fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0 }}>
+                Ver guia completo →
+              </a>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
-                { done: onboarding.has_connection, label: "Conectar WhatsApp", href: "/dashboard/configuracoes/whatsapp", desc: "Configure a conexao via QR Code ou API Oficial" },
-                { done: onboarding.has_message, label: "Receber primeira mensagem", href: "/dashboard/academia/conectar-whatsapp", desc: "Aguardando o primeiro lead enviar mensagem" },
-                { done: onboarding.has_attended, label: "Iniciar atendimento", href: "/dashboard/inbox", desc: "Abra a conversa no Inbox e responda o lead" },
-              ].map((step) => (
-                <div key={step.label} style={{ display: "flex", alignItems: "flex-start", gap: 12, fontSize: "0.85rem" }}>
-                  <span style={{ fontSize: 16, marginTop: 1, flexShrink: 0 }}>{step.done ? "✅" : "⬜"}</span>
-                  <div>
+                { done: onboarding.has_client, label: "Criar o primeiro cliente", href: "/dashboard/clinicas", desc: "Cadastre o cliente que vai receber os leads das campanhas" },
+                { done: onboarding.has_connection, label: "Conectar o WhatsApp", href: "/dashboard/configuracoes/whatsapp", desc: "Configure a conexão via QR Code ou API Oficial da Meta" },
+                { done: onboarding.has_message, label: "Receber o primeiro lead", href: "/dashboard/academia", desc: "Crie a campanha e aguarde o primeiro lead entrar" },
+                { done: onboarding.has_attended, label: "Iniciar o atendimento", href: "/dashboard/inbox", desc: "Abra o Inbox e responda o primeiro lead" },
+              ].map((step, i) => (
+                <div key={step.label} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 14px", borderRadius: 10, background: step.done ? "transparent" : "var(--bg)", border: `1px solid ${step.done ? "transparent" : "var(--border)"}` }}>
+                  <div style={{ flexShrink: 0, width: 26, height: 26, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 800, background: step.done ? "var(--brand)" : "var(--border)", color: step.done ? "#fff" : "var(--muted)" }}>
                     {step.done ? (
-                      <span style={{ color: "var(--muted)", textDecoration: "line-through" }}>{step.label}</span>
+                      <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 12, height: 12 }}>
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    ) : i + 1}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {step.done ? (
+                      <span style={{ color: "var(--muted)", textDecoration: "line-through", fontSize: "0.85rem" }}>{step.label}</span>
                     ) : (
-                      <a href={step.href} style={{ color: "var(--brand)", textDecoration: "none", fontWeight: 600 }}>{step.label} →</a>
+                      <a href={step.href} style={{ color: "var(--dark)", textDecoration: "none", fontWeight: 700, fontSize: "0.85rem" }}>{step.label}</a>
                     )}
                     {!step.done && (
-                      <div style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: 1 }}>{step.desc}</div>
+                      <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 2 }}>{step.desc}</div>
                     )}
                   </div>
+                  {!step.done && (
+                    <a href={step.href} style={{ flexShrink: 0, fontSize: "0.75rem", fontWeight: 700, color: "var(--brand)", textDecoration: "none", alignSelf: "center" }}>
+                      Fazer →
+                    </a>
+                  )}
                 </div>
               ))}
             </div>

@@ -15,7 +15,7 @@ export async function DELETE(req: Request, { params }: Params) {
   const clientSlug = user.clientSlug || searchParams.get("clientSlug") || "";
 
   if (!clientSlug) return NextResponse.json({ error: "clientSlug e obrigatorio." }, { status: 400 });
-  if (!canAccessClient(user, clientSlug)) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
+  if (!(await canAccessClient(user, clientSlug))) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
 
   const instancia = await getInstanciaById(id, clientSlug);
   if (!instancia) return NextResponse.json({ error: "Instancia nao encontrada." }, { status: 404 });

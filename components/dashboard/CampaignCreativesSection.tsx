@@ -13,6 +13,9 @@ type Creative = {
   defaultMessage: string | null;
   metaAdsUrl: string | null;
   isActive: boolean;
+  isSitelink: boolean;
+  sitelinkDesc1: string | null;
+  sitelinkDesc2: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -24,6 +27,17 @@ type ModalState = {
   slug: string;
   defaultMessage: string;
   metaAdsUrl: string;
+  isActive: boolean;
+  slugTouched: boolean;
+};
+
+type SitelinkModalState = {
+  mode: "create" | "edit";
+  id?: string;
+  name: string;
+  slug: string;
+  sitelinkDesc1: string;
+  sitelinkDesc2: string;
   isActive: boolean;
   slugTouched: boolean;
 };
@@ -52,10 +66,21 @@ function buildCreativeGoogleUrl(baseUrl: string, clientSlug: string, campaignSlu
   return `${base}?utm_source=google&utm_medium=cpc&utm_campaign={campaignid}&utm_content={creative}&utm_term={keyword}&gclid={gclid}&device={device}&network={network}&matchtype={matchtype}`;
 }
 
+function CharCounter({ value, max }: { value: string; max: number }) {
+  const len = value.length;
+  const over = len > max;
+  return (
+    <span style={{ fontSize: "0.75rem", color: over ? "var(--error, #e53)" : "var(--text-muted, #888)" }}>
+      {len}/{max}
+    </span>
+  );
+}
+
 export function CampaignCreativesSection({ campaignId, campaignName, campaignSlug, clientSlug, baseUrl, canManage, hasGoogleAds = false }: Props) {
   const [creatives, setCreatives] = useState<Creative[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalState | null>(null);
+  const [sitelinkModal, setSitelinkModal] = useState<SitelinkModalState | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -66,6 +91,9 @@ export function CampaignCreativesSection({ campaignId, campaignName, campaignSlu
       .catch(() => setCreatives([]))
       .finally(() => setLoading(false));
   }, [campaignId]);
+
+  const regularCreatives = creatives.filter((c) => !c.isSitelink);
+  const sitelinks = creatives.filter((c) => c.isSitelink);
 
   function openCreate() {
     setError("");
@@ -142,12 +170,78 @@ export function CampaignCreativesSection({ campaignId, campaignName, campaignSlu
   }
 
   async function handleDelete(c: Creative) {
-    if (!window.confirm(`Remover o criativo "${c.name}"?`)) return;
+    if (!window.confirm(`Remover "${c.name}"?`)) return;
     try {
       const res = await fetch(`/api/campaigns/${campaignId}/creatives/${c.id}`, { method: "DELETE" });
       if (!res.ok) return;
       setCreatives((prev) => prev.filter((x) => x.id !== c.id));
     } catch { /* ignore */ }
+  }
+
+  // Sitelink modal handlers
+  function openCreateSitelink() {
+    setError("");
+    setSitelinkModal({ mode: "create", name: "", slug: "", sitelinkDesc1: "", sitelinkDesc2: "", isActive: true, slugTouched: false });
+  }
+
+  function openEditSitelink(c: Creative) {
+    setError("");
+    setSitelinkModal({
+      mode: "edit",
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      sitelinkDesc1: c.sitelinkDesc1 ?? "",
+      sitelinkDesc2: c.sitelinkDesc2 ?? "",
+      isActive: c.isActive,
+      slugTouched: true,
+    });
+  }
+
+  function closeSitelinkModal() { setSitelinkModal(null); setError(""); }
+
+  function handleSitelinkNameChange(value: string) {
+    if (!sitelinkModal) return;
+    setSitelinkModal({ ...sitelinkModal, name: value, slug: sitelinkModal.slugTouched ? sitelinkModal.slug : slugifyClinicName(value) });
+  }
+
+  async function handleSitelinkSave() {
+    if (!sitelinkModal) return;
+    setError("");
+    if (sitelinkModal.name.trim().length > 25) { setError("Titulo deve ter no maximo 25 caracteres."); return; }
+    if (sitelinkModal.sitelinkDesc1.trim().length > 35) { setError("Descricao 1 deve ter no maximo 35 caracteres."); return; }
+    if (sitelinkModal.sitelinkDesc2.trim().length > 35) { setError("Descricao 2 deve ter no maximo 35 caracteres."); return; }
+    setSaving(true);
+    try {
+      const isCreate = sitelinkModal.mode === "create";
+      const url = isCreate
+        ? `/api/campaigns/${campaignId}/creatives`
+        : `/api/campaigns/${campaignId}/creatives/${sitelinkModal.id}`;
+      const res = await fetch(url, {
+        method: isCreate ? "POST" : "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: sitelinkModal.name,
+          slug: sitelinkModal.slug,
+          isActive: sitelinkModal.isActive,
+          isSitelink: true,
+          sitelinkDesc1: sitelinkModal.sitelinkDesc1 || null,
+          sitelinkDesc2: sitelinkModal.sitelinkDesc2 || null,
+        }),
+      });
+      const data = await res.json() as { creative?: Creative; error?: string };
+      if (!res.ok) { setError(data.error || "Erro ao salvar sitelink."); return; }
+      if (isCreate) {
+        setCreatives((prev) => [...prev, data.creative!]);
+      } else {
+        setCreatives((prev) => prev.map((c) => (c.id === sitelinkModal.id ? data.creative! : c)));
+      }
+      closeSitelinkModal();
+    } catch {
+      setError("Erro de rede ao salvar sitelink.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) {
@@ -156,6 +250,7 @@ export function CampaignCreativesSection({ campaignId, campaignName, campaignSlu
 
   return (
     <div className="dashboard-creatives-section">
+      {/* Regular creatives */}
       <div className="dashboard-creatives-header">
         <span className="dashboard-creatives-title">Criativos</span>
         {canManage ? (
@@ -165,13 +260,13 @@ export function CampaignCreativesSection({ campaignId, campaignName, campaignSlu
         ) : null}
       </div>
 
-      {creatives.length === 0 ? (
+      {regularCreatives.length === 0 ? (
         <div className="dashboard-helper" style={{ padding: "8px 0" }}>
           Nenhum criativo. {canManage ? "Clique em \"+ Adicionar criativo\" para comecar." : ""}
         </div>
       ) : (
         <div className="dashboard-creatives-list">
-          {creatives.map((c) => {
+          {regularCreatives.map((c) => {
             const baseLink   = buildCreativeUrl(baseUrl, clientSlug, campaignSlug, c.slug);
             const metaLink   = buildCreativeMetaUrl(baseUrl, clientSlug, campaignSlug, c.slug);
             const googleLink = buildCreativeGoogleUrl(baseUrl, clientSlug, campaignSlug, c.slug);
@@ -234,6 +329,80 @@ export function CampaignCreativesSection({ campaignId, campaignName, campaignSlu
         </div>
       )}
 
+      {/* Sitelinks Google Ads */}
+      <div className="dashboard-creatives-header" style={{ marginTop: 20 }}>
+        <div>
+          <span className="dashboard-creatives-title">Sitelinks Google Ads</span>
+          <span className="dashboard-helper" style={{ marginLeft: 8 }}>
+            {sitelinks.length}/6
+          </span>
+        </div>
+        {canManage && sitelinks.length < 6 ? (
+          <button type="button" className="dashboard-button dashboard-button--ghost dashboard-button--sm" onClick={openCreateSitelink}>
+            + Adicionar sitelink
+          </button>
+        ) : null}
+      </div>
+
+      <p className="dashboard-helper" style={{ margin: "4px 0 8px" }}>
+        Sitelinks aparecem abaixo do anuncio principal no Google Ads. Titulo max. 25 caracteres, descricoes max. 35 cada. Use a URL gerada como &ldquo;URL Final&rdquo; do sitelink no Google Ads.
+      </p>
+
+      {sitelinks.length === 0 ? (
+        <div className="dashboard-helper" style={{ padding: "4px 0 8px" }}>
+          Nenhum sitelink. {canManage ? "Clique em \"+ Adicionar sitelink\" para criar ate 6." : ""}
+        </div>
+      ) : (
+        <div className="dashboard-creatives-list">
+          {sitelinks.map((c) => {
+            const googleLink = buildCreativeGoogleUrl(baseUrl, clientSlug, campaignSlug, c.slug);
+            return (
+              <div key={c.id} className="dashboard-creative-card">
+                <div className="dashboard-inline-actions">
+                  <strong>{c.name}</strong>
+                  <span className="dashboard-helper" style={{ fontSize: "0.72rem" }}>
+                    {c.name.length}/25
+                  </span>
+                  <span className={`dashboard-pill ${c.isActive ? "dashboard-pill--success" : "dashboard-pill--error"}`}>
+                    {c.isActive ? "Ativo" : "Inativo"}
+                  </span>
+                </div>
+
+                {(c.sitelinkDesc1 || c.sitelinkDesc2) ? (
+                  <div style={{ margin: "4px 0", display: "grid", gap: 2 }}>
+                    {c.sitelinkDesc1 ? (
+                      <span className="dashboard-helper">Desc 1: {c.sitelinkDesc1}</span>
+                    ) : null}
+                    {c.sitelinkDesc2 ? (
+                      <span className="dashboard-helper">Desc 2: {c.sitelinkDesc2}</span>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <div className="dashboard-creative-links">
+                  <div className="dashboard-creative-link-row">
+                    <span className="dashboard-table__sub">URL Final</span>
+                    <code className="dashboard-code-block">{googleLink}</code>
+                    <CopyButton value={googleLink} label="Copiar URL" />
+                  </div>
+                </div>
+
+                {canManage ? (
+                  <div className="dashboard-inline-actions" style={{ marginTop: 6 }}>
+                    <button type="button" className="dashboard-button dashboard-button--ghost" onClick={() => openEditSitelink(c)}>Editar</button>
+                    <button type="button" className="dashboard-button dashboard-button--ghost" onClick={() => handleToggle(c)}>
+                      {c.isActive ? "Desativar" : "Ativar"}
+                    </button>
+                    <button type="button" className="dashboard-button dashboard-button--ghost" onClick={() => handleDelete(c)}>Remover</button>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Regular creative modal */}
       {modal ? (
         <div className="dashboard-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
           <div className="dashboard-modal">
@@ -321,6 +490,97 @@ export function CampaignCreativesSection({ campaignId, campaignName, campaignSlu
                   {saving ? "Salvando..." : "Salvar criativo"}
                 </button>
                 <button type="button" className="dashboard-button dashboard-button--ghost" onClick={closeModal} disabled={saving}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Sitelink modal */}
+      {sitelinkModal ? (
+        <div className="dashboard-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) closeSitelinkModal(); }}>
+          <div className="dashboard-modal">
+            <h3>{sitelinkModal.mode === "create" ? "Novo sitelink" : "Editar sitelink"}</h3>
+            <div className="dashboard-form-stack">
+              <div className="dashboard-field">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span>Titulo do sitelink</span>
+                  <CharCounter value={sitelinkModal.name} max={25} />
+                </div>
+                <input
+                  type="text"
+                  value={sitelinkModal.name}
+                  onChange={(e) => handleSitelinkNameChange(e.target.value)}
+                  placeholder="Ex.: Entre em contato"
+                  maxLength={25}
+                  autoFocus
+                />
+                <span className="dashboard-helper">
+                  Aparece como titulo clicavel no Google Ads. Max. 25 caracteres.
+                </span>
+              </div>
+
+              <div className="dashboard-field">
+                <span>Slug</span>
+                <input
+                  type="text"
+                  value={sitelinkModal.slug}
+                  onChange={(e) => setSitelinkModal({ ...sitelinkModal, slug: e.target.value, slugTouched: true })}
+                  placeholder="entre-em-contato"
+                />
+                <span className="dashboard-helper">
+                  URL Final: {baseUrl}/w/{clientSlug}/{campaignSlug}/{sitelinkModal.slug || "slug-do-sitelink"}?utm_source=google&amp;...
+                </span>
+              </div>
+
+              <div className="dashboard-field">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span>Descricao 1 (opcional)</span>
+                  <CharCounter value={sitelinkModal.sitelinkDesc1} max={35} />
+                </div>
+                <input
+                  type="text"
+                  value={sitelinkModal.sitelinkDesc1}
+                  onChange={(e) => setSitelinkModal({ ...sitelinkModal, sitelinkDesc1: e.target.value })}
+                  placeholder="Ex.: Fale com nossa equipe agora"
+                  maxLength={35}
+                />
+              </div>
+
+              <div className="dashboard-field">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span>Descricao 2 (opcional)</span>
+                  <CharCounter value={sitelinkModal.sitelinkDesc2} max={35} />
+                </div>
+                <input
+                  type="text"
+                  value={sitelinkModal.sitelinkDesc2}
+                  onChange={(e) => setSitelinkModal({ ...sitelinkModal, sitelinkDesc2: e.target.value })}
+                  placeholder="Ex.: Atendimento rapido via WhatsApp"
+                  maxLength={35}
+                />
+              </div>
+
+              <div className="dashboard-field">
+                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={sitelinkModal.isActive}
+                    onChange={(e) => setSitelinkModal({ ...sitelinkModal, isActive: e.target.checked })}
+                  />
+                  <span>Sitelink ativo</span>
+                </label>
+              </div>
+
+              {error ? <div className="dashboard-alert dashboard-alert--error">{error}</div> : null}
+
+              <div className="dashboard-inline-actions">
+                <button type="button" className="dashboard-button" onClick={handleSitelinkSave} disabled={saving}>
+                  {saving ? "Salvando..." : "Salvar sitelink"}
+                </button>
+                <button type="button" className="dashboard-button dashboard-button--ghost" onClick={closeSitelinkModal} disabled={saving}>
                   Cancelar
                 </button>
               </div>

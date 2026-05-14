@@ -1,5 +1,5 @@
 import { slugifyClinicName } from "@/lib/clinic-shared";
-import { hasDatabaseConfig, queryDb } from "@/lib/db";
+import { clientSlugScope, hasDatabaseConfig, queryDb } from "@/lib/db";
 import type { Currency } from "@/lib/format";
 
 export type CampaignRecord = {
@@ -97,7 +97,7 @@ export async function listCampaigns(clientSlug: string): Promise<CampaignRecord[
 export async function listAllCampaigns(scopeClientSlug?: string | null): Promise<CampaignRecord[]> {
   if (!hasDatabaseConfig()) return [];
   try {
-    const where = scopeClientSlug ? "WHERE client_slug = $1" : "";
+    const where = scopeClientSlug ? `WHERE ${clientSlugScope(1)}` : "";
     const params = scopeClientSlug ? [scopeClientSlug] : [];
     const result = await queryDb<CampaignRow>(
       `SELECT ${SELECT_COLS}

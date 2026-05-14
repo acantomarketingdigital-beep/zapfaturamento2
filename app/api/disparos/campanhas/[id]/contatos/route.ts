@@ -13,7 +13,7 @@ export async function GET(req: Request, { params }: Params) {
   const { id } = await params;
   const { searchParams } = new URL(req.url);
   const clientSlug = user.clientSlug || searchParams.get("clientSlug") || "";
-  if (!clientSlug || !canAccessClient(user, clientSlug)) {
+  if (!clientSlug || !(await canAccessClient(user, clientSlug))) {
     return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
   }
 
@@ -31,7 +31,7 @@ export async function POST(request: Request, { params }: Params) {
   const { id } = await params;
   const { searchParams } = new URL(request.url);
   const clientSlug = user.clientSlug || searchParams.get("clientSlug") || "";
-  if (!clientSlug || !canAccessClient(user, clientSlug)) {
+  if (!clientSlug || !(await canAccessClient(user, clientSlug))) {
     return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
   }
 

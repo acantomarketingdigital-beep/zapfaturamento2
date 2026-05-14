@@ -51,6 +51,11 @@ function createEventId() {
   return `zf-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function readCookie(name: string): string {
+  const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
 async function sendLeadToBackend(payload: LeadCapturePayload) {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), 2000);
@@ -116,7 +121,9 @@ export function WhatsAppRedirectFlow({ client, campaign, creative }: WhatsAppRed
 
     const payload: LeadCapturePayload = {
       ...basePayload,
-      redirectUrl: resolvedWhatsappUrl
+      redirectUrl: resolvedWhatsappUrl,
+      fbp: readCookie("_fbp"),
+      fbc: readCookie("_fbc")
     };
 
     setWhatsappUrl(resolvedWhatsappUrl);

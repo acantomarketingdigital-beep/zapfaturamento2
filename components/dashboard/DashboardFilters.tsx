@@ -30,6 +30,7 @@ export function DashboardFiltersPanel({
           <select name="period" defaultValue={filters.period}>
             <option value="all">Todo o periodo</option>
             <option value="today">Hoje</option>
+            <option value="yesterday">Ontem</option>
             <option value="7d">Ultimos 7 dias</option>
             <option value="30d">Ultimos 30 dias</option>
             <option value="90d">Ultimos 90 dias</option>

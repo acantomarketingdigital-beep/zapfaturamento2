@@ -27,7 +27,7 @@ export async function GET(_request: Request, { params }: RouteContext) {
   const { id } = await params;
   const clientSlug = await getClientSlug(id);
   if (!clientSlug) return NextResponse.json({ error: "Campanha nao encontrada." }, { status: 404 });
-  if (!canAccessClient(user, clientSlug)) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
+  if (!(await canAccessClient(user, clientSlug))) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
 
   const creatives = await listCreatives(id);
   return NextResponse.json({ creatives });
@@ -40,7 +40,7 @@ export async function POST(request: Request, { params }: RouteContext) {
   const { id } = await params;
   const clientSlug = await getClientSlug(id);
   if (!clientSlug) return NextResponse.json({ error: "Campanha nao encontrada." }, { status: 404 });
-  if (!canAccessClient(user, clientSlug)) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
+  if (!(await canAccessClient(user, clientSlug))) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
 
   const perms = await getUserPermissions(user.id, user.role);
   if (!perms.criativos_create) {
@@ -57,6 +57,9 @@ export async function POST(request: Request, { params }: RouteContext) {
       defaultMessage: typeof body.defaultMessage === "string" ? body.defaultMessage : null,
       metaAdsUrl: typeof body.metaAdsUrl === "string" ? body.metaAdsUrl : null,
       isActive: body.isActive !== false,
+      isSitelink: body.isSitelink === true,
+      sitelinkDesc1: typeof body.sitelinkDesc1 === "string" ? body.sitelinkDesc1 : null,
+      sitelinkDesc2: typeof body.sitelinkDesc2 === "string" ? body.sitelinkDesc2 : null,
     });
     return NextResponse.json({ creative }, { status: 201 });
   } catch (error) {

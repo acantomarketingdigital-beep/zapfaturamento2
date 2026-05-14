@@ -1,4 +1,4 @@
-import { hasDatabaseConfig, queryDb } from "@/lib/db";
+import { clientSlugScope, hasDatabaseConfig, queryDb } from "@/lib/db";
 import type { LeadCapturePayload } from "@/lib/utm";
 import { recordBillableLead } from "@/lib/billing-usage";
 
@@ -62,7 +62,7 @@ export type LeadEventRecord = {
 };
 
 export type DashboardFilters = {
-  period: "today" | "7d" | "30d" | "90d" | "all";
+  period: "today" | "yesterday" | "7d" | "30d" | "90d" | "all";
   clientSlug: string;
   origin: string;
   campaign: string;
@@ -558,6 +558,8 @@ function buildWhereClause(filters: DashboardFilters) {
 
   if (filters.period === "today") {
     clauses.push(`created_at >= CURRENT_DATE`);
+  } else if (filters.period === "yesterday") {
+    clauses.push(`created_at >= CURRENT_DATE - INTERVAL '1 day' AND created_at < CURRENT_DATE`);
   } else if (filters.period === "7d") {
     clauses.push(`created_at >= NOW() - INTERVAL '7 days'`);
   } else if (filters.period === "30d") {
@@ -568,7 +570,7 @@ function buildWhereClause(filters: DashboardFilters) {
 
   if (filters.clientSlug) {
     values.push(filters.clientSlug);
-    clauses.push(`client_slug = $${values.length}`);
+    clauses.push(clientSlugScope(values.length));
   }
 
   if (filters.origin) {
@@ -781,9 +783,9 @@ async function getLeadRows(filters: DashboardFilters) {
 async function getFilterOptions(scopeClientSlug?: string | null) {
   const values: unknown[] = [];
   const whereSql = scopeClientSlug
-    ? `WHERE client_slug = $${values.push(scopeClientSlug)}`
+    ? `WHERE ${clientSlugScope(values.push(scopeClientSlug) as number)}`
     : "";
-  const suffixSql = whereSql ? `AND client_slug = $1` : "";
+  const suffixSql = whereSql ? `AND ${clientSlugScope(1)}` : "";
 
   const [clientRows, campaignRows, creativeRows, audienceRows] = await Promise.all([
     queryDb<{ client_slug: string; client_name: string }>(
@@ -854,6 +856,7 @@ export function getDefaultDashboardFilters(
   return {
     period:
       period === "today" ||
+      period === "yesterday" ||
       period === "7d" ||
       period === "30d" ||
       period === "90d"
@@ -881,10 +884,12 @@ export async function getDashboardData(
   filters: DashboardFilters,
   scopeClientSlug?: string | null
 ): Promise<DashboardData> {
+  // If the user has a workspace scope, prefer their explicit client selection (more specific),
+  // falling back to the workspace slug (shows all clients in workspace).
   const scopedFilters: DashboardFilters = scopeClientSlug
     ? {
         ...filters,
-        clientSlug: scopeClientSlug
+        clientSlug: filters.clientSlug || scopeClientSlug
       }
     : filters;
 

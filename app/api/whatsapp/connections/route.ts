@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!canAccessClient(user, clientSlug)) {
+  if (!(await canAccessClient(user, clientSlug))) {
     return NextResponse.json({ error: "Sem permissao para este cliente." }, { status: 403 });
   }
 

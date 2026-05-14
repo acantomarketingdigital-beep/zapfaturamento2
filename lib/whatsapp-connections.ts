@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { hasDatabaseConfig, queryDb } from "@/lib/db";
+import { clientSlugScope, hasDatabaseConfig, queryDb } from "@/lib/db";
 
 export type ConnectionStatus = "disconnected" | "connecting" | "connected" | "error";
 
@@ -100,7 +100,7 @@ export async function listConnections(clientSlug?: string | null): Promise<Whats
 
   if (clientSlug) {
     params.push(clientSlug);
-    conditions.push(`wc.client_slug = $${params.length}`);
+    conditions.push(clientSlugScope(params.length, "wc"));
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -307,7 +307,7 @@ export async function listConversations(
 
   if (clientSlug) {
     params.push(clientSlug);
-    conditions.push(`wconv.client_slug = $${params.length}`);
+    conditions.push(clientSlugScope(params.length, "wconv"));
   }
   if (connectionId) {
     params.push(connectionId);

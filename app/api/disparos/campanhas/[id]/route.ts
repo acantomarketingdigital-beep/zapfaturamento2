@@ -17,7 +17,7 @@ export async function GET(req: Request, { params }: Params) {
 
   const { id } = await params;
   const clientSlug = resolveSlug(user, new URL(req.url).searchParams);
-  if (!clientSlug || !canAccessClient(user, clientSlug)) {
+  if (!clientSlug || !(await canAccessClient(user, clientSlug))) {
     return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
   }
 
@@ -34,7 +34,7 @@ export async function PATCH(request: Request, { params }: Params) {
   const { id } = await params;
   const body = await request.json().catch(() => ({})) as Record<string, unknown>;
   const clientSlug = resolveSlug(user, new URL(request.url).searchParams) || (body.clientSlug as string) || "";
-  if (!clientSlug || !canAccessClient(user, clientSlug)) {
+  if (!clientSlug || !(await canAccessClient(user, clientSlug))) {
     return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
   }
 
@@ -57,7 +57,7 @@ export async function DELETE(req: Request, { params }: Params) {
 
   const { id } = await params;
   const clientSlug = resolveSlug(user, new URL(req.url).searchParams);
-  if (!clientSlug || !canAccessClient(user, clientSlug)) {
+  if (!clientSlug || !(await canAccessClient(user, clientSlug))) {
     return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
   }
 

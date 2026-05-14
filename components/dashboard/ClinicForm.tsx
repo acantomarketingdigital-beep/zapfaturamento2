@@ -100,8 +100,12 @@ export function ClinicForm({
             type="text"
             name="gtmId"
             defaultValue={values.gtmId}
+            placeholder="GTM-XXXXXXX"
             disabled={!databaseReady}
           />
+          <small className="dashboard-helper">
+            O evento <code>whatsapp_redirect</code> e enviado ao dataLayer com gclid, UTMs e dados do lead. Configure uma tag de conversao do Google Ads no GTM usando este evento como gatilho.
+          </small>
         </label>
 
         <label className="dashboard-field">
@@ -110,29 +114,41 @@ export function ClinicForm({
             type="text"
             name="ga4Id"
             defaultValue={values.ga4Id}
+            placeholder="G-XXXXXXXXXX"
             disabled={!databaseReady}
           />
         </label>
 
-        <label className="dashboard-field">
-          <span>Google Ads ID</span>
-          <input
-            type="text"
-            name="googleAdsId"
-            defaultValue={values.googleAdsId}
-            disabled={!databaseReady}
-          />
-        </label>
-
-        <label className="dashboard-field">
-          <span>Google Ads Conversion Label</span>
-          <input
-            type="text"
-            name="googleAdsConversionLabel"
-            defaultValue={values.googleAdsConversionLabel}
-            disabled={!databaseReady}
-          />
-        </label>
+        <div className="dashboard-field dashboard-field--full">
+          <div className="dashboard-card dashboard-card--nested" style={{ padding: "12px 14px", gap: 10, display: "grid" }}>
+            <div>
+              <strong style={{ fontSize: "0.82rem" }}>Conversao direta no Google Ads (sem GA4)</strong>
+              <p className="dashboard-helper" style={{ marginTop: 4 }}>
+                Preencha os dois campos abaixo para disparar conversoes diretamente na conta do Google Ads, sem precisar importar do GA4. Acesse Google Ads &rarr; Metas &rarr; Conversoes &rarr; escolha a acao &rarr; use o &ldquo;ID de conversao&rdquo; (AW-XXXXXXXXX) e o &ldquo;Label de conversao&rdquo;.
+              </p>
+            </div>
+            <label className="dashboard-field">
+              <span>Google Ads ID</span>
+              <input
+                type="text"
+                name="googleAdsId"
+                defaultValue={values.googleAdsId}
+                placeholder="AW-XXXXXXXXX"
+                disabled={!databaseReady}
+              />
+            </label>
+            <label className="dashboard-field">
+              <span>Google Ads Conversion Label</span>
+              <input
+                type="text"
+                name="googleAdsConversionLabel"
+                defaultValue={values.googleAdsConversionLabel}
+                placeholder="AbCdEfGhIjK"
+                disabled={!databaseReady}
+              />
+            </label>
+          </div>
+        </div>
 
         <label className="dashboard-field">
           <span>Kommo Pipeline ID</span>

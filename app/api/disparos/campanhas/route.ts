@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const clientSlug = user.clientSlug || searchParams.get("clientSlug") || "";
 
   if (!clientSlug) return NextResponse.json({ error: "clientSlug e obrigatorio." }, { status: 400 });
-  if (!canAccessClient(user, clientSlug)) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
+  if (!(await canAccessClient(user, clientSlug))) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
 
   const campanhas = await listCampanhasDisparos(clientSlug);
   return NextResponse.json({ campanhas });
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   const clientSlug = user.clientSlug || (body.clientSlug as string) || "";
 
   if (!clientSlug) return NextResponse.json({ error: "clientSlug e obrigatorio." }, { status: 400 });
-  if (!canAccessClient(user, clientSlug)) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
+  if (!(await canAccessClient(user, clientSlug))) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
 
   const name = body.name as string;
   if (!name?.trim()) return NextResponse.json({ error: "name e obrigatorio." }, { status: 400 });

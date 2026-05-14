@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   if (!clientSlug || !campaignSlug) {
     return NextResponse.json({ audiences: [] });
   }
-  if (!canAccessClient(user, clientSlug)) {
+  if (!(await canAccessClient(user, clientSlug))) {
     return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
   }
 

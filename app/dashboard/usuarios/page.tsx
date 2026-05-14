@@ -57,7 +57,7 @@ export default async function UsersPage() {
   if (!isAgencyAdmin(user)) {
     return (
       <main className="dashboard-shell">
-        <DashboardSidebar activePath="/dashboard/configuracoes" databaseReady={databaseReady} user={user} />
+        <DashboardSidebar activePath="/dashboard/usuarios" databaseReady={databaseReady} user={user} />
         <section className="dashboard-main">
           <div className="dashboard-alert dashboard-alert--warning">
             Apenas agency_admin pode gerenciar usuarios.
@@ -73,7 +73,7 @@ export default async function UsersPage() {
 
   return (
     <main className="dashboard-shell">
-      <DashboardSidebar activePath="/dashboard/configuracoes" databaseReady={databaseReady} user={user} />
+      <DashboardSidebar activePath="/dashboard/usuarios" databaseReady={databaseReady} user={user} />
 
       <section className="dashboard-main">
         <header className="dashboard-topbar">

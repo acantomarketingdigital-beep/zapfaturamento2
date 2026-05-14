@@ -39,6 +39,8 @@ export type LeadCapturePayload = CampaignParams & {
   timestamp: string;
   language: string;
   sourcePlatform: SourcePlatform;
+  fbp?: string;
+  fbc?: string;
   internalCampaignId?: string;
   internalCampaignSlug?: string;
   internalCreativeId?: string;

@@ -35,7 +35,7 @@ export async function POST(_req: Request, { params }: Params) {
   const { id } = await params;
   const { searchParams } = new URL(_req.url);
   const clientSlug = user.clientSlug || searchParams.get("clientSlug") || "";
-  if (!clientSlug || !canAccessClient(user, clientSlug)) {
+  if (!clientSlug || !(await canAccessClient(user, clientSlug))) {
     return new Response(JSON.stringify({ error: "Sem permissao." }), {
       status: 403,
       headers: { "Content-Type": "application/json" }

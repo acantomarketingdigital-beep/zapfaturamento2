@@ -140,7 +140,7 @@ export async function getBusinessMetrics(period: string): Promise<BusinessMetric
       canceled_in_period: string;
     }>(`
       SELECT
-        COUNT(*) FILTER (WHERE role != 'agency_admin')                                                                AS total_users,
+        COUNT(*) FILTER (WHERE NOT (role = 'agency_admin' AND client_slug IS NULL))                                   AS total_users,
         COUNT(*) FILTER (WHERE plan_type = 'trial' AND trial_expires_at > NOW() AND is_active = true)                AS trials_ativos,
         COUNT(*) FILTER (WHERE plan_type = 'trial' AND (trial_expires_at <= NOW() OR NOT is_active))                 AS trials_expirados,
         COUNT(*) FILTER (WHERE plan_type = 'pro' AND is_active = true
@@ -159,7 +159,7 @@ export async function getBusinessMetrics(period: string): Promise<BusinessMetric
 
     queryDb<{ count: string }>(
       `SELECT COUNT(*) AS count FROM users
-       WHERE role != 'agency_admin' AND created_at >= $1 AND created_at <= $2`,
+       WHERE NOT (role = 'agency_admin' AND client_slug IS NULL) AND created_at >= $1 AND created_at <= $2`,
       [start.toISOString(), end.toISOString()]
     ),
   ]);
@@ -200,7 +200,7 @@ export async function getTrials(): Promise<TrialRow[]> {
     SELECT id, email, phone, plan_type, is_active, status, invite_token,
            trial_started_at, trial_expires_at, created_at
     FROM users
-    WHERE role != 'agency_admin'
+    WHERE NOT (role = 'agency_admin' AND client_slug IS NULL)
       AND (plan_type = 'trial' OR trial_started_at IS NOT NULL)
     ORDER BY
       CASE

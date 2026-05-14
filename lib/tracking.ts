@@ -367,6 +367,9 @@ export function trackRedirectEvent(
       event: "whatsapp_redirect",
       event_category: "lead",
       event_action: "redirect_to_whatsapp",
+      // Include conversion IDs so GTM tags can reference them via DL variables
+      google_conversion_id: client.googleAdsId || undefined,
+      google_conversion_label: client.googleAdsConversionLabel || undefined,
       ...eventPayload
     });
 

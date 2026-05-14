@@ -69,6 +69,8 @@ function toSafePayload(body: unknown): LeadCapturePayload | null {
     timestamp: sanitizeString(data.timestamp),
     language: sanitizeString(data.language),
     sourcePlatform: inferSourcePlatform(campaignParams),
+    fbp: sanitizeString(data.fbp) || undefined,
+    fbc: sanitizeString(data.fbc) || undefined,
     internalCampaignId: sanitizeString(data.internalCampaignId) || undefined,
     internalCampaignSlug: sanitizeString(data.internalCampaignSlug) || undefined,
     internalCreativeId: sanitizeString(data.internalCreativeId) || undefined,
@@ -90,6 +92,10 @@ function buildLeadStatusPayload(params: {
 }
 
 function getClientIpAddress(headerStore: Awaited<ReturnType<typeof headers>>) {
+  // Prefer IPv6 sources: cf-connecting-ipv6 (Cloudflare) or x-real-ip if IPv6
+  const cfIpv6 = headerStore.get("cf-connecting-ipv6")?.trim() || "";
+  if (cfIpv6) return cfIpv6;
+
   const forwardedFor = headerStore.get("x-forwarded-for") || "";
   const firstForwardedIp = forwardedFor.split(",")[0]?.trim() || "";
 
@@ -124,9 +130,13 @@ async function sendMetaLeadEvent(
     requestHeaders.get("user-agent") ||
     "";
   const fbc =
+    payload.fbc ||
     cookieStore.get("_fbc")?.value ||
     buildMetaFbc(payload.fbclid);
-  const fbp = cookieStore.get("_fbp")?.value || "";
+  const fbp =
+    payload.fbp ||
+    cookieStore.get("_fbp")?.value ||
+    "";
 
   await sendMetaCapiEvent({
     pixelId: client.metaPixelId,

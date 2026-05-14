@@ -14,7 +14,7 @@ export async function POST(
   const connection = await getConnection(id);
   if (!connection) return NextResponse.json({ error: "Conexao nao encontrada." }, { status: 404 });
 
-  if (!canAccessClient(user, connection.client_slug)) {
+  if (!(await canAccessClient(user, connection.client_slug))) {
     return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
   }
 

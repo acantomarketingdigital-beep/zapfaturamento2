@@ -14,7 +14,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
   const { id } = await params;
   const form = await getLeadFormById(id);
   if (!form) return NextResponse.json({ error: "Formulario nao encontrado." }, { status: 404 });
-  if (!canAccessClient(user, form.clientSlug)) {
+  if (!(await canAccessClient(user, form.clientSlug))) {
     return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
   }
 
@@ -28,7 +28,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   const { id } = await params;
   const form = await getLeadFormById(id);
   if (!form) return NextResponse.json({ error: "Formulario nao encontrado." }, { status: 404 });
-  if (!canAccessClient(user, form.clientSlug)) {
+  if (!(await canAccessClient(user, form.clientSlug))) {
     return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
   }
 
@@ -89,7 +89,7 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
   const { id } = await params;
   const form = await getLeadFormById(id);
   if (!form) return NextResponse.json({ error: "Formulario nao encontrado." }, { status: 404 });
-  if (!canAccessClient(user, form.clientSlug)) {
+  if (!(await canAccessClient(user, form.clientSlug))) {
     return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
   }
 

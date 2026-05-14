@@ -23,7 +23,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       return NextResponse.json({ error: "clientSlug e obrigatorio." }, { status: 400 });
     }
 
-    if (!canAccessClient(user, clientSlug)) {
+    if (!(await canAccessClient(user, clientSlug))) {
       return NextResponse.json({ error: "Sem permissao para este cliente." }, { status: 403 });
     }
 

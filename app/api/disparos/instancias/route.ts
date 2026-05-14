@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   const clientSlug = user.clientSlug || searchParams.get("clientSlug") || "";
 
   if (!clientSlug) return NextResponse.json({ error: "clientSlug e obrigatorio." }, { status: 400 });
-  if (!canAccessClient(user, clientSlug)) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
+  if (!(await canAccessClient(user, clientSlug))) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
 
   const instancias = await listInstancias(clientSlug);
   // Never expose access_token in list
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   const clientSlug = resolveClientSlug(user, body.clientSlug as string) ?? (body.clientSlug as string);
 
   if (!clientSlug) return NextResponse.json({ error: "clientSlug e obrigatorio." }, { status: 400 });
-  if (!canAccessClient(user, clientSlug)) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
+  if (!(await canAccessClient(user, clientSlug))) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
 
   const { name, phoneNumberId, accessToken, wabaId } = body as Record<string, string>;
   if (!name || !phoneNumberId || !accessToken) {

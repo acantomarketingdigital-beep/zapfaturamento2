@@ -120,7 +120,7 @@ export default async function DashboardAssinaturaPage() {
   return (
     <main className="dashboard-shell">
       <DashboardSidebar
-        activePath="/dashboard/configuracoes"
+        activePath="/dashboard/assinatura"
         databaseReady={databaseReady}
         user={user}
       />

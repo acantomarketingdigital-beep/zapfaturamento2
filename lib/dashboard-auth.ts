@@ -269,11 +269,27 @@ export function isAgencyAdmin(user: AppSession | null) {
   return user?.role === "agency_admin";
 }
 
-export function canAccessClient(user: AppSession | null, clientSlug: string, workspaceSlug?: string | null) {
+export async function canAccessClient(user: AppSession | null, clientSlug: string, workspaceSlug?: string | null): Promise<boolean> {
   if (!user) return false;
   if (user.clientSlug === null) return true; // super-admin: null clientSlug = see everything
   if (user.clientSlug === clientSlug) return true;
   if (workspaceSlug != null && user.clientSlug === workspaceSlug) return true;
+
+  // Workspace scope check: clientSlug may belong to the user's workspace
+  if (hasDatabaseConfig() && user.clientSlug) {
+    try {
+      const result = await queryDb<{ found: string }>(
+        `SELECT COUNT(*) AS found FROM clients
+         WHERE client_slug = $1
+           AND (workspace_slug = $2 OR $2 = ANY(COALESCE(shared_with_workspaces, '{}')::text[]))`,
+        [clientSlug, user.clientSlug]
+      );
+      return parseInt(result.rows[0]?.found ?? "0") > 0;
+    } catch {
+      return false;
+    }
+  }
+
   return false;
 }
 

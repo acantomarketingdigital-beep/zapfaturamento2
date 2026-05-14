@@ -69,7 +69,7 @@ export default async function AcademyPage() {
   return (
     <main className="dashboard-shell">
       <DashboardSidebar
-        activePath="/dashboard/configuracoes"
+        activePath="/dashboard/academia"
         databaseReady={hasDatabaseConfig()}
         user={user}
       />
@@ -310,7 +310,7 @@ export default async function AcademyPage() {
             <div>
               <h3>Google Ads — Rastreamento de conversoes</h3>
               <p className="dashboard-helper" style={{ marginBottom: 0 }}>
-                Com ou sem landing page, GTM e GA4 sao obrigatorios para o Google nao rodar cego.
+                Duas abordagens: com GA4 (importacao) ou sem GA4 (disparo direto com Conversion ID + Label). A segunda funciona mesmo quando a conta nao exibe a opcao de importar do GA4.
               </p>
             </div>
             <a
@@ -323,10 +323,10 @@ export default async function AcademyPage() {
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
             {[
-              "Todos os cenarios precisam de GTM + GA4",
-              "Cadastre os IDs no painel do cliente",
-              "O sistema injeta GTM automaticamente",
-              "Passo critico: marcar generate_lead como conversao no GA4",
+              "Sem GA4: preencha Google Ads ID + Conversion Label no cliente",
+              "Via GTM: evento whatsapp_redirect ja esta no dataLayer",
+              "Com GA4: marque generate_lead como evento-chave e importe",
+              "O sistema injeta GTM e dispara a conversao automaticamente",
             ].map((tip) => (
               <span key={tip} style={{ fontSize: "0.78rem", background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1d4ed8", borderRadius: 6, padding: "2px 10px" }}>
                 {tip}

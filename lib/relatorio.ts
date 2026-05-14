@@ -121,11 +121,13 @@ export async function getRelatorioData(options: RelatorioOptions): Promise<{
     ? `
       spend AS (
         SELECT
-          COALESCE(e.client_slug, b.client_slug) AS client_slug,
-          COALESCE(e.campaign_key, b.campaign_key) AS campaign_key,
-          COALESCE(e.campaign_name, b.campaign_name) AS campaign_name,
-          COALESCE(e.investment_cents, b.investment_cents) AS investment_cents,
-          COALESCE(e.currency, b.currency, 'BRL') AS currency
+          COALESCE(b.client_slug, e.client_slug) AS client_slug,
+          COALESCE(b.campaign_key, e.campaign_key) AS campaign_key,
+          COALESCE(b.campaign_name, e.campaign_name) AS campaign_name,
+          -- Prefer daily_budget × period over one-off ad_spend imports,
+          -- because ad_spend stores aggregate totals, not per-day records.
+          COALESCE(b.investment_cents, e.investment_cents) AS investment_cents,
+          COALESCE(b.currency, e.currency, 'BRL') AS currency
         FROM budget_spend b
         FULL OUTER JOIN (
           SELECT

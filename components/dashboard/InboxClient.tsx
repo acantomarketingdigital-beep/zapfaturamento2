@@ -114,6 +114,7 @@ export function InboxClient({ isAgencyAdmin }: Props) {
 
   // Connection filter
   const [filterConnection, setFilterConnection] = useState<string | null>(null);
+  const [filterDate, setFilterDate] = useState<"all" | "today" | "yesterday" | "week">("all");
 
   const connections = Array.from(
     new Map(
@@ -123,9 +124,22 @@ export function InboxClient({ isAgencyAdmin }: Props) {
     ).entries()
   ).map(([slug, name]) => ({ slug, name: name ?? slug }));
 
-  const visibleConversations = filterConnection
-    ? conversations.filter((c) => c.client_slug === filterConnection)
-    : conversations;
+  const visibleConversations = conversations.filter((c) => {
+    if (filterConnection && c.client_slug !== filterConnection) return false;
+    if (filterDate !== "all") {
+      const ts = c.last_message_at ?? c.created_at;
+      if (!ts) return false;
+      const d = new Date(ts);
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterdayStart = new Date(todayStart.getTime() - 86400000);
+      const weekStart = new Date(todayStart.getTime() - 6 * 86400000);
+      if (filterDate === "today" && d < todayStart) return false;
+      if (filterDate === "yesterday" && (d < yesterdayStart || d >= todayStart)) return false;
+      if (filterDate === "week" && d < weekStart) return false;
+    }
+    return true;
+  });
 
   const selectedConv = conversations.find((c) => c.id === selectedId) ?? null;
 
@@ -266,6 +280,28 @@ export function InboxClient({ isAgencyAdmin }: Props) {
         <div className="inbox-panel-left__header">
           <span>Conversas</span>
           <span className="inbox-panel-left__count">{visibleConversations.length}</span>
+        </div>
+
+        {/* Filtro de data */}
+        <div style={{ display: "flex", gap: 4, padding: "6px 10px", borderBottom: "1px solid var(--border)", flexWrap: "wrap" }}>
+          {(["all", "today", "yesterday", "week"] as const).map((opt) => {
+            const labels = { all: "Tudo", today: "Hoje", yesterday: "Ontem", week: "Semana" };
+            return (
+              <button
+                key={opt}
+                onClick={() => setFilterDate(opt)}
+                style={{
+                  fontSize: "0.7rem", padding: "3px 10px", borderRadius: 20,
+                  border: "1px solid var(--border)", cursor: "pointer",
+                  background: filterDate === opt ? "var(--brand)" : "transparent",
+                  color: filterDate === opt ? "#fff" : "var(--muted)",
+                  fontWeight: filterDate === opt ? 600 : 400,
+                }}
+              >
+                {labels[opt]}
+              </button>
+            );
+          })}
         </div>
 
         {connections.length > 1 && (

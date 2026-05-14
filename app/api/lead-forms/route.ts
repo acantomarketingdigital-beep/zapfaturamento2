@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const clientSlug = searchParams.get("clientSlug") || "";
 
   if (!clientSlug) return NextResponse.json({ error: "clientSlug obrigatorio." }, { status: 400 });
-  if (!canAccessClient(user, clientSlug)) {
+  if (!(await canAccessClient(user, clientSlug))) {
     return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
   }
 
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
   const clientSlug = String(body.clientSlug || "").trim();
   if (!clientSlug) return NextResponse.json({ error: "clientSlug obrigatorio." }, { status: 400 });
-  if (!canAccessClient(user, clientSlug)) {
+  if (!(await canAccessClient(user, clientSlug))) {
     return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
   }
 

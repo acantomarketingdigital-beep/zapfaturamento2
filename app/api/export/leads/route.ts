@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   const scopedClientSlug =
     user.role === "client_user" ? user.clientSlug : clientSlug;
 
-  if (scopedClientSlug && !canAccessClient(user, scopedClientSlug)) {
+  if (scopedClientSlug && !(await canAccessClient(user, scopedClientSlug))) {
     return NextResponse.json({ error: "Sem permissao para este cliente." }, { status: 403 });
   }
 

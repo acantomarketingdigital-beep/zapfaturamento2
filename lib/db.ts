@@ -33,6 +33,22 @@ function isTransientError(err: unknown): boolean {
   );
 }
 
+/**
+ * Generates a workspace-aware client_slug filter.
+ * Matches the value at $paramIdx whether it's a specific client slug
+ * OR a workspace slug (expands to all member clients).
+ */
+export function clientSlugScope(paramIdx: number, tableAlias = ""): string {
+  const col = tableAlias ? `${tableAlias}.client_slug` : "client_slug";
+  return `${col} IN (
+    SELECT $${paramIdx}::text
+    UNION ALL
+    SELECT c.client_slug FROM clients c
+    WHERE c.workspace_slug = $${paramIdx}
+       OR $${paramIdx} = ANY(COALESCE(c.shared_with_workspaces, '{}'))
+  )`;
+}
+
 export async function queryDb<T extends QueryResultRow>(
   text: string,
   params: unknown[] = []

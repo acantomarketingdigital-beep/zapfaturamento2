@@ -26,7 +26,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
   const { id, creativeId } = await params;
   const clientSlug = await getClientSlug(id);
   if (!clientSlug) return NextResponse.json({ error: "Campanha nao encontrada." }, { status: 404 });
-  if (!canAccessClient(user, clientSlug)) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
+  if (!(await canAccessClient(user, clientSlug))) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
 
   try {
     const body = await request.json() as Record<string, unknown>;
@@ -39,6 +39,8 @@ export async function PUT(request: Request, { params }: RouteContext) {
       defaultMessage: typeof body.defaultMessage === "string" ? body.defaultMessage : null,
       metaAdsUrl: typeof body.metaAdsUrl === "string" ? body.metaAdsUrl : null,
       isActive: body.isActive !== false,
+      sitelinkDesc1: typeof body.sitelinkDesc1 === "string" ? body.sitelinkDesc1 : null,
+      sitelinkDesc2: typeof body.sitelinkDesc2 === "string" ? body.sitelinkDesc2 : null,
     });
     return NextResponse.json({ creative });
   } catch (error) {
@@ -56,7 +58,7 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
   const { id, creativeId } = await params;
   const clientSlug = await getClientSlug(id);
   if (!clientSlug) return NextResponse.json({ error: "Campanha nao encontrada." }, { status: 404 });
-  if (!canAccessClient(user, clientSlug)) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
+  if (!(await canAccessClient(user, clientSlug))) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
 
   try {
     await deleteCreative(creativeId, id);

@@ -10,6 +10,9 @@ export type CreativeRecord = {
   defaultMessage: string | null;
   metaAdsUrl: string | null;
   isActive: boolean;
+  isSitelink: boolean;
+  sitelinkDesc1: string | null;
+  sitelinkDesc2: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -23,6 +26,9 @@ export type CreativeInput = {
   defaultMessage?: string | null;
   metaAdsUrl?: string | null;
   isActive?: boolean;
+  isSitelink?: boolean;
+  sitelinkDesc1?: string | null;
+  sitelinkDesc2?: string | null;
 };
 
 type CreativeRow = {
@@ -34,11 +40,14 @@ type CreativeRow = {
   default_message: string | null;
   meta_ads_url: string | null;
   is_active: boolean;
+  is_sitelink: boolean;
+  sitelink_desc1: string | null;
+  sitelink_desc2: string | null;
   created_at: string;
   updated_at: string;
 };
 
-const SELECT_COLS = `id, campaign_id, client_slug, name, slug, default_message, meta_ads_url, is_active, created_at, updated_at`;
+const SELECT_COLS = `id, campaign_id, client_slug, name, slug, default_message, meta_ads_url, is_active, is_sitelink, sitelink_desc1, sitelink_desc2, created_at, updated_at`;
 
 function mapRow(row: CreativeRow): CreativeRecord {
   return {
@@ -50,6 +59,9 @@ function mapRow(row: CreativeRow): CreativeRecord {
     defaultMessage: row.default_message ?? null,
     metaAdsUrl: row.meta_ads_url ?? null,
     isActive: row.is_active,
+    isSitelink: row.is_sitelink ?? false,
+    sitelinkDesc1: row.sitelink_desc1 ?? null,
+    sitelinkDesc2: row.sitelink_desc2 ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -95,27 +107,41 @@ export async function saveCreative(input: CreativeInput): Promise<CreativeRecord
   if (!slug) throw new Error("Informe um slug valido para o criativo.");
   if (!input.name.trim()) throw new Error("Informe o nome do criativo.");
 
+  const isSitelink = input.isSitelink === true;
+
+  if (isSitelink && input.name.trim().length > 25) {
+    throw new Error("Titulo do sitelink deve ter no maximo 25 caracteres.");
+  }
+  if (isSitelink && input.sitelinkDesc1 && input.sitelinkDesc1.trim().length > 35) {
+    throw new Error("Descricao 1 do sitelink deve ter no maximo 35 caracteres.");
+  }
+  if (isSitelink && input.sitelinkDesc2 && input.sitelinkDesc2.trim().length > 35) {
+    throw new Error("Descricao 2 do sitelink deve ter no maximo 35 caracteres.");
+  }
+
   const defaultMessage = input.defaultMessage?.trim() || null;
   const metaAdsUrl = input.metaAdsUrl?.trim() || null;
   const isActive = input.isActive !== false;
+  const sitelinkDesc1 = input.sitelinkDesc1?.trim() || null;
+  const sitelinkDesc2 = input.sitelinkDesc2?.trim() || null;
 
   if (input.id) {
     const result = await queryDb<CreativeRow>(
       `UPDATE campaign_creatives
-       SET name = $2, slug = $3, default_message = $4, meta_ads_url = $5, is_active = $6
-       WHERE id = $1 AND campaign_id = $7
+       SET name = $2, slug = $3, default_message = $4, meta_ads_url = $5, is_active = $6, sitelink_desc1 = $7, sitelink_desc2 = $8
+       WHERE id = $1 AND campaign_id = $9
        RETURNING ${SELECT_COLS}`,
-      [input.id, input.name.trim(), slug, defaultMessage, metaAdsUrl, isActive, input.campaignId]
+      [input.id, input.name.trim(), slug, defaultMessage, metaAdsUrl, isActive, sitelinkDesc1, sitelinkDesc2, input.campaignId]
     );
     if (!result.rows[0]) throw new Error("Criativo nao encontrado.");
     return mapRow(result.rows[0]);
   }
 
   const result = await queryDb<CreativeRow>(
-    `INSERT INTO campaign_creatives (campaign_id, client_slug, name, slug, default_message, meta_ads_url, is_active)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO campaign_creatives (campaign_id, client_slug, name, slug, default_message, meta_ads_url, is_active, is_sitelink, sitelink_desc1, sitelink_desc2)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING ${SELECT_COLS}`,
-    [input.campaignId, input.clientSlug, input.name.trim(), slug, defaultMessage, metaAdsUrl, isActive]
+    [input.campaignId, input.clientSlug, input.name.trim(), slug, defaultMessage, metaAdsUrl, isActive, isSitelink, sitelinkDesc1, sitelinkDesc2]
   );
   if (!result.rows[0]) throw new Error("Ja existe um criativo com este slug nesta campanha.");
   return mapRow(result.rows[0]);

@@ -26,7 +26,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   const { id, creativeId } = await params;
   const clientSlug = await getClientSlug(id);
   if (!clientSlug) return NextResponse.json({ error: "Campanha nao encontrada." }, { status: 404 });
-  if (!canAccessClient(user, clientSlug)) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
+  if (!(await canAccessClient(user, clientSlug))) return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
 
   try {
     const body = await request.json() as Record<string, unknown>;

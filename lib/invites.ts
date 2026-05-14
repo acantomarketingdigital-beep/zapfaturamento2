@@ -46,7 +46,7 @@ export async function createInvite(input: {
      VALUES ($1, NULL, $2, $3, 'pending', $4, $5, $6, $7)
      ON CONFLICT (email) DO UPDATE SET
        role               = EXCLUDED.role,
-       client_slug        = EXCLUDED.client_slug,
+       client_slug        = COALESCE(users.client_slug, EXCLUDED.client_slug),
        status             = 'pending',
        invite_token       = EXCLUDED.invite_token,
        invite_expires_at  = EXCLUDED.invite_expires_at,

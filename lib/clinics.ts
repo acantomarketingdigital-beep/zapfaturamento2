@@ -474,6 +474,7 @@ export async function listManagedClinics(query = "", scopeClientSlug?: string | 
             workspace_slug
           FROM clients
           WHERE workspace_slug IS NOT DISTINCT FROM $1
+             OR ($1 IS NOT NULL AND $1 = ANY(COALESCE(shared_with_workspaces, '{}'::text[])))
           ORDER BY client_name ASC, client_slug ASC
         `,
         [scopeClientSlug ?? null]

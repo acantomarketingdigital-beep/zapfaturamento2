@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     : (user.clientSlug ?? "");
 
   if (!clientSlug) return NextResponse.json({ error: "Cliente obrigatorio." }, { status: 400 });
-  if (!canAccessClient(user, clientSlug)) {
+  if (!(await canAccessClient(user, clientSlug))) {
     return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
   }
 

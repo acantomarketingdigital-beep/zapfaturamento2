@@ -47,7 +47,7 @@ export default async function ClinicDetailsPage({
   const baseUrl = await getBaseUrlFromHeaders();
   const databaseReady = hasDatabaseConfig();
 
-  if (!clinic || !canAccessClient(user, clinic.clientSlug, clinic.workspaceSlug)) {
+  if (!clinic || !(await canAccessClient(user, clinic.clientSlug, clinic.workspaceSlug))) {
     return (
       <main className="dashboard-shell">
         <DashboardSidebar
@@ -89,6 +89,7 @@ export default async function ClinicDetailsPage({
   ]);
 
   const status = readParam(resolvedSearchParams, "status");
+  const canManageCampaigns = isAgencyAdmin(user) || await canAccessClient(user, clinic.clientSlug, clinic.workspaceSlug);
 
   return (
     <main className="dashboard-shell">
@@ -229,7 +230,7 @@ export default async function ClinicDetailsPage({
             initialCampaigns={campaigns}
             clientSlug={clinic.clientSlug}
             baseUrl={baseUrl}
-            canManage={isAgencyAdmin(user) || canAccessClient(user, clinic.clientSlug)}
+            canManage={canManageCampaigns}
             savedNumbers={savedNumbersResult}
             hasGoogleAds={!!(clinic.googleAdsId)}
           />

@@ -47,7 +47,7 @@ export default async function EditClinicPage({ params }: EditClinicPageProps) {
   const { id } = await params;
   const clinic = await getClinicByIdOrSlug(id);
 
-  if (!clinic || !canAccessClient(user, clinic.clientSlug, clinic.workspaceSlug)) {
+  if (!clinic || !(await canAccessClient(user, clinic.clientSlug, clinic.workspaceSlug))) {
     return (
       <main className="dashboard-shell">
         <DashboardSidebar

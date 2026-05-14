@@ -1,4 +1,4 @@
-import { hasDatabaseConfig, queryDb } from "@/lib/db";
+import { clientSlugScope, hasDatabaseConfig, queryDb } from "@/lib/db";
 import {
   LEAD_STATUS_LABELS,
   normalizeLeadStatus,
@@ -219,7 +219,7 @@ export async function updateLeadStatus(
   }
 
   const scopeSql = options?.scopeClientSlug
-    ? `AND client_slug = $${values.push(options.scopeClientSlug)}`
+    ? `AND ${clientSlugScope(values.push(options.scopeClientSlug) as number)}`
     : "";
 
   await queryDb(
@@ -294,7 +294,7 @@ export async function setLeadReply(
   if (!hasDatabaseConfig()) return;
   const values: unknown[] = [leadId, hasReplied];
   const scopeSql = scopeClientSlug
-    ? `AND client_slug = $${values.push(scopeClientSlug)}`
+    ? `AND ${clientSlugScope(values.push(scopeClientSlug) as number)}`
     : "";
   await queryDb(
     `UPDATE whatsapp_leads
@@ -355,7 +355,7 @@ export async function setLeadFollowUp(
   if (!sets.length) return;
 
   const scopeSql = params.scopeClientSlug
-    ? `AND client_slug = $${values.push(params.scopeClientSlug)}`
+    ? `AND ${clientSlugScope(values.push(params.scopeClientSlug) as number)}`
     : "";
   await queryDb(
     `UPDATE whatsapp_leads SET ${sets.join(", ")} WHERE id = $1 ${scopeSql}`,
