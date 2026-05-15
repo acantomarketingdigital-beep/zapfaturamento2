@@ -11,10 +11,10 @@ type PageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-function isGoogleTraffic(sp: { [key: string]: string | string[] | undefined }) {
-  const gclid = sp.gclid;
-  const src = sp.utm_source;
-  return !!(gclid || (typeof src === "string" && src.toLowerCase().includes("google")));
+function isMetaTraffic(sp: { [key: string]: string | string[] | undefined }) {
+  const fbclid = sp.fbclid;
+  const src = typeof sp.utm_source === "string" ? sp.utm_source.toLowerCase() : "";
+  return !!(fbclid || src.includes("facebook") || src.includes("instagram") || src.includes("meta"));
 }
 
 export default async function CampaignRedirectPage({ params, searchParams }: PageProps) {
@@ -97,9 +97,9 @@ export default async function CampaignRedirectPage({ params, searchParams }: Pag
     defaultMessage: campaign.defaultMessage || client.whatsappMessage,
   };
 
-  if (isGoogleTraffic(sp)) {
-    return <SmartRedirectPage client={effectiveClient} campaign={campaignCtx} />;
+  if (isMetaTraffic(sp)) {
+    return <WhatsAppRedirectFlow client={effectiveClient} campaign={campaignCtx} />;
   }
 
-  return <WhatsAppRedirectFlow client={effectiveClient} campaign={campaignCtx} />;
+  return <SmartRedirectPage client={effectiveClient} campaign={campaignCtx} />;
 }
