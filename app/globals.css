@@ -1711,6 +1711,192 @@ code {
   }
 }
 
+/* ─── SMART REDIRECT PAGE ─────────────────────────────── */
+.smart-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--background, #fff);
+  font-family: inherit;
+}
+
+.smart-header {
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  padding: 14px 24px;
+}
+
+.smart-header__inner {
+  max-width: 620px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.smart-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 50%;
+  border: 1px solid var(--border, #e5e7eb);
+  background: #fff;
+  padding: 3px;
+}
+
+.smart-logo--placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #25d366;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.smart-client-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text, #111827);
+}
+
+.smart-content {
+  flex: 1;
+  max-width: 620px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 48px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.smart-headline {
+  font-size: clamp(1.55rem, 5vw, 2.1rem);
+  font-weight: 800;
+  color: var(--text, #111827);
+  line-height: 1.2;
+  margin: 0 0 14px;
+}
+
+.smart-subtitle {
+  font-size: 1rem;
+  color: var(--text-muted, #6b7280);
+  margin: 0 0 32px;
+  line-height: 1.65;
+}
+
+.smart-benefits {
+  list-style: none;
+  margin: 0 0 36px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.smart-benefit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.97rem;
+  color: var(--text, #111827);
+  font-weight: 500;
+}
+
+.smart-benefit__icon {
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+}
+
+.smart-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 60px;
+  background: #25d366;
+  color: #fff;
+  font-size: 1.08rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  box-shadow: 0 4px 14px rgba(37,211,102,0.35);
+  margin-bottom: 16px;
+}
+
+.smart-cta:hover:not(:disabled) {
+  background: #1ebe5d;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(37,211,102,0.4);
+}
+
+.smart-cta:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(37,211,102,0.3);
+}
+
+.smart-cta--loading,
+.smart-cta:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.smart-trust {
+  font-size: 0.78rem;
+  color: var(--text-muted, #9ca3af);
+  margin: 0;
+  text-align: center;
+  width: 100%;
+}
+
+.smart-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border, #e5e7eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-size: 0.78rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.smart-footer__sep {
+  color: var(--border, #d1d5db);
+}
+
+.smart-footer__link {
+  color: var(--text-muted, #6b7280);
+  text-decoration: none;
+}
+
+.smart-footer__link:hover {
+  text-decoration: underline;
+  color: var(--text, #374151);
+}
+
+@media (max-width: 480px) {
+  .smart-content {
+    padding: 32px 18px 28px;
+  }
+  .smart-headline {
+    font-size: 1.4rem;
+  }
+  .smart-cta {
+    height: 54px;
+    font-size: 1rem;
+  }
+}
+
 /* â”€â”€â”€ WHATSAPP CONNECTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .conexoes-grid {
   display: grid;

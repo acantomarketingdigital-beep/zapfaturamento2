@@ -251,26 +251,45 @@ export default async function AcademyPage() {
 
           <article className="dashboard-card">
             <div className="dashboard-card__header">
-              <h3>Google Ads — Link Direto (sem landing page)</h3>
+              <div>
+                <h3>Google Ads — Smart Page (link direto aprovado)</h3>
+                <span style={{ display: "inline-block", marginTop: 4, fontSize: "0.75rem", background: "#dcfce7", border: "1px solid #bbf7d0", color: "#15803d", borderRadius: 6, padding: "1px 8px", fontWeight: 600 }}>
+                  Recomendado para evitar reprovacao e zero impressoes
+                </span>
+              </div>
             </div>
             <p className="dashboard-helper">
-              Anuncio aponta direto para o link do Zap Faturamento. O sistema captura as UTMs e redireciona para o WhatsApp.
+              O Zap Faturamento detecta automaticamente o trafego do Google (via <code>gclid</code> ou <code>utm_source=google</code>) e exibe uma pagina intermediaria legitima com logo, headline e botao manual para o WhatsApp. Para Meta Ads e outros canais, o redirect automatico continua funcionando normalmente.
             </p>
+            <div className="guide-tip guide-tip--info" style={{ marginBottom: 14 }}>
+              <strong>Por que isso e necessario:</strong> o Google Ads proibe &ldquo;bridge pages&rdquo; — paginas que redirecionam automaticamente sem conteudo. Campanhas com redirect puro ficam com Quality Score baixo, zero impressoes ou sao reprovadas silenciosamente. A Smart Page resolve isso sem precisar de uma landing page completa.
+            </div>
             <ol className="guide-steps">
               <li className="guide-step">
                 <span className="guide-step__num">1</span>
-                <span className="guide-step__text">Crie a campanha normalmente no Google Ads.</span>
+                <span className="guide-step__text">Crie a campanha no Google Ads normalmente (rede de pesquisa ou display).</span>
               </li>
               <li className="guide-step">
                 <span className="guide-step__num">2</span>
-                <span className="guide-step__text">No campo <strong>URL final</strong>, cole o link abaixo. As UTMs e o <code>gclid</code> ja estao incluidos.</span>
+                <div className="guide-step__text">
+                  <div>No campo <strong>URL final</strong>, cole o link da campanha gerado pelo sistema.</div>
+                  <div className="guide-step__sub">O link ja inclui <code>utm_source=google</code> — isso ativa automaticamente a Smart Page para visitantes do Google.</div>
+                </div>
               </li>
               <li className="guide-step">
                 <span className="guide-step__num">3</span>
-                <span className="guide-step__text"><strong>Obrigatorio:</strong> cadastre o GTM ID e o GA4 ID no painel do cliente para o Google nao rodar cego.</span>
+                <span className="guide-step__text">Cadastre o GTM ID e/ou Google Ads ID + Conversion Label no painel do cliente para rastrear conversoes corretamente.</span>
+              </li>
+              <li className="guide-step">
+                <span className="guide-step__num">4</span>
+                <div className="guide-step__text">
+                  <div>O lead ve a pagina do cliente, clica no botao verde e abre o WhatsApp.</div>
+                  <div className="guide-step__sub">O sistema dispara o evento de conversao no clique, nao no carregamento da pagina — o que e o comportamento correto para o Google Ads.</div>
+                </div>
               </li>
             </ol>
             <div style={{ marginTop: 12 }}>
+              <div className="dashboard-table__sub" style={{ marginBottom: 4 }}>URL final para o Google Ads (inclui UTMs automaticas)</div>
               <code className="dashboard-code-block">{googleLink}</code>
               <CopyButton value={googleLink} label="Copiar link Google" />
             </div>

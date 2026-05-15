@@ -1,3 +1,4 @@
+import { SmartRedirectPage } from "@/components/SmartRedirectPage";
 import { WhatsAppRedirectFlow } from "@/components/WhatsAppRedirectFlow";
 import { WhatsAppRedirectScreen } from "@/components/WhatsAppRedirectScreen";
 import { getCampaignBySlug } from "@/lib/campaigns";
@@ -7,15 +8,19 @@ import { getClinicBySlug } from "@/lib/clinics";
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  params: Promise<{
-    slug: string;
-    campaignSlug: string;
-    creativeSlug: string;
-  }>;
+  params: Promise<{ slug: string; campaignSlug: string; creativeSlug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function CreativeRedirectPage({ params }: PageProps) {
+function isGoogleTraffic(sp: { [key: string]: string | string[] | undefined }) {
+  const gclid = sp.gclid;
+  const src = sp.utm_source;
+  return !!(gclid || (typeof src === "string" && src.toLowerCase().includes("google")));
+}
+
+export default async function CreativeRedirectPage({ params, searchParams }: PageProps) {
   const { slug, campaignSlug, creativeSlug } = await params;
+  const sp = await searchParams;
   const client = await getClinicBySlug(slug);
 
   if (!client) {
@@ -111,25 +116,35 @@ export default async function CreativeRedirectPage({ params }: PageProps) {
     );
   }
 
-  // Priority: creative message > campaign message > client message
   const resolvedMessage =
     creative.defaultMessage?.trim() ||
     campaign.defaultMessage?.trim() ||
     client.whatsappMessage;
 
+  const campaignCtx = {
+    id: campaign.id,
+    slug: campaign.slug,
+    name: campaign.name,
+    defaultMessage: resolvedMessage,
+  };
+
+  const creativeCtx = { id: creative.id, slug: creative.slug };
+
+  if (isGoogleTraffic(sp)) {
+    return (
+      <SmartRedirectPage
+        client={client}
+        campaign={campaignCtx}
+        creative={creativeCtx}
+      />
+    );
+  }
+
   return (
     <WhatsAppRedirectFlow
       client={client}
-      campaign={{
-        id: campaign.id,
-        slug: campaign.slug,
-        name: campaign.name,
-        defaultMessage: resolvedMessage
-      }}
-      creative={{
-        id: creative.id,
-        slug: creative.slug
-      }}
+      campaign={campaignCtx}
+      creative={creativeCtx}
     />
   );
 }

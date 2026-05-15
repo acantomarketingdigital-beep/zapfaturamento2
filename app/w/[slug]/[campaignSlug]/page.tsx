@@ -1,3 +1,4 @@
+import { SmartRedirectPage } from "@/components/SmartRedirectPage";
 import { WhatsAppRedirectFlow } from "@/components/WhatsAppRedirectFlow";
 import { WhatsAppRedirectScreen } from "@/components/WhatsAppRedirectScreen";
 import { getCampaignBySlug } from "@/lib/campaigns";
@@ -6,14 +7,19 @@ import { getClinicBySlug } from "@/lib/clinics";
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  params: Promise<{
-    slug: string;
-    campaignSlug: string;
-  }>;
+  params: Promise<{ slug: string; campaignSlug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function CampaignRedirectPage({ params }: PageProps) {
+function isGoogleTraffic(sp: { [key: string]: string | string[] | undefined }) {
+  const gclid = sp.gclid;
+  const src = sp.utm_source;
+  return !!(gclid || (typeof src === "string" && src.toLowerCase().includes("google")));
+}
+
+export default async function CampaignRedirectPage({ params, searchParams }: PageProps) {
   const { slug, campaignSlug } = await params;
+  const sp = await searchParams;
   const client = await getClinicBySlug(slug);
 
   if (!client) {
@@ -82,16 +88,18 @@ export default async function CampaignRedirectPage({ params }: PageProps) {
   }
 
   const effectiveNumber = campaign.whatsappNumber || client.whatsappNumber;
+  const effectiveClient = { ...client, whatsappNumber: effectiveNumber };
 
-  return (
-    <WhatsAppRedirectFlow
-      client={{ ...client, whatsappNumber: effectiveNumber }}
-      campaign={{
-        id: campaign.id,
-        slug: campaign.slug,
-        name: campaign.name,
-        defaultMessage: campaign.defaultMessage || client.whatsappMessage
-      }}
-    />
-  );
+  const campaignCtx = {
+    id: campaign.id,
+    slug: campaign.slug,
+    name: campaign.name,
+    defaultMessage: campaign.defaultMessage || client.whatsappMessage,
+  };
+
+  if (isGoogleTraffic(sp)) {
+    return <SmartRedirectPage client={effectiveClient} campaign={campaignCtx} />;
+  }
+
+  return <WhatsAppRedirectFlow client={effectiveClient} campaign={campaignCtx} />;
 }

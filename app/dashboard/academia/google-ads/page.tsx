@@ -285,11 +285,99 @@ export default async function GoogleAdsPage() {
             <span className="dashboard-eyebrow">Academia · Google Ads</span>
             <h2>Rastreamento de leads no Google Ads</h2>
             <p>
-              Duas abordagens: com GA4 (importacao de conversoes) ou sem GA4 (disparo direto).
-              Escolha a que funciona para a conta do seu cliente.
+              O sistema detecta trafego do Google automaticamente e exibe uma pagina intermediaria com conteudo real — evitando a classificacao como bridge page. Para rastreamento, escolha entre disparo direto (sem GA4) ou via GA4 + GTM.
             </p>
           </div>
         </header>
+
+        {/* ── Smart Redirect Page ── */}
+        <article className="dashboard-card" style={{ border: "2px solid #6366f1", marginBottom: 0 }}>
+          <div className="dashboard-card__header">
+            <div>
+              <h3 style={{ color: "#4f46e5" }}>Pagina Intermediaria Google (Smart Redirect Page)</h3>
+              <p className="dashboard-helper" style={{ marginBottom: 0 }}>
+                Por que o sistema nao redireciona automaticamente para o WhatsApp quando o trafego vem do Google Ads.
+              </p>
+            </div>
+          </div>
+
+          {/* Por que existe */}
+          <div style={{ background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: 8, padding: "12px 16px", marginBottom: 16 }}>
+            <strong style={{ fontSize: "0.85rem", color: "#92400e" }}>O problema: pagina ponte (bridge page)</strong>
+            <p className="dashboard-helper" style={{ marginTop: 6, marginBottom: 0 }}>
+              Paginas que redirecionam automaticamente o usuario para outro destino (como um link do WhatsApp) sao classificadas pelo Google como <strong>bridge pages</strong> ou <strong>doorway pages</strong>. O resultado e <strong>zero impressoes</strong> — o Google para de veicular o anuncio por violacao de politica de qualidade da pagina de destino.
+            </p>
+          </div>
+
+          {/* Como funciona agora */}
+          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "12px 16px", marginBottom: 16 }}>
+            <strong style={{ fontSize: "0.85rem", color: "#14532d" }}>Como o sistema resolve isso automaticamente</strong>
+            <p className="dashboard-helper" style={{ marginTop: 6, marginBottom: 10 }}>
+              Quando o sistema detecta trafego do Google (presenca de <code>gclid</code> ou <code>utm_source=google</code> na URL), em vez de redirecionar, ele exibe uma pagina com conteudo real:
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+              {[
+                ["Logo e nome do cliente", "Identidade visual da empresa no topo da pagina"],
+                ["Titulo e subtitulo", 'Ex: "Fale com Clinica X pelo WhatsApp"'],
+                ["3 beneficios do atendimento", "Texto que demonstra valor — nao e uma pagina vazia"],
+                ["Botao de acao manual", "O lead clica para abrir o WhatsApp — sem redirecionamento automatico"],
+                ["Rodape com Politica de Privacidade e Termos de Uso", "Conformidade LGPD e exigencia basica do Google Ads"],
+              ].map(([item, desc]) => (
+                <div key={String(item)} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <span style={{ color: "#15803d", fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✓</span>
+                  <div>
+                    <strong style={{ fontSize: "0.85rem" }}>{item}</strong>
+                    <div className="guide-step__sub" style={{ marginTop: 2 }}>{desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Fluxo visual */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>Fluxo por tipo de trafego</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+
+              <div>
+                <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#4f46e5", marginBottom: 6 }}>Google Ads (gclid ou utm_source=google)</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: "0.78rem" }}>
+                  <span style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#1d4ed8" }}>Anuncio Google</span>
+                  <span style={{ color: "var(--muted)" }}>→</span>
+                  <span style={{ background: "#ede9fe", border: "1px solid #c4b5fd", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#6d28d9" }}>Pagina com conteudo (Zap)</span>
+                  <span style={{ color: "var(--muted)" }}>→</span>
+                  <span style={{ background: "#f3f4f6", border: "1px solid #d1d5db", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#374151" }}>Lead clica no botao</span>
+                  <span style={{ color: "var(--muted)" }}>→</span>
+                  <span style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#15803d" }}>WhatsApp</span>
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#db2777", marginBottom: 6 }}>Meta Ads / trafego direto / organico</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: "0.78rem" }}>
+                  <span style={{ background: "#fdf2f8", border: "1px solid #fbcfe8", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#be185d" }}>Anuncio Meta / Link direto</span>
+                  <span style={{ color: "var(--muted)" }}>→</span>
+                  <span style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#15803d" }}>Redireciona para WhatsApp (automatico)</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* O que voce precisa fazer */}
+          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "12px 16px" }}>
+            <strong style={{ fontSize: "0.85rem", color: "#14532d" }}>O que voce precisa fazer no Google Ads</strong>
+            <p className="dashboard-helper" style={{ marginTop: 6, marginBottom: 0 }}>
+              <strong>Nada diferente.</strong> Use o mesmo link <code>/w/slug/campanha</code> com os parametros UTM normais. O sistema detecta o trafego do Google automaticamente e exibe a pagina intermediaria — voce nao precisa configurar nada adicional.
+            </p>
+            <div style={{ marginTop: 10, background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 14px" }}>
+              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>URL Final no anuncio</div>
+              <code style={{ fontSize: "0.78rem", wordBreak: "break-all" }}>
+                https://zapfaturamento.com.br/w/cliente/campanha?utm_source=google&utm_medium=cpc&utm_campaign=&#123;campaignid&#125;&utm_content=&#123;adgroupid&#125;&gclid=&#123;gclid&#125;
+              </code>
+            </div>
+          </div>
+        </article>
 
         {/* ── NOVO: Sem GA4 ── */}
         <div className="dashboard-section-divider">

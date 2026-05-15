@@ -1,3 +1,4 @@
+import { SmartRedirectPage } from "@/components/SmartRedirectPage";
 import { WhatsAppRedirectFlow } from "@/components/WhatsAppRedirectFlow";
 import { WhatsAppRedirectScreen } from "@/components/WhatsAppRedirectScreen";
 import { getClinicBySlug } from "@/lib/clinics";
@@ -5,13 +6,19 @@ import { getClinicBySlug } from "@/lib/clinics";
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  params: Promise<{
-    slug: string;
-  }>;
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function RedirectPage({ params }: PageProps) {
+function isGoogleTraffic(sp: { [key: string]: string | string[] | undefined }) {
+  const gclid = sp.gclid;
+  const src = sp.utm_source;
+  return !!(gclid || (typeof src === "string" && src.toLowerCase().includes("google")));
+}
+
+export default async function RedirectPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const sp = await searchParams;
   const client = await getClinicBySlug(slug);
 
   if (!client) {
@@ -49,6 +56,10 @@ export default async function RedirectPage({ params }: PageProps) {
         isError
       />
     );
+  }
+
+  if (isGoogleTraffic(sp)) {
+    return <SmartRedirectPage client={client} />;
   }
 
   return <WhatsAppRedirectFlow client={client} />;
