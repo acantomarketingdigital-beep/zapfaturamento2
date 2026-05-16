@@ -153,6 +153,24 @@ export default async function ClinicDetailsPage({
             >
               Ver dashboard do cliente
             </a>
+            {isAgencyAdmin(user) ? (
+              <form
+                action={`/api/admin/clients/${encodeURIComponent(clinic.clientSlug)}/delete-all`}
+                method="POST"
+                onSubmit={(e) => {
+                  if (!confirm(`Deletar TODOS os dados de "${clinic.clientName}"?\n\nIsso inclui leads, campanhas, conversas e o cadastro do cliente.\n\nEssa acao nao tem como ser desfeita.`)) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                <button
+                  type="submit"
+                  className="dashboard-button dashboard-button--danger"
+                >
+                  Deletar cliente
+                </button>
+              </form>
+            ) : null}
           </div>
         </header>
 
