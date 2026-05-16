@@ -155,18 +155,18 @@ export function LeadTable({ rows }: LeadTableProps) {
                 </td>
                 <td>{row.utm_term || "-"}</td>
                 <td>
-                  {(row.lead_phone || row.whatsapp_number) ? (
+                  {row.lead_phone ? (
                     <a
-                      href={buildWhatsAppWebUrl(row.lead_phone || row.whatsapp_number)}
+                      href={buildWhatsAppWebUrl(row.lead_phone)}
                       target="_blank"
                       rel="noreferrer"
                       style={{ color: "#15803D", textDecoration: "none", whiteSpace: "nowrap" }}
                       title="Abrir no WhatsApp Web"
                     >
-                      {row.lead_phone || row.whatsapp_number}
+                      {row.lead_phone}
                     </a>
                   ) : (
-                    "-"
+                    <span style={{ color: "var(--muted)" }}>—</span>
                   )}
                 </td>
                 <td>
