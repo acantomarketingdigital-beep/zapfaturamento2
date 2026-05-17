@@ -1858,6 +1858,57 @@ code {
   width: 100%;
 }
 
+.smart-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  padding: 3px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #15803d;
+  margin-bottom: 12px;
+}
+
+.smart-keywords {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #f3f4f6;
+  width: 100%;
+  max-width: 520px;
+}
+
+.smart-keywords__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 10px;
+  text-align: center;
+}
+
+.smart-keywords__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  justify-content: center;
+}
+
+.smart-keywords__tag {
+  font-size: 0.75rem;
+  color: #4b5563;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 3px 10px;
+}
+
 .smart-footer {
   padding: 16px 24px;
   border-top: 1px solid var(--border, #e5e7eb);

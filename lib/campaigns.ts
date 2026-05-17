@@ -2,6 +2,8 @@ import { slugifyClinicName } from "@/lib/clinic-shared";
 import { clientSlugScope, hasDatabaseConfig, queryDb } from "@/lib/db";
 import type { Currency } from "@/lib/format";
 
+export type CampaignSource = "direct" | "google" | "meta" | "tiktok" | "other";
+
 export type CampaignRecord = {
   id: string;
   clientId: string;
@@ -14,6 +16,12 @@ export type CampaignRecord = {
   dailyBudgetCents: number;
   currency: Currency;
   creativeUrl: string | null;
+  campaignSource: CampaignSource;
+  seoKeywords: string[];
+  seoLocations: string[];
+  seoTitle: string | null;
+  seoDescription: string | null;
+  seoBullets: string[] | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -29,15 +37,29 @@ export type CampaignInput = {
   dailyBudgetCents?: number;
   currency?: Currency;
   creativeUrl?: string | null;
+  campaignSource?: CampaignSource;
+  seoKeywords?: string[];
+  seoLocations?: string[];
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoBullets?: string[] | null;
 };
 
 const VALID_CURRENCIES: Currency[] = ["BRL", "USD", "EUR"];
+const VALID_SOURCES: CampaignSource[] = ["direct", "google", "meta", "tiktok", "other"];
 
 function normalizeCurrency(value: unknown): Currency {
   if (typeof value === "string" && VALID_CURRENCIES.includes(value as Currency)) {
     return value as Currency;
   }
   return "BRL";
+}
+
+function normalizeSource(value: unknown): CampaignSource {
+  if (typeof value === "string" && VALID_SOURCES.includes(value as CampaignSource)) {
+    return value as CampaignSource;
+  }
+  return "direct";
 }
 
 type CampaignRow = {
@@ -52,12 +74,23 @@ type CampaignRow = {
   daily_budget_cents: string | number;
   currency: string | null;
   creative_url: string | null;
+  campaign_source: string | null;
+  seo_keywords: string[] | null;
+  seo_locations: string[] | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_bullets: string[] | null;
   created_at: string;
   updated_at: string;
 };
 
 const SELECT_COLS = `id, client_id, client_slug, name, slug, default_message, whatsapp_number, is_active,
-  daily_budget_cents, COALESCE(currency, 'BRL') AS currency, creative_url, created_at, updated_at`;
+  daily_budget_cents, COALESCE(currency, 'BRL') AS currency, creative_url,
+  COALESCE(campaign_source, 'direct') AS campaign_source,
+  COALESCE(seo_keywords, '{}') AS seo_keywords,
+  COALESCE(seo_locations, '{}') AS seo_locations,
+  seo_title, seo_description, seo_bullets,
+  created_at, updated_at`;
 
 function mapRow(row: CampaignRow): CampaignRecord {
   return {
@@ -72,6 +105,12 @@ function mapRow(row: CampaignRow): CampaignRecord {
     dailyBudgetCents: Number(row.daily_budget_cents ?? 0),
     currency: normalizeCurrency(row.currency),
     creativeUrl: row.creative_url ?? null,
+    campaignSource: normalizeSource(row.campaign_source),
+    seoKeywords: row.seo_keywords ?? [],
+    seoLocations: row.seo_locations ?? [],
+    seoTitle: row.seo_title ?? null,
+    seoDescription: row.seo_description ?? null,
+    seoBullets: row.seo_bullets ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -143,18 +182,28 @@ export async function saveCampaign(input: CampaignInput): Promise<CampaignRecord
   const dailyBudgetCents = Math.max(0, Math.round(input.dailyBudgetCents ?? 0));
   const currency = normalizeCurrency(input.currency);
   const creativeUrl = input.creativeUrl?.trim() || null;
-
   const whatsappNumber = input.whatsappNumber?.trim().replace(/\D/g, "") || null;
+  const campaignSource = normalizeSource(input.campaignSource);
+  const seoKeywords = input.seoKeywords ?? [];
+  const seoLocations = input.seoLocations ?? [];
+  const seoTitle = input.seoTitle?.trim() || null;
+  const seoDescription = input.seoDescription?.trim() || null;
+  const seoBullets = input.seoBullets && input.seoBullets.length > 0 ? input.seoBullets : null;
 
   if (input.id) {
     const result = await queryDb<CampaignRow>(
       `UPDATE client_campaigns
        SET name = $2, slug = $3, default_message = $4, is_active = $5,
-           daily_budget_cents = $6, currency = $8, creative_url = $9, whatsapp_number = $10
+           daily_budget_cents = $6, currency = $8, creative_url = $9, whatsapp_number = $10,
+           campaign_source = $11, seo_keywords = $12, seo_locations = $13,
+           seo_title = $14, seo_description = $15, seo_bullets = $16
        WHERE id = $1 AND client_slug = $7
        RETURNING ${SELECT_COLS}`,
-      [input.id, input.name.trim(), slug, input.defaultMessage.trim(),
-       input.isActive, dailyBudgetCents, input.clientSlug, currency, creativeUrl, whatsappNumber]
+      [
+        input.id, input.name.trim(), slug, input.defaultMessage.trim(),
+        input.isActive, dailyBudgetCents, input.clientSlug, currency, creativeUrl, whatsappNumber,
+        campaignSource, seoKeywords, seoLocations, seoTitle, seoDescription, seoBullets,
+      ]
     );
     if (!result.rows[0]) throw new Error("Campanha nao encontrada.");
     return mapRow(result.rows[0]);
@@ -168,20 +217,16 @@ export async function saveCampaign(input: CampaignInput): Promise<CampaignRecord
 
   const result = await queryDb<CampaignRow>(
     `INSERT INTO client_campaigns
-       (client_id, client_slug, name, slug, default_message, is_active, daily_budget_cents, currency, creative_url, whatsapp_number)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       (client_id, client_slug, name, slug, default_message, is_active, daily_budget_cents, currency,
+        creative_url, whatsapp_number, campaign_source, seo_keywords, seo_locations,
+        seo_title, seo_description, seo_bullets)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
      RETURNING ${SELECT_COLS}`,
     [
-      clientResult.rows[0].id,
-      input.clientSlug,
-      input.name.trim(),
-      slug,
-      input.defaultMessage.trim(),
-      input.isActive,
-      dailyBudgetCents,
-      currency,
-      creativeUrl,
-      whatsappNumber,
+      clientResult.rows[0].id, input.clientSlug, input.name.trim(), slug,
+      input.defaultMessage.trim(), input.isActive, dailyBudgetCents, currency,
+      creativeUrl, whatsappNumber, campaignSource, seoKeywords, seoLocations,
+      seoTitle, seoDescription, seoBullets,
     ]
   );
   if (!result.rows[0]) throw new Error("Ja existe uma campanha com este slug para este cliente.");

@@ -7,6 +7,8 @@ import { CopyButton } from "@/components/dashboard/CopyButton";
 import { CampaignCreativesSection } from "@/components/dashboard/CampaignCreativesSection";
 import { formatCurrency, type Currency } from "@/lib/format";
 
+type CampaignSource = "direct" | "google" | "meta" | "tiktok" | "other";
+
 type Campaign = {
   id: string;
   clientSlug: string;
@@ -17,6 +19,12 @@ type Campaign = {
   isActive: boolean;
   dailyBudgetCents: number;
   currency: Currency;
+  campaignSource: CampaignSource;
+  seoKeywords: string[];
+  seoLocations: string[];
+  seoTitle: string | null;
+  seoDescription: string | null;
+  seoBullets: string[] | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -43,6 +51,12 @@ type ModalState = {
   dailyBudget: string;
   currency: Currency;
   slugTouched: boolean;
+  campaignSource: CampaignSource;
+  seoKeywords: string[];
+  seoLocations: string[];
+  seoTitle: string;
+  seoDescription: string;
+  seoBullets: string[];
 };
 
 const CURRENCY_OPTIONS: { value: Currency; label: string }[] = [
@@ -100,6 +114,12 @@ export function CampaignSection({
       dailyBudget: "",
       currency: "BRL",
       slugTouched: false,
+      campaignSource: "direct",
+      seoKeywords: [],
+      seoLocations: [],
+      seoTitle: "",
+      seoDescription: "",
+      seoBullets: [],
     });
   }
 
@@ -118,6 +138,12 @@ export function CampaignSection({
         : "",
       currency: campaign.currency ?? "BRL",
       slugTouched: true,
+      campaignSource: campaign.campaignSource ?? "direct",
+      seoKeywords: campaign.seoKeywords ?? [],
+      seoLocations: campaign.seoLocations ?? [],
+      seoTitle: campaign.seoTitle ?? "",
+      seoDescription: campaign.seoDescription ?? "",
+      seoBullets: campaign.seoBullets ?? [],
     });
   }
 
@@ -158,6 +184,12 @@ export function CampaignSection({
           isActive: modal.isActive,
           dailyBudgetCents: isNaN(dailyBudgetCents) ? 0 : dailyBudgetCents,
           currency: modal.currency,
+          campaignSource: modal.campaignSource,
+          seoKeywords: modal.seoKeywords,
+          seoLocations: modal.seoLocations,
+          seoTitle: modal.seoTitle.trim() || null,
+          seoDescription: modal.seoDescription.trim() || null,
+          seoBullets: modal.seoBullets.filter(Boolean),
           ...(modal.id ? { id: modal.id } : {}),
         }),
       });
@@ -448,6 +480,113 @@ export function CampaignSection({
                   Usado para estimar o investimento do período nos relatórios.
                 </span>
               </div>
+
+              {/* Fonte da campanha */}
+              <div className="dashboard-field">
+                <span>Fonte da campanha</span>
+                <select
+                  value={modal.campaignSource}
+                  onChange={(e) => setModal({ ...modal, campaignSource: e.target.value as CampaignSource })}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: "0.9rem" }}
+                >
+                  <option value="direct">Direto / Orgânico</option>
+                  <option value="google">Google Ads</option>
+                  <option value="meta">Meta Ads (Facebook / Instagram)</option>
+                  <option value="tiktok">TikTok Ads</option>
+                  <option value="other">Outro</option>
+                </select>
+              </div>
+
+              {/* Bloco SEO — apenas para Google Ads */}
+              {modal.campaignSource === "google" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10 }}>
+                  <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#15803d", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                    Otimização Google Ads — Landing Page
+                  </div>
+                  <p className="dashboard-helper" style={{ margin: 0 }}>
+                    Esses dados geram automaticamente o conteúdo da página de redirect, melhorando o Quality Score.
+                  </p>
+
+                  {/* Localização */}
+                  <div className="dashboard-field" style={{ margin: 0 }}>
+                    <span>Localização(ões) atendida(s) *</span>
+                    <textarea
+                      rows={3}
+                      placeholder={"Londrina PR\nRegião Metropolitana de Londrina\nNorte do Paraná"}
+                      value={modal.seoLocations.join("\n")}
+                      onChange={(e) =>
+                        setModal({
+                          ...modal,
+                          seoLocations: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
+                        })
+                      }
+                    />
+                    <span className="dashboard-helper">Uma por linha. Ex: Londrina PR · Curitiba PR</span>
+                  </div>
+
+                  {/* Keywords */}
+                  <div className="dashboard-field" style={{ margin: 0 }}>
+                    <span>
+                      Palavras-chave *{" "}
+                      <span style={{ fontWeight: 400, color: modal.seoKeywords.length < 10 ? "#dc2626" : "#15803d" }}>
+                        ({modal.seoKeywords.length}/10 mínimo)
+                      </span>
+                    </span>
+                    <textarea
+                      rows={10}
+                      placeholder={"limpeza de sofá londrina\nhigienização de sofá londrina\nlavagem de sofá londrina\nlimpeza de estofados londrina\nhigienização de estofados londrina\nlavagem de sofa profissional\nimpermeabilização de sofá londrina\nlimpeza profissional de sofá\nlimpeza sofá perto de mim\nlimpar sofá londrina"}
+                      value={modal.seoKeywords.join("\n")}
+                      onChange={(e) => {
+                        const kws = e.target.value.split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 20);
+                        setModal({ ...modal, seoKeywords: kws });
+                      }}
+                    />
+                    <span className="dashboard-helper">Mínimo 10, máximo 20. Uma por linha. Use as mesmas do Google Ads.</span>
+                  </div>
+
+                  {/* Avançado */}
+                  <details>
+                    <summary style={{ cursor: "pointer", fontSize: "0.85rem", color: "#15803d", fontWeight: 600 }}>
+                      Personalização avançada (opcional — gerado automaticamente se vazio)
+                    </summary>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
+                      <div className="dashboard-field" style={{ margin: 0 }}>
+                        <span>Título da página</span>
+                        <input
+                          type="text"
+                          placeholder='Se vazio → "[1ª keyword] em [localização]"'
+                          value={modal.seoTitle}
+                          onChange={(e) => setModal({ ...modal, seoTitle: e.target.value })}
+                        />
+                      </div>
+                      <div className="dashboard-field" style={{ margin: 0 }}>
+                        <span>Descrição</span>
+                        <textarea
+                          rows={3}
+                          placeholder="Se vazia, gerada automaticamente."
+                          value={modal.seoDescription}
+                          onChange={(e) => setModal({ ...modal, seoDescription: e.target.value })}
+                        />
+                      </div>
+                      <div className="dashboard-field" style={{ margin: 0 }}>
+                        <span>Benefícios (bullets)</span>
+                        <textarea
+                          rows={4}
+                          placeholder={"Atendemos Londrina e região\nProdutos seguros para pets\nOrçamento grátis pelo WhatsApp"}
+                          value={modal.seoBullets.join("\n")}
+                          onChange={(e) =>
+                            setModal({
+                              ...modal,
+                              seoBullets: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
+                            })
+                          }
+                        />
+                        <span className="dashboard-helper">Um por linha. Se vazio, gerado automaticamente.</span>
+                      </div>
+                    </div>
+                  </details>
+                </div>
+              )}
 
               <div className="dashboard-field">
                 <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>

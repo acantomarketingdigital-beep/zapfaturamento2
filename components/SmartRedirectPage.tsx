@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CustomerLogo } from "@/components/CustomerLogo";
 import type { ResolvedClientConfig } from "@/lib/clients";
+import type { SeoContent } from "@/lib/seo-content-generator";
 import {
   buildLeadCapturePayload,
   buildWhatsAppUrl,
@@ -21,6 +22,7 @@ type Props = {
   client: ResolvedClientConfig;
   campaign?: CampaignContext;
   creative?: CreativeContext;
+  seoContent?: SeoContent | null;
 };
 
 function createEventId() {
@@ -48,7 +50,7 @@ async function sendLeadToBackend(payload: LeadCapturePayload) {
   } catch { /* best-effort */ }
 }
 
-const BENEFITS = [
+const DEFAULT_BENEFITS = [
   "Atendimento personalizado para você",
   "Resposta rápida da nossa equipe",
   "Sem compromisso, fale agora",
@@ -70,13 +72,15 @@ function WhatsAppIcon() {
   );
 }
 
-export function SmartRedirectPage({ client, campaign, creative }: Props) {
+export function SmartRedirectPage({ client, campaign, creative, seoContent }: Props) {
   const [whatsappUrl, setWhatsappUrl] = useState("");
   const [payload, setPayload] = useState<LeadCapturePayload | null>(null);
   const [clicked, setClicked] = useState(false);
   const initialized = useRef(false);
 
-  const headline = `Fale com ${client.clientName} pelo WhatsApp`;
+  const headline = seoContent?.title ?? `Fale com ${client.clientName} pelo WhatsApp`;
+  const bullets = seoContent?.bullets ?? DEFAULT_BENEFITS;
+  const ctaText = seoContent?.ctaText ?? "Falar no WhatsApp agora";
 
   useEffect(() => {
     if (initialized.current) return;
@@ -137,14 +141,23 @@ export function SmartRedirectPage({ client, campaign, creative }: Props) {
       </header>
 
       <section className="smart-content">
+        {seoContent && (
+          <div className="smart-badge">⭐ {seoContent.badgeText}</div>
+        )}
+
         <h1 className="smart-headline">{headline}</h1>
-        <p className="smart-subtitle">
-          Nossa equipe está pronta para te atender agora. Clique no botão abaixo para iniciar a conversa.
-        </p>
+
+        {seoContent?.description ? (
+          <p className="smart-subtitle">{seoContent.description}</p>
+        ) : (
+          <p className="smart-subtitle">
+            Nossa equipe está pronta para te atender agora. Clique no botão abaixo para iniciar a conversa.
+          </p>
+        )}
 
         <ul className="smart-benefits" aria-label="Benefícios">
-          {BENEFITS.map((b) => (
-            <li key={b} className="smart-benefit">
+          {bullets.map((b, i) => (
+            <li key={i} className="smart-benefit">
               <span className="smart-benefit__icon"><CheckIcon /></span>
               <span>{b}</span>
             </li>
@@ -159,10 +172,21 @@ export function SmartRedirectPage({ client, campaign, creative }: Props) {
           aria-label="Falar no WhatsApp"
         >
           <WhatsAppIcon />
-          {clicked ? "Abrindo WhatsApp..." : "Falar no WhatsApp agora"}
+          {clicked ? "Abrindo WhatsApp..." : ctaText}
         </button>
 
         <p className="smart-trust">🔒 Atendimento gratuito e sem compromisso</p>
+
+        {seoContent && seoContent.keywords.length > 0 && (
+          <section aria-label="Serviços atendidos" className="smart-keywords">
+            <p className="smart-keywords__label">Serviços que atendemos:</p>
+            <ul className="smart-keywords__list">
+              {seoContent.keywords.map((kw, i) => (
+                <li key={i} className="smart-keywords__tag">{kw}</li>
+              ))}
+            </ul>
+          </section>
+        )}
       </section>
 
       <footer className="smart-footer">

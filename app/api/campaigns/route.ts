@@ -36,7 +36,8 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { clientSlug, name, slug, defaultMessage, isActive, dailyBudgetCents, currency, creativeUrl } = body as Record<string, unknown>;
+    const { clientSlug, name, slug, defaultMessage, isActive, dailyBudgetCents, currency, creativeUrl,
+            campaignSource, seoKeywords, seoLocations, seoTitle, seoDescription, seoBullets } = body as Record<string, unknown>;
 
     if (typeof clientSlug !== "string" || !clientSlug) {
       return NextResponse.json({ error: "clientSlug e obrigatorio." }, { status: 400 });
@@ -59,7 +60,13 @@ export async function POST(request: Request) {
       isActive: isActive !== false,
       dailyBudgetCents: typeof dailyBudgetCents === "number" ? dailyBudgetCents : 0,
       currency: typeof currency === "string" ? currency as import("@/lib/format").Currency : "BRL",
-      creativeUrl: typeof creativeUrl === "string" ? creativeUrl : null
+      creativeUrl: typeof creativeUrl === "string" ? creativeUrl : null,
+      campaignSource: typeof campaignSource === "string" ? campaignSource as import("@/lib/campaigns").CampaignSource : "direct",
+      seoKeywords: Array.isArray(seoKeywords) ? seoKeywords.filter((k): k is string => typeof k === "string") : [],
+      seoLocations: Array.isArray(seoLocations) ? seoLocations.filter((l): l is string => typeof l === "string") : [],
+      seoTitle: typeof seoTitle === "string" ? seoTitle : null,
+      seoDescription: typeof seoDescription === "string" ? seoDescription : null,
+      seoBullets: Array.isArray(seoBullets) ? seoBullets.filter((b): b is string => typeof b === "string") : null,
     });
 
     return NextResponse.json({ campaign }, { status: 201 });

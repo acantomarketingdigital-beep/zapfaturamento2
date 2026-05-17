@@ -3,6 +3,7 @@ import { WhatsAppRedirectFlow } from "@/components/WhatsAppRedirectFlow";
 import { WhatsAppRedirectScreen } from "@/components/WhatsAppRedirectScreen";
 import { getCampaignBySlug } from "@/lib/campaigns";
 import { getClinicBySlug } from "@/lib/clinics";
+import { generateSeoContent } from "@/lib/seo-content-generator";
 
 export const dynamic = "force-dynamic";
 
@@ -101,5 +102,16 @@ export default async function CampaignRedirectPage({ params, searchParams }: Pag
     return <WhatsAppRedirectFlow client={effectiveClient} campaign={campaignCtx} />;
   }
 
-  return <SmartRedirectPage client={effectiveClient} campaign={campaignCtx} />;
+  const seoContent = campaign.campaignSource === "google"
+    ? generateSeoContent({
+        clientName: effectiveClient.clientName,
+        seoKeywords: campaign.seoKeywords,
+        seoLocations: campaign.seoLocations,
+        seoTitle: campaign.seoTitle,
+        seoDescription: campaign.seoDescription,
+        seoBullets: campaign.seoBullets,
+      })
+    : null;
+
+  return <SmartRedirectPage client={effectiveClient} campaign={campaignCtx} seoContent={seoContent} />;
 }
