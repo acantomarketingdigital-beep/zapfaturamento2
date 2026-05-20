@@ -26,19 +26,24 @@ export function generateSeoContent(input: SeoInput): SeoContent {
   const primaryLocation = input.seoLocations[0] ?? "";
   const locationList = input.seoLocations.slice(0, 2).join(" e ");
 
+  // Avoid repeating the city name when it's already present in the keyword.
+  // e.g. keyword "limpeza de sofá londrina" + location "Londrina PR" → don't add "em Londrina PR".
+  const locationCity = primaryLocation.split(/[\s,]+/)[0].toLowerCase();
+  const keywordAlreadyHasCity =
+    locationCity.length >= 4 &&
+    primaryKeyword.toLowerCase().includes(locationCity);
+  const locationSuffix =
+    primaryLocation && !keywordAlreadyHasCity ? ` em ${primaryLocation}` : "";
+
   const title =
     input.seoTitle?.trim() ||
-    toTitleCase(
-      primaryLocation
-        ? `${primaryKeyword} em ${primaryLocation}`
-        : primaryKeyword
-    );
+    toTitleCase(`${primaryKeyword}${locationSuffix}`);
 
   const description =
     input.seoDescription?.trim() ||
-    `${toSentenceCase(primaryKeyword)}${primaryLocation ? ` em ${primaryLocation}` : ""} com ${input.clientName}. ` +
+    `${toSentenceCase(primaryKeyword)}${locationSuffix} com ${input.clientName}. ` +
       `Atendimento personalizado, resposta rápida e sem compromisso. ` +
-      `Fale agora pelo WhatsApp e receba seu orçamento grátis.`;
+      `Chame agora no WhatsApp e seja atendido rapidamente.`;
 
   const bullets =
     input.seoBullets && input.seoBullets.length >= 3
