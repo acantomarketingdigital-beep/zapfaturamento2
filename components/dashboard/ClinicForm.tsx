@@ -153,7 +153,7 @@ export function ClinicForm({
         <label className="dashboard-field">
           <span>Kommo Pipeline ID</span>
           <input
-            type="number"
+            type="text"
             name="kommoPipelineId"
             defaultValue={values.kommoPipelineId ?? ""}
             disabled={!databaseReady}
@@ -163,7 +163,7 @@ export function ClinicForm({
         <label className="dashboard-field">
           <span>Kommo Status ID</span>
           <input
-            type="number"
+            type="text"
             name="kommoStatusId"
             defaultValue={values.kommoStatusId ?? ""}
             disabled={!databaseReady}
@@ -196,7 +196,7 @@ export function ClinicForm({
               <label key={field.key} className="dashboard-field">
                 <span>{field.label}</span>
                 <input
-                  type="number"
+                  type="text"
                   name={`kommoCustomFields.${field.key}`}
                   defaultValue={values.kommoCustomFields[field.key] ?? ""}
                   disabled={!databaseReady}
