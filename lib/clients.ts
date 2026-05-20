@@ -40,6 +40,7 @@ export type ClientConfig = {
   kommoPipelineId?: number;
   kommoStatusId?: number;
   kommoCustomFields?: KommoCustomFieldMap;
+  kommoSubdomain?: string;
 };
 
 export type ResolvedClientConfig = Required<

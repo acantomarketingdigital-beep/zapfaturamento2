@@ -412,6 +412,30 @@ export function ClinicEditor({
               <div className="dashboard-section__body">
                 <div className="dashboard-form-grid">
                   <label className="dashboard-field">
+                    <span>Subdomínio Kommo</span>
+                    <input
+                      type="text"
+                      name="kommoSubdomain"
+                      defaultValue={values.kommoSubdomain ?? ""}
+                      placeholder="ex: suaempresa (de suaempresa.kommo.com)"
+                    />
+                  </label>
+
+                  <label className="dashboard-field">
+                    <span>Token de Acesso Kommo</span>
+                    <input
+                      type="password"
+                      name="kommoAccessToken"
+                      defaultValue=""
+                      placeholder={values.kommoAccessTokenConfigured ? "Token salvo — cole novo para substituir" : "Cole o access token aqui"}
+                      autoComplete="off"
+                    />
+                    <input type="hidden" name="preserveKommoAccessToken" value={values.kommoAccessTokenConfigured ? "true" : "false"} />
+                  </label>
+                </div>
+
+                <div className="dashboard-form-grid">
+                  <label className="dashboard-field">
                     <span>Kommo Pipeline ID</span>
                     <input
                       type="text"

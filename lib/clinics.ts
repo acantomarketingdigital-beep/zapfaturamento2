@@ -29,6 +29,7 @@ export type ManagedClinicRecord = ResolvedClientConfig & {
 
 export type ManagedClinicServerRecord = ManagedClinicRecord & {
   metaCapiAccessToken?: string;
+  kommoAccessToken?: string;
 };
 
 export type ManagedClinicListItem = ManagedClinicRecord & {
@@ -57,6 +58,9 @@ export type ManagedClinicInput = {
   kommoPipelineId?: number;
   kommoStatusId?: number;
   kommoCustomFields: KommoCustomFieldMap;
+  kommoSubdomain?: string;
+  kommoAccessToken?: string;
+  preserveKommoAccessToken?: boolean;
   isActive: boolean;
 };
 
@@ -64,6 +68,7 @@ export type ManagedClinicFormValues = ManagedClinicInput & {
   source: "database" | "static";
   metaCapiConfigured: boolean;
   metaCapiAccessTokenConfigured: boolean;
+  kommoAccessTokenConfigured: boolean;
 };
 
 type DatabaseClinicRow = {
@@ -87,6 +92,8 @@ type DatabaseClinicRow = {
   kommo_pipeline_id: string | number | null;
   kommo_status_id: string | number | null;
   kommo_custom_fields: KommoCustomFieldMap | string | null;
+  kommo_subdomain: string | null;
+  kommo_access_token: string | null;
   is_active: boolean;
   workspace_slug: string | null;
 };
@@ -191,6 +198,7 @@ function resolveClientConfig(
     kommoPipelineId: toOptionalNumber(client.kommoPipelineId),
     kommoStatusId: toOptionalNumber(client.kommoStatusId),
     kommoCustomFields: normalizeCustomFieldMap(client.kommoCustomFields),
+    kommoSubdomain: cleanText(client.kommoSubdomain),
     id: metadata?.id || client.clientSlug,
     createdAt: metadata?.createdAt,
     updatedAt: metadata?.updatedAt,
@@ -220,7 +228,8 @@ function mapDatabaseRow(
       kommoEnabled: row.kommo_enabled ?? true,
       kommoPipelineId: toOptionalNumber(row.kommo_pipeline_id),
       kommoStatusId: toOptionalNumber(row.kommo_status_id),
-      kommoCustomFields: normalizeCustomFieldMap(row.kommo_custom_fields)
+      kommoCustomFields: normalizeCustomFieldMap(row.kommo_custom_fields),
+      kommoSubdomain: row.kommo_subdomain || undefined
     },
     "database",
     {
@@ -241,7 +250,8 @@ function mapDatabaseRow(
   if (options?.includeSecrets) {
     return {
       ...withWorkspace,
-      metaCapiAccessToken: cleanText(row.meta_capi_access_token)
+      metaCapiAccessToken: cleanText(row.meta_capi_access_token),
+      kommoAccessToken: cleanText(row.kommo_access_token)
     };
   }
 
@@ -279,6 +289,8 @@ async function fetchDatabaseClinicBySlug(
         kommo_pipeline_id,
         kommo_status_id,
         kommo_custom_fields,
+        kommo_subdomain,
+        kommo_access_token,
         is_active,
         workspace_slug
       FROM clients
@@ -553,17 +565,22 @@ export async function saveClinic(input: ManagedClinicInput, workspaceSlug?: stri
 
   if (!metaCapiAccessToken && input.preserveMetaCapiAccessToken) {
     const existingTokenResult = await queryDb<{ meta_capi_access_token: string | null }>(
-      `
-        SELECT meta_capi_access_token
-        FROM clients
-        WHERE client_slug = $1
-        LIMIT 1
-      `,
+      `SELECT meta_capi_access_token FROM clients WHERE client_slug = $1 LIMIT 1`,
       [existingSlug]
     );
-
     metaCapiAccessToken =
       cleanText(existingTokenResult.rows[0]?.meta_capi_access_token) || null;
+  }
+
+  let kommoAccessToken = cleanText(input.kommoAccessToken) || null;
+
+  if (!kommoAccessToken && input.preserveKommoAccessToken) {
+    const existingKommoResult = await queryDb<{ kommo_access_token: string | null }>(
+      `SELECT kommo_access_token FROM clients WHERE client_slug = $1 LIMIT 1`,
+      [existingSlug]
+    );
+    kommoAccessToken =
+      cleanText(existingKommoResult.rows[0]?.kommo_access_token) || null;
   }
 
   const result = await queryDb<DatabaseClinicRow>(
@@ -586,11 +603,13 @@ export async function saveClinic(input: ManagedClinicInput, workspaceSlug?: stri
         kommo_pipeline_id,
         kommo_status_id,
         kommo_custom_fields,
+        kommo_subdomain,
+        kommo_access_token,
         is_active,
         workspace_slug
       )
       VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, $18, $19
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, $18, $19, $20, $21
       )
       ON CONFLICT (client_slug)
       DO UPDATE SET
@@ -610,6 +629,8 @@ export async function saveClinic(input: ManagedClinicInput, workspaceSlug?: stri
         kommo_pipeline_id = EXCLUDED.kommo_pipeline_id,
         kommo_status_id = EXCLUDED.kommo_status_id,
         kommo_custom_fields = EXCLUDED.kommo_custom_fields,
+        kommo_subdomain = EXCLUDED.kommo_subdomain,
+        kommo_access_token = EXCLUDED.kommo_access_token,
         is_active = EXCLUDED.is_active,
         workspace_slug = COALESCE(clients.workspace_slug, EXCLUDED.workspace_slug)
       RETURNING
@@ -633,6 +654,8 @@ export async function saveClinic(input: ManagedClinicInput, workspaceSlug?: stri
         kommo_pipeline_id,
         kommo_status_id,
         kommo_custom_fields,
+        kommo_subdomain,
+        kommo_access_token,
         is_active
     `,
     [
@@ -657,6 +680,8 @@ export async function saveClinic(input: ManagedClinicInput, workspaceSlug?: stri
           ? normalizeCustomFieldMap(input.kommoCustomFields)
           : DEFAULT_KOMMO_CUSTOM_FIELDS
       ),
+      input.kommoEnabled ? cleanText(input.kommoSubdomain) || null : null,
+      input.kommoEnabled ? kommoAccessToken : null,
       input.isActive,
       workspaceSlug ?? null
     ]
@@ -733,10 +758,14 @@ export function toClinicFormValues(
     kommoPipelineId: clinic?.kommoPipelineId,
     kommoStatusId: clinic?.kommoStatusId,
     kommoCustomFields: normalizeCustomFieldMap(clinic?.kommoCustomFields),
+    kommoSubdomain: clinic?.kommoSubdomain || "",
+    kommoAccessToken: "",
+    preserveKommoAccessToken: false,
     isActive: clinic?.isActive ?? true,
     source: clinic?.source || "database",
     metaCapiConfigured: clinic?.metaCapiConfigured ?? false,
-    metaCapiAccessTokenConfigured: clinic?.metaCapiConfigured ?? false
+    metaCapiAccessTokenConfigured: clinic?.metaCapiConfigured ?? false,
+    kommoAccessTokenConfigured: Boolean((clinic as ManagedClinicServerRecord)?.kommoAccessToken)
   };
 }
 
@@ -794,6 +823,11 @@ export function parseClinicFormData(formData: FormData): ManagedClinicInput {
     kommoPipelineId: kommoEnabled ? getNumber("kommoPipelineId") : undefined,
     kommoStatusId: kommoEnabled ? getNumber("kommoStatusId") : undefined,
     kommoCustomFields,
+    kommoSubdomain: kommoEnabled ? cleanText(getValue("kommoSubdomain")) : undefined,
+    kommoAccessToken: kommoEnabled ? cleanText(getValue("kommoAccessToken")) : undefined,
+    preserveKommoAccessToken:
+      getValue("preserveKommoAccessToken") === "true" &&
+      !cleanText(getValue("kommoAccessToken")),
     isActive: formData.get("isActive") === "on"
   };
 }

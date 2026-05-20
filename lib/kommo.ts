@@ -31,42 +31,46 @@ function toOptionalNumber(value?: number | string | null) {
   return undefined;
 }
 
-function getKommoBaseUrl() {
-  const envBaseUrl = process.env.KOMMO_BASE_URL?.trim();
+function resolveKommoBaseUrl(client: ResolvedClientConfig) {
+  const subdomain = (client as { kommoSubdomain?: string }).kommoSubdomain?.trim();
 
+  if (subdomain) {
+    return `https://${subdomain}.kommo.com`;
+  }
+
+  const envBaseUrl = process.env.KOMMO_BASE_URL?.trim();
   if (envBaseUrl) {
     return envBaseUrl.replace(/\/+$/, "");
   }
 
-  const subdomain = process.env.KOMMO_SUBDOMAIN?.trim();
-
-  if (!subdomain) {
-    throw new Error("KOMMO_BASE_URL ou KOMMO_SUBDOMAIN precisa estar configurado.");
+  const envSubdomain = process.env.KOMMO_SUBDOMAIN?.trim();
+  if (envSubdomain) {
+    return `https://${envSubdomain}.kommo.com`;
   }
 
-  return `https://${subdomain}.kommo.com`;
+  throw new Error("Kommo: configure o Subdomínio no cadastro do cliente.");
 }
 
-function getKommoToken() {
-  const token = process.env.KOMMO_LONG_LIVED_TOKEN?.trim();
+function resolveKommoToken(client: ResolvedClientConfig) {
+  const perClientToken = (client as { kommoAccessToken?: string }).kommoAccessToken?.trim();
+  if (perClientToken) return perClientToken;
 
-  if (!token) {
-    throw new Error("KOMMO_LONG_LIVED_TOKEN não configurado.");
-  }
+  const envToken = process.env.KOMMO_LONG_LIVED_TOKEN?.trim();
+  if (envToken) return envToken;
 
-  return token;
+  throw new Error("Kommo: configure o Token de Acesso no cadastro do cliente.");
 }
 
-async function kommoFetch<T>(path: string, init: RequestInit) {
-  const response = await fetch(`${getKommoBaseUrl()}${path}`, {
+async function kommoFetch<T>(path: string, init: RequestInit, client: ResolvedClientConfig) {
+  const response = await fetch(`${resolveKommoBaseUrl(client)}${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${getKommoToken()}`,
+      Authorization: `Bearer ${resolveKommoToken(client)}`,
       "Content-Type": "application/json",
       Accept: "application/json",
       ...(init.headers || {})
     },
-    signal: AbortSignal.timeout(1800),
+    signal: AbortSignal.timeout(10000),
     cache: "no-store"
   });
 
@@ -197,7 +201,7 @@ export async function createKommoLead(
   const leadResponse = await kommoFetch<KommoLeadApiResponse>("/api/v4/leads", {
     method: "POST",
     body: JSON.stringify([leadBody])
-  });
+  }, client);
 
   const leadId = leadResponse?._embedded?.leads?.[0]?.id;
 
@@ -219,7 +223,7 @@ export async function createKommoLead(
           }
         }
       ])
-    });
+    }, client);
     noteCreated = true;
   } catch {
     noteCreated = false;
