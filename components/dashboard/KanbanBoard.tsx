@@ -7,7 +7,7 @@ import type { KanbanLead } from "@/lib/kanban";
 import { formatCurrencyFromCents } from "@/lib/format";
 import { formatLeadPhone } from "@/lib/phone";
 
-type KanbanBoardProps = { leads: KanbanLead[] };
+type KanbanBoardProps = { leads: KanbanLead[]; trafficOnly?: boolean };
 
 type FilterType = "all" | "not_replied" | "replied" | "stale" | "urgent" | "follow_up_pending";
 type ChannelFilter = "all" | "whatsapp" | "instagram" | "messenger";
@@ -148,7 +148,7 @@ const WA_ICON = (
 
 // ─── component ──────────────────────────────────────────────────────────────
 
-export function KanbanBoard({ leads }: KanbanBoardProps) {
+export function KanbanBoard({ leads, trafficOnly = false }: KanbanBoardProps) {
   const router = useRouter();
 
   // existing state
@@ -356,6 +356,37 @@ export function KanbanBoard({ leads }: KanbanBoardProps) {
             </span>
           </>
         ) : null}
+      </div>
+
+      {/* ── traffic / todos toggle ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+        <span style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          Origem:
+        </span>
+        <a
+          href="/dashboard/kanban"
+          style={{
+            fontSize: "0.72rem", padding: "4px 12px", borderRadius: 20,
+            border: "1px solid var(--border)", cursor: "pointer", textDecoration: "none",
+            background: !trafficOnly ? "var(--brand)" : "transparent",
+            color: !trafficOnly ? "#fff" : "var(--muted)",
+            fontWeight: !trafficOnly ? 600 : 400,
+          }}
+        >
+          Todos
+        </a>
+        <a
+          href="/dashboard/kanban?mode=traffic"
+          style={{
+            fontSize: "0.72rem", padding: "4px 12px", borderRadius: 20,
+            border: "1px solid var(--border)", cursor: "pointer", textDecoration: "none",
+            background: trafficOnly ? "var(--brand)" : "transparent",
+            color: trafficOnly ? "#fff" : "var(--muted)",
+            fontWeight: trafficOnly ? 600 : 400,
+          }}
+        >
+          Só Tráfego
+        </a>
       </div>
 
       {/* ── channel filter ── */}

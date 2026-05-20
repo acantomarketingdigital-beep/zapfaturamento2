@@ -104,15 +104,20 @@ export function mapKommoStatusToLeadStatus(value?: string | null): LeadStatus {
   return "em_atendimento";
 }
 
-export async function listKanbanLeads(clientSlug?: string | null) {
+export async function listKanbanLeads(clientSlug?: string | null, trafficOnly = false) {
   if (!hasDatabaseConfig()) {
     return [];
   }
 
   const values: unknown[] = [];
-  const whereSql = clientSlug
-    ? `WHERE client_slug = $${values.push(clientSlug)} AND lead_phone IS NOT NULL`
-    : "WHERE lead_phone IS NOT NULL";
+  const parts: string[] = ["lead_phone IS NOT NULL"];
+  if (clientSlug) parts.push(`client_slug = $${values.push(clientSlug)}`);
+  if (trafficOnly) {
+    parts.push(
+      "(fbclid IS NOT NULL OR gclid IS NOT NULL OR (source_platform IS NOT NULL AND source_platform != ''))"
+    );
+  }
+  const whereSql = `WHERE ${parts.join(" AND ")}`;
 
   const result = await queryDb<KanbanLead>(
     `

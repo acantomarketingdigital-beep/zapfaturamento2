@@ -5,12 +5,19 @@ import { getCurrentUser, isDashboardConfigured } from "@/lib/dashboard-auth";
 import { hasDatabaseConfig } from "@/lib/db";
 import { listConversationsByStage } from "@/lib/whatsapp-connections";
 
-export default async function PipelinePage() {
+export default async function PipelinePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string>>;
+}) {
   const user = await getCurrentUser();
   if (!user) return <DashboardLogin configured={isDashboardConfigured()} error="" />;
 
+  const params = await searchParams;
+  const trafficOnly = params.mode === "traffic";
+
   const clientSlug = user.clientSlug;
-  const conversations = await listConversationsByStage(clientSlug);
+  const conversations = await listConversationsByStage(clientSlug, trafficOnly);
 
   return (
     <main className="dashboard-shell" style={{ overflow: "hidden" }}>
@@ -33,7 +40,7 @@ export default async function PipelinePage() {
           </div>
         </header>
 
-        <PipelineClient initialConversations={conversations} />
+        <PipelineClient initialConversations={conversations} trafficOnly={trafficOnly} />
       </section>
     </main>
   );

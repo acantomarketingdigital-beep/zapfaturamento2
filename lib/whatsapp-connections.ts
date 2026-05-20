@@ -622,14 +622,20 @@ export async function setConversationStage(id: string, stage: string): Promise<v
 }
 
 export async function listConversationsByStage(
-  clientSlug: string | null
+  clientSlug: string | null,
+  trafficOnly = false
 ): Promise<WhatsappConversation[]> {
   if (!hasDatabaseConfig()) return [];
   const params: unknown[] = [];
-  const conditions: string[] = ["wconv.pipeline_stage != 'perdido'"];
+  const conditions: string[] = [
+    "(wconv.pipeline_stage IS NULL OR wconv.pipeline_stage != 'perdido')",
+  ];
   if (clientSlug) {
     params.push(clientSlug);
     conditions.push(`wconv.client_slug = $${params.length}`);
+  }
+  if (trafficOnly) {
+    conditions.push("wconv.lead_id IS NOT NULL");
   }
   const where = `WHERE ${conditions.join(" AND ")}`;
   const result = await queryDb<WhatsappConversation>(

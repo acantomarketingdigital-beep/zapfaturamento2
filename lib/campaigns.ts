@@ -22,6 +22,10 @@ export type CampaignRecord = {
   seoTitle: string | null;
   seoDescription: string | null;
   seoBullets: string[] | null;
+  media1Url: string | null;
+  media1Type: "image" | "video" | null;
+  media2Url: string | null;
+  media2Type: "image" | "video" | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -80,6 +84,10 @@ type CampaignRow = {
   seo_title: string | null;
   seo_description: string | null;
   seo_bullets: string[] | null;
+  media_1_url: string | null;
+  media_1_type: string | null;
+  media_2_url: string | null;
+  media_2_type: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -90,6 +98,7 @@ const SELECT_COLS = `id, client_id, client_slug, name, slug, default_message, wh
   COALESCE(seo_keywords, '{}') AS seo_keywords,
   COALESCE(seo_locations, '{}') AS seo_locations,
   seo_title, seo_description, seo_bullets,
+  media_1_url, media_1_type, media_2_url, media_2_type,
   created_at, updated_at`;
 
 function mapRow(row: CampaignRow): CampaignRecord {
@@ -111,6 +120,10 @@ function mapRow(row: CampaignRow): CampaignRecord {
     seoTitle: row.seo_title ?? null,
     seoDescription: row.seo_description ?? null,
     seoBullets: row.seo_bullets ?? null,
+    media1Url: row.media_1_url ?? null,
+    media1Type: (row.media_1_type === "image" || row.media_1_type === "video") ? row.media_1_type : null,
+    media2Url: row.media_2_url ?? null,
+    media2Type: (row.media_2_type === "image" || row.media_2_type === "video") ? row.media_2_type : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

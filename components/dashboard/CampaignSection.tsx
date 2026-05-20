@@ -25,6 +25,10 @@ type Campaign = {
   seoTitle: string | null;
   seoDescription: string | null;
   seoBullets: string[] | null;
+  media1Url: string | null;
+  media1Type: "image" | "video" | null;
+  media2Url: string | null;
+  media2Type: "image" | "video" | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -58,6 +62,141 @@ type ModalState = {
   seoDescription: string;
   seoBullets: string[];
 };
+
+function CampaignMediaSection({
+  campaign,
+  clientSlug,
+  canManage,
+  onUpdate,
+}: {
+  campaign: Campaign;
+  clientSlug: string;
+  canManage: boolean;
+  onUpdate: (updates: Partial<Pick<Campaign, "media1Url" | "media1Type" | "media2Url" | "media2Type">>) => void;
+}) {
+  const [slot1Loading, setSlot1Loading] = useState(false);
+  const [slot2Loading, setSlot2Loading] = useState(false);
+  const slot1Ref = useRef<HTMLInputElement>(null);
+  const slot2Ref = useRef<HTMLInputElement>(null);
+
+  async function handleUpload(slot: "1" | "2", file: File) {
+    const setLoading = slot === "1" ? setSlot1Loading : setSlot2Loading;
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("slot", slot);
+      fd.append("clientSlug", clientSlug);
+      const res = await fetch(`/api/campaigns/${campaign.id}/media`, { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || "Erro ao fazer upload."); return; }
+      if (slot === "1") {
+        onUpdate({ media1Url: data.url, media1Type: data.type });
+      } else {
+        onUpdate({ media2Url: data.url, media2Type: data.type });
+      }
+    } catch {
+      alert("Erro de rede ao fazer upload.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRemove(slot: "1" | "2") {
+    const setLoading = slot === "1" ? setSlot1Loading : setSlot2Loading;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/campaigns/${campaign.id}/media`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientSlug, slot }),
+      });
+      if (!res.ok) { alert("Erro ao remover mídia."); return; }
+      if (slot === "1") {
+        onUpdate({ media1Url: null, media1Type: null });
+      } else {
+        onUpdate({ media2Url: null, media2Type: null });
+      }
+    } catch {
+      alert("Erro de rede.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const slots = [
+    { slot: "1" as const, url: campaign.media1Url, type: campaign.media1Type, loading: slot1Loading, ref: slot1Ref },
+    { slot: "2" as const, url: campaign.media2Url, type: campaign.media2Type, loading: slot2Loading, ref: slot2Ref },
+  ];
+
+  return (
+    <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
+      <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted, #9ca3af)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>
+        Mídia da Smart Page
+      </div>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        {slots.map(({ slot, url, type, loading, ref }) => (
+          <div key={slot} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--text-muted, #6b7280)", fontWeight: 600 }}>Mídia {slot}</div>
+            {url ? (
+              <div style={{ position: "relative", width: 130, height: 98, borderRadius: 8, overflow: "hidden", background: "#f3f4f6" }}>
+                {type === "video" ? (
+                  <video src={url} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted playsInline />
+                ) : (
+                  <img src={url} alt={`Mídia ${slot}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                )}
+                {canManage && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(slot)}
+                    disabled={loading}
+                    style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: 4, padding: "2px 7px", cursor: "pointer", fontSize: "0.72rem", lineHeight: 1.4 }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ) : canManage ? (
+              <button
+                type="button"
+                onClick={() => !loading && ref.current?.click()}
+                disabled={loading}
+                style={{ width: 130, height: 98, border: "2px dashed var(--border, #e5e7eb)", borderRadius: 8, background: "none", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: loading ? "wait" : "pointer", color: "var(--text-muted, #9ca3af)", fontSize: "0.78rem", gap: 4 }}
+              >
+                {loading ? "Enviando..." : (
+                  <>
+                    <span style={{ fontSize: "1.3rem", lineHeight: 1 }}>+</span>
+                    <span>Adicionar mídia</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <div style={{ width: 130, height: 98, border: "2px dashed var(--border, #e5e7eb)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted, #9ca3af)", fontSize: "0.78rem" }}>
+                Sem mídia
+              </div>
+            )}
+            {canManage && (
+              <input
+                ref={ref}
+                type="file"
+                accept="image/*,video/*"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleUpload(slot, file);
+                  e.target.value = "";
+                }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+      <p style={{ fontSize: "0.72rem", color: "var(--text-muted, #9ca3af)", margin: "8px 0 0" }}>
+        Imagem até 5 MB · Vídeo até 50 MB. Aparece nas laterais da Smart Page no desktop e abaixo do CTA no mobile.
+      </p>
+    </div>
+  );
+}
 
 const CURRENCY_OPTIONS: { value: Currency; label: string }[] = [
   { value: "BRL", label: "BRL — Real" },
@@ -185,8 +324,8 @@ export function CampaignSection({
           dailyBudgetCents: isNaN(dailyBudgetCents) ? 0 : dailyBudgetCents,
           currency: modal.currency,
           campaignSource: modal.campaignSource,
-          seoKeywords: modal.seoKeywords,
-          seoLocations: modal.seoLocations,
+          seoKeywords: modal.seoKeywords.filter(Boolean),
+          seoLocations: modal.seoLocations.filter(Boolean),
           seoTitle: modal.seoTitle.trim() || null,
           seoDescription: modal.seoDescription.trim() || null,
           seoBullets: modal.seoBullets.filter(Boolean),
@@ -334,6 +473,15 @@ export function CampaignSection({
                   baseUrl={baseUrl}
                   canManage={canManage}
                   hasGoogleAds={hasGoogleAds}
+                />
+
+                <CampaignMediaSection
+                  campaign={campaign}
+                  clientSlug={clientSlug}
+                  canManage={canManage}
+                  onUpdate={(updates) =>
+                    setCampaigns((prev) => prev.map((c) => (c.id === campaign.id ? { ...c, ...updates } : c)))
+                  }
                 />
 
                 {canManage ? (
@@ -517,7 +665,7 @@ export function CampaignSection({
                       onChange={(e) =>
                         setModal({
                           ...modal,
-                          seoLocations: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
+                          seoLocations: e.target.value.split("\n").map((s) => s.trim()),
                         })
                       }
                     />
@@ -528,16 +676,16 @@ export function CampaignSection({
                   <div className="dashboard-field" style={{ margin: 0 }}>
                     <span>
                       Palavras-chave *{" "}
-                      <span style={{ fontWeight: 400, color: modal.seoKeywords.length < 10 ? "#dc2626" : "#15803d" }}>
-                        ({modal.seoKeywords.length}/10 mínimo)
+                      <span style={{ fontWeight: 400, color: modal.seoKeywords.filter(Boolean).length < 10 ? "#dc2626" : "#15803d" }}>
+                        ({modal.seoKeywords.filter(Boolean).length}/10 mínimo)
                       </span>
                     </span>
                     <textarea
-                      rows={10}
+                      rows={6}
                       placeholder={"limpeza de sofá londrina\nhigienização de sofá londrina\nlavagem de sofá londrina\nlimpeza de estofados londrina\nhigienização de estofados londrina\nlavagem de sofa profissional\nimpermeabilização de sofá londrina\nlimpeza profissional de sofá\nlimpeza sofá perto de mim\nlimpar sofá londrina"}
                       value={modal.seoKeywords.join("\n")}
                       onChange={(e) => {
-                        const kws = e.target.value.split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 20);
+                        const kws = e.target.value.split("\n").map((s) => s.trim()).slice(0, 20);
                         setModal({ ...modal, seoKeywords: kws });
                       }}
                     />
@@ -577,7 +725,7 @@ export function CampaignSection({
                           onChange={(e) =>
                             setModal({
                               ...modal,
-                              seoBullets: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
+                              seoBullets: e.target.value.split("\n").map((s) => s.trim()),
                             })
                           }
                         />

@@ -15,7 +15,16 @@ import {
   trackRedirectPageView,
 } from "@/lib/tracking";
 
-type CampaignContext = { id: string; slug: string; name: string; defaultMessage: string };
+type CampaignContext = {
+  id: string;
+  slug: string;
+  name: string;
+  defaultMessage: string;
+  media1Url?: string | null;
+  media1Type?: "image" | "video" | null;
+  media2Url?: string | null;
+  media2Type?: "image" | "video" | null;
+};
 type CreativeContext = { id: string; slug: string };
 
 type Props = {
@@ -72,6 +81,65 @@ function WhatsAppIcon() {
   );
 }
 
+function MediaSlot({
+  url,
+  type,
+  onWaClick,
+  disabled,
+}: {
+  url: string;
+  type: "image" | "video" | null;
+  onWaClick: () => void;
+  disabled: boolean;
+}) {
+  const [muted, setMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  function toggleSound() {
+    if (!videoRef.current) return;
+    const next = !videoRef.current.muted;
+    videoRef.current.muted = next;
+    setMuted(next);
+  }
+
+  return (
+    <div className="smart-media-slot">
+      {type === "video" ? (
+        <div className="smart-media-video-wrap">
+          <video
+            ref={videoRef}
+            src={url}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="smart-media-video"
+          />
+          <button
+            type="button"
+            className="smart-media-sound-btn"
+            onClick={toggleSound}
+            aria-label={muted ? "Ativar som" : "Silenciar"}
+          >
+            {muted ? "🔇" : "🔊"}
+          </button>
+        </div>
+      ) : (
+        <img src={url} alt="Mídia da campanha" className="smart-media-img" />
+      )}
+      <button
+        type="button"
+        className="smart-media-wa-btn"
+        onClick={onWaClick}
+        disabled={disabled}
+      >
+        <WhatsAppIcon />
+        Falar no WhatsApp
+      </button>
+    </div>
+  );
+}
+
 export function SmartRedirectPage({ client, campaign, creative, seoContent }: Props) {
   const [whatsappUrl, setWhatsappUrl] = useState("");
   const [payload, setPayload] = useState<LeadCapturePayload | null>(null);
@@ -81,6 +149,12 @@ export function SmartRedirectPage({ client, campaign, creative, seoContent }: Pr
   const headline = seoContent?.title ?? `Fale com ${client.clientName} pelo WhatsApp`;
   const bullets = seoContent?.bullets ?? DEFAULT_BENEFITS;
   const ctaText = seoContent?.ctaText ?? "Falar no WhatsApp agora";
+
+  const media1Url = campaign?.media1Url ?? null;
+  const media1Type = campaign?.media1Type ?? null;
+  const media2Url = campaign?.media2Url ?? null;
+  const media2Type = campaign?.media2Type ?? null;
+  const hasMedia = !!(media1Url || media2Url);
 
   useEffect(() => {
     if (initialized.current) return;
@@ -126,6 +200,59 @@ export function SmartRedirectPage({ client, campaign, creative, seoContent }: Pr
     window.location.href = whatsappUrl;
   }
 
+  const mediaDisabled = clicked || !whatsappUrl;
+
+  const contentSection = (
+    <section className="smart-content">
+      {seoContent && (
+        <div className="smart-badge">⭐ {seoContent.badgeText}</div>
+      )}
+
+      <h1 className="smart-headline">{headline}</h1>
+
+      {seoContent?.description ? (
+        <p className="smart-subtitle">{seoContent.description}</p>
+      ) : (
+        <p className="smart-subtitle">
+          Nossa equipe está pronta para te atender agora. Clique no botão abaixo para iniciar a conversa.
+        </p>
+      )}
+
+      <ul className="smart-benefits" aria-label="Benefícios">
+        {bullets.map((b, i) => (
+          <li key={i} className="smart-benefit">
+            <span className="smart-benefit__icon"><CheckIcon /></span>
+            <span>{b}</span>
+          </li>
+        ))}
+      </ul>
+
+      <button
+        type="button"
+        className={`smart-cta${clicked ? " smart-cta--loading" : ""}`}
+        onClick={handleClick}
+        disabled={clicked || !whatsappUrl}
+        aria-label="Falar no WhatsApp"
+      >
+        <WhatsAppIcon />
+        {clicked ? "Abrindo WhatsApp..." : ctaText}
+      </button>
+
+      <p className="smart-trust">🔒 Atendimento gratuito e sem compromisso</p>
+
+      {seoContent && seoContent.keywords.length > 0 && (
+        <section aria-label="Serviços atendidos" className="smart-keywords">
+          <p className="smart-keywords__label">Serviços que atendemos:</p>
+          <ul className="smart-keywords__list">
+            {seoContent.keywords.map((kw, i) => (
+              <li key={i} className="smart-keywords__tag">{kw}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </section>
+  );
+
   return (
     <main className="smart-shell">
       <header className="smart-header">
@@ -140,54 +267,36 @@ export function SmartRedirectPage({ client, campaign, creative, seoContent }: Pr
         </div>
       </header>
 
-      <section className="smart-content">
-        {seoContent && (
-          <div className="smart-badge">⭐ {seoContent.badgeText}</div>
+      <div className="smart-body">
+        {hasMedia && (
+          <aside className="smart-sidebar">
+            {media1Url && (
+              <MediaSlot url={media1Url} type={media1Type} onWaClick={handleClick} disabled={mediaDisabled} />
+            )}
+          </aside>
         )}
 
-        <h1 className="smart-headline">{headline}</h1>
+        {contentSection}
 
-        {seoContent?.description ? (
-          <p className="smart-subtitle">{seoContent.description}</p>
-        ) : (
-          <p className="smart-subtitle">
-            Nossa equipe está pronta para te atender agora. Clique no botão abaixo para iniciar a conversa.
-          </p>
+        {hasMedia && (
+          <aside className="smart-sidebar">
+            {media2Url && (
+              <MediaSlot url={media2Url} type={media2Type} onWaClick={handleClick} disabled={mediaDisabled} />
+            )}
+          </aside>
         )}
+      </div>
 
-        <ul className="smart-benefits" aria-label="Benefícios">
-          {bullets.map((b, i) => (
-            <li key={i} className="smart-benefit">
-              <span className="smart-benefit__icon"><CheckIcon /></span>
-              <span>{b}</span>
-            </li>
-          ))}
-        </ul>
-
-        <button
-          type="button"
-          className={`smart-cta${clicked ? " smart-cta--loading" : ""}`}
-          onClick={handleClick}
-          disabled={clicked || !whatsappUrl}
-          aria-label="Falar no WhatsApp"
-        >
-          <WhatsAppIcon />
-          {clicked ? "Abrindo WhatsApp..." : ctaText}
-        </button>
-
-        <p className="smart-trust">🔒 Atendimento gratuito e sem compromisso</p>
-
-        {seoContent && seoContent.keywords.length > 0 && (
-          <section aria-label="Serviços atendidos" className="smart-keywords">
-            <p className="smart-keywords__label">Serviços que atendemos:</p>
-            <ul className="smart-keywords__list">
-              {seoContent.keywords.map((kw, i) => (
-                <li key={i} className="smart-keywords__tag">{kw}</li>
-              ))}
-            </ul>
-          </section>
-        )}
-      </section>
+      {hasMedia && (
+        <div className="smart-media-mobile">
+          {media1Url && (
+            <MediaSlot url={media1Url} type={media1Type} onWaClick={handleClick} disabled={mediaDisabled} />
+          )}
+          {media2Url && (
+            <MediaSlot url={media2Url} type={media2Type} onWaClick={handleClick} disabled={mediaDisabled} />
+          )}
+        </div>
+      )}
 
       <footer className="smart-footer">
         <span>© {new Date().getFullYear()} {client.clientName}</span>

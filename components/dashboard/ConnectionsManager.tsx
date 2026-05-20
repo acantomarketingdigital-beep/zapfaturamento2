@@ -878,8 +878,12 @@ export function ConnectionsManager({
               <div className="conexao-card__header">
                 <div>
                   <strong className="conexao-card__name">{conn.connection_name}</strong>
-                  {isAgencyAdmin && conn.client_name && (
-                    <div className="conexao-card__client">{conn.client_name}</div>
+                  {(conn.client_name || conn.client_slug) && (
+                    <div className="conexao-card__client">
+                      {conn.client_name
+                        ? conn.client_name
+                        : conn.client_slug.replace(/-/g, " ")}
+                    </div>
                   )}
                   {conn.phone_number && (
                     <div className="conexao-card__phone">{conn.phone_number}</div>

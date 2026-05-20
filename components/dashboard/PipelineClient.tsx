@@ -18,6 +18,7 @@ type StageKey = typeof STAGES[number]["key"];
 
 type Props = {
   initialConversations: WhatsappConversation[];
+  trafficOnly?: boolean;
 };
 
 type DealModal = {
@@ -25,7 +26,7 @@ type DealModal = {
   value: string;
 };
 
-export function PipelineClient({ initialConversations }: Props) {
+export function PipelineClient({ initialConversations, trafficOnly = false }: Props) {
   const [conversations, setConversations] = useState(initialConversations);
   const [movingId, setMovingId] = useState<string | null>(null);
   const [dealModal, setDealModal] = useState<DealModal | null>(null);
@@ -164,6 +165,37 @@ export function PipelineClient({ initialConversations }: Props) {
           </div>
         </div>
       )}
+
+      {/* Traffic / todos toggle */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+        <span style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          Origem:
+        </span>
+        <a
+          href="/dashboard/pipeline"
+          style={{
+            fontSize: "0.72rem", padding: "4px 12px", borderRadius: 20,
+            border: "1px solid var(--border)", cursor: "pointer", textDecoration: "none",
+            background: !trafficOnly ? "var(--brand)" : "transparent",
+            color: !trafficOnly ? "#fff" : "var(--muted)",
+            fontWeight: !trafficOnly ? 600 : 400,
+          }}
+        >
+          Todos
+        </a>
+        <a
+          href="/dashboard/pipeline?mode=traffic"
+          style={{
+            fontSize: "0.72rem", padding: "4px 12px", borderRadius: 20,
+            border: "1px solid var(--border)", cursor: "pointer", textDecoration: "none",
+            background: trafficOnly ? "var(--brand)" : "transparent",
+            color: trafficOnly ? "#fff" : "var(--muted)",
+            fontWeight: trafficOnly ? 600 : 400,
+          }}
+        >
+          Só Tráfego
+        </a>
+      </div>
 
       {clients.length > 1 && (
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>

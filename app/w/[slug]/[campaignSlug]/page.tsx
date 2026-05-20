@@ -96,6 +96,10 @@ export default async function CampaignRedirectPage({ params, searchParams }: Pag
     slug: campaign.slug,
     name: campaign.name,
     defaultMessage: campaign.defaultMessage || client.whatsappMessage,
+    media1Url: campaign.media1Url,
+    media1Type: campaign.media1Type,
+    media2Url: campaign.media2Url,
+    media2Type: campaign.media2Type,
   };
 
   if (isMetaTraffic(sp)) {

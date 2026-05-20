@@ -215,7 +215,7 @@ export default async function ClinicDetailsPage({
                 <strong>{clinic.ga4Id || "-"}</strong>
               </div>
               <div>
-                <span>Google Ads</span>
+                <span>ID de Conversão</span>
                 <strong>{clinic.googleAdsId || "-"}</strong>
               </div>
             </div>

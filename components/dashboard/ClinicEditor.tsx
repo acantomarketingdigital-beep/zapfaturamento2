@@ -347,12 +347,12 @@ export function ClinicEditor({
               </label>
 
               <label className="dashboard-field">
-                <span>Google Ads ID</span>
+                <span>ID de Conversão</span>
                 <input type="text" name="googleAdsId" defaultValue={values.googleAdsId} />
               </label>
 
               <label className="dashboard-field dashboard-field--full">
-                <span>Google Ads Conversion Label</span>
+                <span>Rótulo de Conversão</span>
                 <input
                   type="text"
                   name="googleAdsConversionLabel"

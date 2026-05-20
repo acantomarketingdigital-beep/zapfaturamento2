@@ -128,7 +128,7 @@ export function ClinicForm({
               </p>
             </div>
             <label className="dashboard-field">
-              <span>Google Ads ID</span>
+              <span>ID de Conversão</span>
               <input
                 type="text"
                 name="googleAdsId"
@@ -138,7 +138,7 @@ export function ClinicForm({
               />
             </label>
             <label className="dashboard-field">
-              <span>Google Ads Conversion Label</span>
+              <span>Rótulo de Conversão</span>
               <input
                 type="text"
                 name="googleAdsConversionLabel"

@@ -115,6 +115,7 @@ export function InboxClient({ isAgencyAdmin }: Props) {
   // Connection filter
   const [filterConnection, setFilterConnection] = useState<string | null>(null);
   const [filterDate, setFilterDate] = useState<"all" | "today" | "yesterday" | "week">("all");
+  const [trafficOnly, setTrafficOnly] = useState(false);
 
   const connections = Array.from(
     new Map(
@@ -145,11 +146,14 @@ export function InboxClient({ isAgencyAdmin }: Props) {
 
   const loadConversations = useCallback(async () => {
     try {
-      const res = await fetch("/api/whatsapp/inbox/conversations?traffic_only=1");
+      const url = trafficOnly
+        ? "/api/whatsapp/inbox/conversations?traffic_only=1"
+        : "/api/whatsapp/inbox/conversations?traffic_only=0";
+      const res = await fetch(url);
       const data = (await res.json()) as { conversations?: WhatsappConversation[] };
       if (data.conversations) setConversations(data.conversations);
     } catch {}
-  }, []);
+  }, [trafficOnly]);
 
   const loadMessages = useCallback(async (id: string) => {
     setLoadingMsgs(true);
@@ -280,6 +284,25 @@ export function InboxClient({ isAgencyAdmin }: Props) {
         <div className="inbox-panel-left__header">
           <span>Conversas</span>
           <span className="inbox-panel-left__count">{visibleConversations.length}</span>
+        </div>
+
+        {/* Filtro tráfego / todos */}
+        <div style={{ display: "flex", gap: 4, padding: "6px 10px", borderBottom: "1px solid var(--border)", flexWrap: "wrap" }}>
+          {([false, true] as const).map((val) => (
+            <button
+              key={String(val)}
+              onClick={() => setTrafficOnly(val)}
+              style={{
+                fontSize: "0.7rem", padding: "3px 10px", borderRadius: 20,
+                border: "1px solid var(--border)", cursor: "pointer",
+                background: trafficOnly === val ? "var(--brand)" : "transparent",
+                color: trafficOnly === val ? "#fff" : "var(--muted)",
+                fontWeight: trafficOnly === val ? 600 : 400,
+              }}
+            >
+              {val ? "Só Tráfego" : "Todos"}
+            </button>
+          ))}
         </div>
 
         {/* Filtro de data */}

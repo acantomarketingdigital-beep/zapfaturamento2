@@ -1,0 +1,5 @@
+ALTER TABLE client_campaigns
+  ADD COLUMN IF NOT EXISTS media_1_url  TEXT,
+  ADD COLUMN IF NOT EXISTS media_1_type TEXT,
+  ADD COLUMN IF NOT EXISTS media_2_url  TEXT,
+  ADD COLUMN IF NOT EXISTS media_2_type TEXT;

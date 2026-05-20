@@ -5,17 +5,24 @@ import { getCurrentUser, isDashboardConfigured } from "@/lib/dashboard-auth";
 import { hasDatabaseConfig } from "@/lib/db";
 import { listKanbanLeads } from "@/lib/kanban";
 
-export default async function KanbanPage() {
+export default async function KanbanPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string>>;
+}) {
   const user = await getCurrentUser();
 
   if (!user) {
     return <DashboardLogin configured={isDashboardConfigured()} error="" />;
   }
 
+  const params = await searchParams;
+  const trafficOnly = params.mode === "traffic";
+
   let leads: Awaited<ReturnType<typeof listKanbanLeads>> = [];
   let kanbanError = "";
   try {
-    leads = await listKanbanLeads(user.clientSlug);
+    leads = await listKanbanLeads(user.clientSlug, trafficOnly);
   } catch (err) {
     kanbanError = err instanceof Error ? err.message : "Erro ao carregar leads.";
   }
@@ -46,7 +53,7 @@ export default async function KanbanPage() {
             <strong>Erro ao carregar leads:</strong> {kanbanError}
           </div>
         )}
-        <KanbanBoard leads={leads} />
+        <KanbanBoard leads={leads} trafficOnly={trafficOnly} />
       </section>
     </main>
   );

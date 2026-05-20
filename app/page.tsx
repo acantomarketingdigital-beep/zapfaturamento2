@@ -130,7 +130,7 @@ const integrations = [
 
 const inboxFeatures = [
   { label: "Conversas do tráfego pago apenas", desc: "Sem misturar com conversas particulares" },
-  { label: "Filtro por cliente", desc: "Separe UNIK Beauty de Águia Tech com um clique" },
+  { label: "Filtro por cliente", desc: "Separe Cliente 1 de Cliente 2 com um clique" },
   { label: "Pipeline por etapa", desc: "Novo Lead → Atendimento → Fechado → Ganho" },
   { label: "Lead quente marcado", desc: "🔴 Priorize quem está pronto para fechar" },
 ];
