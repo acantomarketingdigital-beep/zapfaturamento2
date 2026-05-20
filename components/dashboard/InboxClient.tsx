@@ -286,8 +286,8 @@ export function InboxClient({ isAgencyAdmin }: Props) {
           <span className="inbox-panel-left__count">{visibleConversations.length}</span>
         </div>
 
-        {/* Filtro de cliente — sempre visível se houver mais de um */}
-        {connections.length > 1 && (
+        {/* Filtro de cliente — visível para agency admin sempre que houver ao menos um cliente */}
+        {isAgencyAdmin && connections.length >= 1 && (
           <div style={{ display: "flex", gap: 4, padding: "6px 10px", borderBottom: "1px solid var(--border)", flexWrap: "wrap" }}>
             <button
               onClick={() => setFilterConnection(null)}
