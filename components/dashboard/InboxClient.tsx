@@ -286,6 +286,41 @@ export function InboxClient({ isAgencyAdmin }: Props) {
           <span className="inbox-panel-left__count">{visibleConversations.length}</span>
         </div>
 
+        {/* Filtro de cliente — sempre visível se houver mais de um */}
+        {connections.length > 1 && (
+          <div style={{ display: "flex", gap: 4, padding: "6px 10px", borderBottom: "1px solid var(--border)", flexWrap: "wrap" }}>
+            <button
+              onClick={() => setFilterConnection(null)}
+              style={{
+                fontSize: "0.7rem", padding: "3px 10px", borderRadius: 20,
+                border: "1px solid var(--border)", cursor: "pointer",
+                background: filterConnection === null ? "var(--brand)" : "transparent",
+                color: filterConnection === null ? "#fff" : "var(--muted)",
+                fontWeight: filterConnection === null ? 600 : 400,
+              }}
+            >
+              Todos
+            </button>
+            {connections.map(({ slug, name }) => (
+              <button
+                key={slug}
+                onClick={() => setFilterConnection(slug)}
+                style={{
+                  fontSize: "0.7rem", padding: "3px 10px", borderRadius: 20,
+                  border: "1px solid var(--border)", cursor: "pointer",
+                  background: filterConnection === slug ? "var(--brand)" : "transparent",
+                  color: filterConnection === slug ? "#fff" : "var(--muted)",
+                  fontWeight: filterConnection === slug ? 600 : 400,
+                  maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}
+                title={name}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Filtro tráfego / todos */}
         <div style={{ display: "flex", gap: 4, padding: "6px 10px", borderBottom: "1px solid var(--border)", flexWrap: "wrap" }}>
           {([false, true] as const).map((val) => (
@@ -326,40 +361,6 @@ export function InboxClient({ isAgencyAdmin }: Props) {
             );
           })}
         </div>
-
-        {connections.length > 1 && (
-          <div style={{ display: "flex", gap: 4, padding: "6px 10px", borderBottom: "1px solid var(--border)", flexWrap: "wrap" }}>
-            <button
-              onClick={() => setFilterConnection(null)}
-              style={{
-                fontSize: "0.7rem", padding: "3px 10px", borderRadius: 20,
-                border: "1px solid var(--border)", cursor: "pointer",
-                background: filterConnection === null ? "var(--brand)" : "transparent",
-                color: filterConnection === null ? "#fff" : "var(--muted)",
-                fontWeight: filterConnection === null ? 600 : 400,
-              }}
-            >
-              Todas
-            </button>
-            {connections.map(({ slug, name }) => (
-              <button
-                key={slug}
-                onClick={() => setFilterConnection(slug)}
-                style={{
-                  fontSize: "0.7rem", padding: "3px 10px", borderRadius: 20,
-                  border: "1px solid var(--border)", cursor: "pointer",
-                  background: filterConnection === slug ? "var(--brand)" : "transparent",
-                  color: filterConnection === slug ? "#fff" : "var(--muted)",
-                  fontWeight: filterConnection === slug ? 600 : 400,
-                  maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}
-                title={name}
-              >
-                {name}
-              </button>
-            ))}
-          </div>
-        )}
 
         <div className="inbox-convs">
           {visibleConversations.length === 0 && (
