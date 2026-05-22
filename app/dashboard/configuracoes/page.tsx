@@ -45,6 +45,13 @@ export default async function ConfiguracoesPage() {
 
   const CONFIG_CARDS: ConfigCard[] = [
     {
+      title: "Personalização",
+      description:
+        "Renomeie as etapas do Kanban, defina tags predefinidas para o CRM e cadastre membros da equipe para atribuição de leads.",
+      href: "/dashboard/configuracoes/workspace",
+      label: "Configurar workspace",
+    },
+    {
       title: "WhatsApp",
       description:
         "Conecte o WhatsApp da clinica via QR Code e receba mensagens dos leads automaticamente no Kanban.",

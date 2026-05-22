@@ -4,6 +4,7 @@ import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { getCurrentUser, isDashboardConfigured } from "@/lib/dashboard-auth";
 import { hasDatabaseConfig } from "@/lib/db";
 import { listKanbanLeads } from "@/lib/kanban";
+import { getWorkspaceSettings } from "@/lib/workspace-settings";
 
 export default async function KanbanPage({
   searchParams,
@@ -26,6 +27,8 @@ export default async function KanbanPage({
   } catch (err) {
     kanbanError = err instanceof Error ? err.message : "Erro ao carregar leads.";
   }
+
+  const wsSettings = await getWorkspaceSettings(user.clientSlug).catch(() => null);
 
   return (
     <main className="dashboard-shell">
@@ -53,7 +56,7 @@ export default async function KanbanPage({
             <strong>Erro ao carregar leads:</strong> {kanbanError}
           </div>
         )}
-        <KanbanBoard leads={leads} trafficOnly={trafficOnly} />
+        <KanbanBoard leads={leads} trafficOnly={trafficOnly} wsSettings={wsSettings} />
       </section>
     </main>
   );

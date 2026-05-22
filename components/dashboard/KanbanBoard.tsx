@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LEAD_STATUS_LABELS, type LeadStatus } from "@/lib/kanban-shared";
 import type { KanbanLead } from "@/lib/kanban";
+import { resolveKanbanLabel, type WorkspaceSettings } from "@/lib/workspace-settings";
 import { formatCurrencyFromCents } from "@/lib/format";
 import { formatLeadPhone } from "@/lib/phone";
 
-type KanbanBoardProps = { leads: KanbanLead[]; trafficOnly?: boolean };
+type KanbanBoardProps = { leads: KanbanLead[]; trafficOnly?: boolean; wsSettings?: WorkspaceSettings | null };
 
 type FilterType = "all" | "not_replied" | "replied" | "stale" | "urgent" | "follow_up_pending";
 type ChannelFilter = "all" | "whatsapp" | "instagram" | "messenger";
@@ -148,7 +149,7 @@ const WA_ICON = (
 
 // ─── component ──────────────────────────────────────────────────────────────
 
-export function KanbanBoard({ leads, trafficOnly = false }: KanbanBoardProps) {
+export function KanbanBoard({ leads, trafficOnly = false, wsSettings = null }: KanbanBoardProps) {
   const router = useRouter();
 
   // existing state
@@ -275,8 +276,8 @@ export function KanbanBoard({ leads, trafficOnly = false }: KanbanBoardProps) {
   }, [leads, filteredLeads, query, channelFilter, filterClient, now]);
 
   const columns = useMemo(
-    () => STATUS_ORDER.map((s) => ({ status: s, label: LEAD_STATUS_LABELS[s], leads: filteredLeads.filter((l) => l.lead_status === s) })),
-    [filteredLeads]
+    () => STATUS_ORDER.map((s) => ({ status: s, label: resolveKanbanLabel(wsSettings, s), leads: filteredLeads.filter((l) => l.lead_status === s) })),
+    [filteredLeads, wsSettings]
   );
 
   // ── actions ────────────────────────────────────────────────────────────────
@@ -836,7 +837,7 @@ export function KanbanBoard({ leads, trafficOnly = false }: KanbanBoardProps) {
                               void submitStatusUpdate(lead.id, s);
                             }}
                           >
-                            {LEAD_STATUS_LABELS[s]}
+                            {resolveKanbanLabel(wsSettings, s)}
                           </button>
                         ))}
                       </div>
@@ -899,14 +900,27 @@ export function KanbanBoard({ leads, trafficOnly = false }: KanbanBoardProps) {
               <div className="dashboard-field">
                 <span>Responsável</span>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <input
-                    type="text"
-                    value={detailAssignedTo}
-                    onChange={(e) => setDetailAssignedTo(e.target.value)}
-                    placeholder="Nome do responsável"
-                    style={{ flex: 1 }}
-                    onKeyDown={(e) => { if (e.key === "Enter") void saveAssignedTo(); }}
-                  />
+                  {wsSettings?.team_members && wsSettings.team_members.length > 0 ? (
+                    <select
+                      value={detailAssignedTo}
+                      onChange={(e) => setDetailAssignedTo(e.target.value)}
+                      style={{ flex: 1 }}
+                    >
+                      <option value="">— Sem responsável —</option>
+                      {wsSettings.team_members.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={detailAssignedTo}
+                      onChange={(e) => setDetailAssignedTo(e.target.value)}
+                      placeholder="Nome do responsável"
+                      style={{ flex: 1 }}
+                      onKeyDown={(e) => { if (e.key === "Enter") void saveAssignedTo(); }}
+                    />
+                  )}
                   <button
                     type="button"
                     className="dashboard-button dashboard-button--brand"
@@ -935,6 +949,22 @@ export function KanbanBoard({ leads, trafficOnly = false }: KanbanBoardProps) {
                     </span>
                   ))}
                 </div>
+                {/* Tags predefinidas como sugestão */}
+                {(wsSettings?.crm_tags_preset ?? []).filter((t) => !(detailLead.tags ?? []).includes(t)).length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
+                    <span style={{ fontSize: "0.65rem", color: "var(--muted)", alignSelf: "center" }}>Sugestões:</span>
+                    {(wsSettings?.crm_tags_preset ?? []).filter((t) => !(detailLead.tags ?? []).includes(t)).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        style={{ fontSize: "0.68rem", padding: "1px 8px", borderRadius: 999, background: "transparent", color: "#4F46E5", fontWeight: 600, border: "1px dashed rgba(99,102,241,0.5)", cursor: "pointer" }}
+                        onClick={() => { setNewTag(t); }}
+                      >
+                        + {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div style={{ display: "flex", gap: 6 }}>
                   <input
                     type="text"
