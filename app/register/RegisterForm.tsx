@@ -23,45 +23,88 @@ function EyeOffIcon() {
 
 interface Props {
   error?: string;
+  plan?: string;
 }
 
-export function RegisterForm({ error }: Props) {
+export function RegisterForm({ error, plan }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const isCrm = plan === "crm";
 
   return (
     <main className="dashboard-auth-shell">
       <section className="dashboard-auth-showcase">
-        <span className="dashboard-auth-showcase__eyebrow">Zap Faturamento</span>
-        <h1>Comece grátis por 7 dias. Sem cartão de crédito.</h1>
+        <span className="dashboard-auth-showcase__eyebrow">
+          {isCrm ? "ZapFaturamento CRM" : "Zap Faturamento"}
+        </span>
+        <h1>
+          {isCrm
+            ? "CRM para WhatsApp. 7 dias grátis."
+            : "Comece grátis por 7 dias. Sem cartão de crédito."}
+        </h1>
         <p>
-          Organize clientes, campanhas, WhatsApp, Kanban e faturamento em uma
-          experiência com cara de software premium.
+          {isCrm
+            ? "Organize leads, atendimento e follow-up no WhatsApp — tudo em um painel feito para o seu negócio."
+            : "Organize clientes, campanhas, WhatsApp, Kanban e faturamento em uma experiência com cara de software premium."}
         </p>
 
         <div className="dashboard-auth-showcase__stats">
-          <article>
-            <span>Trial</span>
-            <strong>7 dias grátis</strong>
-          </article>
-          <article>
-            <span>Kanban</span>
-            <strong>Pipeline comercial</strong>
-          </article>
-          <article>
-            <span>Performance</span>
-            <strong>ROAS e receita</strong>
-          </article>
+          {isCrm ? (
+            <>
+              <article>
+                <span>Trial</span>
+                <strong>7 dias grátis</strong>
+              </article>
+              <article>
+                <span>Kanban</span>
+                <strong>Pipeline de leads</strong>
+              </article>
+              <article>
+                <span>CRM</span>
+                <strong>WhatsApp nativo</strong>
+              </article>
+            </>
+          ) : (
+            <>
+              <article>
+                <span>Trial</span>
+                <strong>7 dias grátis</strong>
+              </article>
+              <article>
+                <span>Kanban</span>
+                <strong>Pipeline comercial</strong>
+              </article>
+              <article>
+                <span>Performance</span>
+                <strong>ROAS e receita</strong>
+              </article>
+            </>
+          )}
         </div>
       </section>
 
       <section className="dashboard-auth-card">
         <BrandLogo variant="horizontal" className="dashboard-auth-card__logo" priority />
 
+        {isCrm && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "5px 12px", borderRadius: 20,
+            background: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.3)",
+            fontSize: "0.72rem", fontWeight: 700, color: "var(--brand)",
+            marginBottom: 4,
+          }}>
+            Plano CRM · R$79,90/mês após o trial
+          </div>
+        )}
+
         <div>
-          <h1>Criar sua conta</h1>
+          <h1>{isCrm ? "Testar CRM grátis" : "Criar sua conta"}</h1>
           <p className="dashboard-auth-card__lead">
-            7 dias grátis, depois escolha o plano que faz mais sentido.
+            {isCrm
+              ? "7 dias grátis, sem cartão. Acesso completo ao CRM."
+              : "7 dias grátis, depois escolha o plano que faz mais sentido."}
           </p>
         </div>
 
@@ -75,6 +118,8 @@ export function RegisterForm({ error }: Props) {
           className="dashboard-login-form"
           onSubmit={() => setLoading(true)}
         >
+          {isCrm && <input type="hidden" name="plan" value="crm" />}
+
           <label className="dashboard-field">
             <span>Nome completo</span>
             <input
@@ -98,11 +143,11 @@ export function RegisterForm({ error }: Props) {
           </label>
 
           <label className="dashboard-field">
-            <span>Nome da agência / empresa</span>
+            <span>{isCrm ? "Nome do seu negócio" : "Nome da agência / empresa"}</span>
             <input
               type="text"
               name="agency_name"
-              placeholder="Minha Agência Digital"
+              placeholder={isCrm ? "Clínica Bem Estar" : "Minha Agência Digital"}
               autoComplete="organization"
               required
             />
@@ -137,7 +182,11 @@ export function RegisterForm({ error }: Props) {
             disabled={loading}
             style={{ marginTop: 4, height: 42, fontSize: "0.92rem" }}
           >
-            {loading ? "Criando conta…" : "Criar conta grátis →"}
+            {loading
+              ? "Criando conta…"
+              : isCrm
+                ? "Testar CRM grátis →"
+                : "Criar conta grátis →"}
           </button>
 
           <p style={{ textAlign: "center", fontSize: "0.78rem", color: "var(--muted)", margin: "12px 0 0" }}>

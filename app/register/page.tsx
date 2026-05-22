@@ -5,7 +5,7 @@ import { hasDatabaseConfig } from "@/lib/db";
 import { RegisterForm } from "./RegisterForm";
 
 interface Props {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; plan?: string }>;
 }
 
 export default async function RegisterPage({ searchParams }: Props) {
@@ -27,7 +27,7 @@ export default async function RegisterPage({ searchParams }: Props) {
     redirect("/dashboard");
   }
 
-  const { error } = await searchParams;
+  const { error, plan } = await searchParams;
 
-  return <RegisterForm error={error} />;
+  return <RegisterForm error={error} plan={plan} />;
 }

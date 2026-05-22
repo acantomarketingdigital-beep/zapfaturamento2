@@ -380,13 +380,40 @@ export default async function DashboardAssinaturaPage() {
         </article>
 
         {/* Plan upgrade section: only for non-pro users */}
-        {!isPro && !isEnvAdmin && stripeReady && (
+        {!isPro && !isEnvAdmin && !isCrm && stripeReady && (
           <article className="dashboard-card">
             <div className="dashboard-card__header">
               <h3>Escolha seu plano</h3>
               <p>Ative sua assinatura para continuar com acesso completo.</p>
             </div>
             <SubscribePlansClient isLoggedIn={true} activePlan={activePlan} />
+          </article>
+        )}
+
+        {/* CRM upgrade to full system */}
+        {isCrm && !isEnvAdmin && stripeReady && (
+          <article className="dashboard-card">
+            <div className="dashboard-card__header">
+              <h3>Quer o sistema completo?</h3>
+              <p style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
+                Os planos de agência incluem CAPI 100%, campanhas, criativos, Lead Express, relatórios de ROAS, múltiplos clientes e muito mais.
+              </p>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, marginBottom: 20 }}>
+              {[
+                { icon: "🎯", title: "CAPI 100% de cobertura", text: "Purchase automático ao fechar lead no Kanban." },
+                { icon: "📊", title: "Campanhas e criativos", text: "Rastreie CPL e ROAS por anúncio e criativo." },
+                { icon: "👥", title: "Múltiplos clientes", text: "Gerencie vários clientes em um único painel." },
+                { icon: "📋", title: "Lead Express", text: "Formulários de captação com rastreamento completo." },
+              ].map(({ icon, title, text }) => (
+                <div key={title} style={{ padding: "12px 14px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 10 }}>
+                  <div style={{ fontSize: "1.2rem", marginBottom: 4 }}>{icon}</div>
+                  <div style={{ fontWeight: 700, fontSize: "0.82rem", marginBottom: 2 }}>{title}</div>
+                  <div style={{ fontSize: "0.74rem", color: "var(--muted)" }}>{text}</div>
+                </div>
+              ))}
+            </div>
+            <SubscribePlansClient isLoggedIn={true} activePlan={activePlan} showAddons={false} />
           </article>
         )}
       </section>

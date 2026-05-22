@@ -690,32 +690,171 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── PREÇOS ───────────────────────────────────────────── */}
+      {/* ── ESCOLHA SEU CAMINHO ──────────────────────────────── */}
       <section id="precos" className="zf-section zf-section--muted">
         <div className="zf-container">
           <div className="zf-section-heading">
             <span className="zf-badge zf-badge--soft">Preços</span>
-            <h2>Planos para cada tamanho de operação</h2>
+            <h2>Qual melhor se encaixa no seu negócio?</h2>
             <p>
-              Todos os planos incluem o ZapFaturamento completo: CAPI, campanhas, criativos, Kanban, Pipeline, WhatsApp e Lead Express.
-              Você paga pela capacidade da sua operação.
+              Negócio próprio vendendo por WhatsApp ou agência gerenciando múltiplos clientes — temos um plano para cada caso.
             </p>
           </div>
 
-          <div style={{ textAlign: "center", marginBottom: 40 }}>
-            <a
-              href="/register"
-              className="zf-button zf-button--primary"
-              style={{ fontSize: "1rem", padding: "14px 32px", borderRadius: 10 }}
-            >
-              Começar teste grátis por 7 dias
-            </a>
-            <p style={{ fontSize: "0.78rem", color: "var(--muted, #64748b)", marginTop: 10 }}>
-              Sem cartão de crédito · Acesso completo por 7 dias · Cancele quando quiser
-            </p>
+          {/* ── DOIS CAMINHOS ── */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24, maxWidth: 840, margin: "0 auto 56px" }}>
+
+            {/* CARD CRM */}
+            <div style={{
+              background: "#fff",
+              border: "2.5px solid var(--brand)",
+              borderRadius: 20,
+              padding: "32px 28px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 18,
+              boxShadow: "0 8px 40px rgba(22,163,74,0.13)",
+              position: "relative",
+            }}>
+              <div style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", background: "var(--brand)", color: "#fff", fontSize: "0.62rem", fontWeight: 800, letterSpacing: "0.06em", padding: "3px 14px", borderRadius: 20, whiteSpace: "nowrap" }}>
+                NOVO · CRM
+              </div>
+
+              <div>
+                <div style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--brand)", marginBottom: 6 }}>
+                  Para o seu negócio
+                </div>
+                <h3 style={{ margin: "0 0 6px", fontSize: "1.15rem" }}>Clínica · Consultório · Prestador de serviço</h3>
+                <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--muted)" }}>
+                  Você atende pelo WhatsApp e quer organizar leads, agenda e follow-up — sem precisar de agência.
+                </p>
+              </div>
+
+              <div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                  <span style={{ fontSize: "2.2rem", fontWeight: 900, color: "var(--dark)", lineHeight: 1, letterSpacing: "-0.03em" }}>R$79</span>
+                  <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--dark)" }}>,90</span>
+                  <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>/mês</span>
+                </div>
+                <p style={{ margin: "4px 0 0", fontSize: "0.75rem", color: "var(--brand)", fontWeight: 600 }}>
+                  7 dias grátis · Sem cartão de crédito
+                </p>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                {[
+                  "Kanban e Pipeline de leads",
+                  "Inbox WhatsApp nativo",
+                  "Conversas e atendimento CRM",
+                  "Tags, notas e responsável por lead",
+                  "1 número WhatsApp incluso",
+                  "Respostas rápidas",
+                  "Configurações personalizáveis",
+                  "+ WhatsApp adicional: R$29/mês",
+                  "+ Disparos em massa: R$49/mês",
+                ].map((f) => (
+                  <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: "0.78rem", color: f.startsWith("+") ? "var(--brand)" : "var(--dark)" }}>
+                    <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 14, height: 14, color: "var(--brand)", flexShrink: 0, marginTop: 1 }}>
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    {f}
+                  </div>
+                ))}
+              </div>
+
+              <a
+                href="/register?plan=crm"
+                className="zf-button zf-button--primary"
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", borderRadius: 10, padding: "13px 0", fontSize: "0.92rem", fontWeight: 700, marginTop: "auto" }}
+              >
+                Testar CRM grátis por 7 dias →
+              </a>
+            </div>
+
+            {/* CARD AGÊNCIA */}
+            <div style={{
+              background: "#fff",
+              border: "1.5px solid var(--border, #e5e7eb)",
+              borderRadius: 20,
+              padding: "32px 28px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 18,
+              boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+            }}>
+              <div>
+                <div style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted)", marginBottom: 6 }}>
+                  Para agências e equipes
+                </div>
+                <h3 style={{ margin: "0 0 6px", fontSize: "1.15rem" }}>Agência · Gestor · Operação com múltiplos clientes</h3>
+                <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--muted)" }}>
+                  Você gerencia campanhas, criativos, CAPI, ROAS e múltiplos clientes em uma só operação.
+                </p>
+              </div>
+
+              <div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                  <span style={{ fontSize: "1rem", fontWeight: 600, color: "var(--muted)" }}>A partir de</span>
+                  <span style={{ fontSize: "2.2rem", fontWeight: 900, color: "var(--dark)", lineHeight: 1, letterSpacing: "-0.03em" }}>R$97</span>
+                  <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>/mês</span>
+                </div>
+                <p style={{ margin: "4px 0 0", fontSize: "0.75rem", color: "var(--muted)", fontWeight: 600 }}>
+                  7 dias grátis · Planos Starter, Agency, Scale, Enterprise
+                </p>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                {[
+                  "Sistema completo + CAPI 100%",
+                  "Campanhas e criativos ilimitados",
+                  "Múltiplos clientes no mesmo painel",
+                  "Lead Express (formulários)",
+                  "Relatórios e ROI por criativo",
+                  "Exportação de públicos para Meta",
+                  "Google Ads + GA4 automático",
+                  "3 a ilimitados WhatsApps ativos",
+                ].map((f) => (
+                  <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: "0.78rem", color: "var(--dark)" }}>
+                    <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 14, height: 14, color: "var(--muted)", flexShrink: 0, marginTop: 1 }}>
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    {f}
+                  </div>
+                ))}
+              </div>
+
+              <a
+                href="#planos-agencia"
+                className="zf-button zf-button--secondary"
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", borderRadius: 10, padding: "13px 0", fontSize: "0.92rem", fontWeight: 700, marginTop: "auto" }}
+              >
+                Ver planos de agência ↓
+              </a>
+            </div>
           </div>
 
-          <SubscribePlansClient isLoggedIn={true} activePlan={null} />
+          {/* ── PLANOS AGÊNCIA ── */}
+          <div id="planos-agencia">
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <span className="zf-badge zf-badge--soft">Para Agências e Equipes</span>
+              <h3 style={{ marginTop: 12, marginBottom: 4 }}>Planos com sistema completo</h3>
+              <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 24 }}>
+                CAPI, campanhas, criativos, Kanban, Pipeline, WhatsApp e Lead Express — tudo incluso em todos os planos.
+              </p>
+              <a
+                href="/register"
+                className="zf-button zf-button--primary"
+                style={{ fontSize: "0.92rem", padding: "12px 28px", borderRadius: 10, textDecoration: "none" }}
+              >
+                Testar grátis por 7 dias
+              </a>
+              <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 8 }}>
+                Sem cartão de crédito · Acesso completo por 7 dias
+              </p>
+            </div>
+
+            <SubscribePlansClient isLoggedIn={true} activePlan={null} />
+          </div>
 
           <p style={{ textAlign: "center", marginTop: 16, fontSize: "0.75rem", color: "var(--muted, #64748b)" }}>
             Lead/conversa faturável é todo novo lead que entra no Kanban/Pipeline pela primeira vez.

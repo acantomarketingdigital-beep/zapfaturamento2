@@ -4,7 +4,7 @@ import {
   authenticateAppUser,
   createDashboardLoginResponse,
 } from "@/lib/dashboard-auth";
-import { hasDatabaseConfig } from "@/lib/db";
+import { hasDatabaseConfig, queryDb } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -22,13 +22,14 @@ export async function POST(request: Request) {
     return redirectErr(base, "Sistema não configurado. Tente novamente em instantes.");
   }
 
-  let name: string, email: string, password: string, agencyName: string;
+  let name: string, email: string, password: string, agencyName: string, plan: string;
   try {
     const fd = await request.formData();
     name       = String(fd.get("name")        || "").trim();
     email      = String(fd.get("email")       || "").trim().toLowerCase();
     password   = String(fd.get("password")    || "").trim();
     agencyName = String(fd.get("agency_name") || "").trim();
+    plan       = String(fd.get("plan")        || "").trim().toLowerCase();
   } catch {
     return redirectErr(base, "Erro ao ler os dados do formulário.");
   }
@@ -37,6 +38,8 @@ export async function POST(request: Request) {
   if (!email)      return redirectErr(base, "Informe um e-mail válido.");
   if (!agencyName) return redirectErr(base, "Informe o nome da sua agência ou empresa.");
   if (password.length < 6) return redirectErr(base, "A senha precisa ter pelo menos 6 caracteres.");
+
+  const isCrmSignup = plan === "crm";
 
   try {
     await createAppUser({
@@ -55,6 +58,18 @@ export async function POST(request: Request) {
     return redirectErr(base, msg);
   }
 
+  // CRM signup: tag user with subscription_plan = 'crm'
+  if (isCrmSignup) {
+    try {
+      await queryDb(
+        `UPDATE users SET subscription_plan = 'crm' WHERE LOWER(email) = $1`,
+        [email]
+      );
+    } catch {
+      // non-blocking — trial still works even without this
+    }
+  }
+
   // Immediately authenticate and set session cookie
   const session = await authenticateAppUser(email, password);
   if (!session) {
@@ -62,5 +77,7 @@ export async function POST(request: Request) {
     return NextResponse.redirect(new URL("/login?registered=1", base), 303);
   }
 
-  return createDashboardLoginResponse(session, "/dashboard", request.url);
+  // CRM users land on Kanban — their primary workspace
+  const redirectTo = isCrmSignup ? "/dashboard/kanban" : "/dashboard";
+  return createDashboardLoginResponse(session, redirectTo, request.url);
 }
