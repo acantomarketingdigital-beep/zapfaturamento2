@@ -441,6 +441,11 @@ function TrialsTable({ trials }: { trials: TrialRow[] }) {
                           </button>
                         </form>
                       )}
+                      <ActionBtn
+                        href={`/api/admin/users/${t.id}/set-crm`}
+                        label="CRM"
+                        variant="brand"
+                      />
                       {t.is_active && (
                         <ActionBtn
                           href={`/api/admin/users/${t.id}/deactivate`}
@@ -520,6 +525,11 @@ function SubscriptionsTable({ subs }: { subs: SubscriptionRow[] }) {
                         variant="brand"
                       />
                     )}
+                    <ActionBtn
+                      href={`/api/admin/users/${s.id}/set-crm`}
+                      label="CRM"
+                      variant="brand"
+                    />
                     {s.is_active && (
                       <ActionBtn
                         href={`/api/admin/users/${s.id}/deactivate`}
