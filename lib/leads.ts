@@ -419,6 +419,37 @@ export async function linkLeadContact(
   }
 }
 
+export async function ensureWhatsappInboundLead(
+  clientSlug: string,
+  contactPhone: string,
+  contactName: string | null
+): Promise<void> {
+  if (!hasDatabaseConfig()) return;
+  const digits = contactPhone.replace(/\D/g, "");
+  if (!digits) return;
+
+  // Check if there's already a lead for this phone in the last 30 days
+  const existing = await queryDb<{ id: number }>(
+    `SELECT id FROM whatsapp_leads
+     WHERE client_slug = $1
+       AND lead_phone = $2
+       AND created_at > NOW() - INTERVAL '30 days'
+     LIMIT 1`,
+    [clientSlug, digits]
+  );
+  if (existing.rows.length > 0) return;
+
+  // Auto-create a lead for this inbound WhatsApp contact
+  await queryDb(
+    `INSERT INTO whatsapp_leads
+       (client_slug, whatsapp_number, lead_name, lead_phone, source_platform, lead_status, has_replied, replied_at)
+     VALUES ($1, '', $2, $3, 'whatsapp_inbound', 'novo_lead', true, NOW())
+     ON CONFLICT DO NOTHING`,
+    [clientSlug, contactName, digits]
+  );
+  console.log("[ensureWhatsappInboundLead] created inbound lead", { clientSlug, digits });
+}
+
 export async function updateLeadEventStatus(
   eventId: number,
   status: UpdateLeadEventParams

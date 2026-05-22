@@ -3,6 +3,8 @@ import { BrandLogo } from "@/components/BrandLogo";
 import type { AppSession } from "@/lib/dashboard-auth";
 import { TrialBanner } from "@/components/dashboard/TrialBanner";
 import { getUserPermissions, type UserPermissions } from "@/lib/permissions";
+import { getCachedBillingStatus } from "@/lib/billing";
+import { isCrmPlan } from "@/lib/plans";
 
 type ActivePath =
   | "/dashboard"
@@ -41,6 +43,7 @@ type NavItem = {
   adminOnly?: boolean;
   notEnvAdmin?: boolean;
   badge?: string;
+  hiddenForCrm?: boolean;
 };
 
 type NavGroup = {
@@ -66,6 +69,7 @@ const NAV_GROUPS: NavGroup[] = [
         href: "/dashboard/clinicas",
         label: "Clientes",
         permission: "clientes",
+        hiddenForCrm: true,
         icon: (
           <svg viewBox="0 0 20 20" fill="currentColor" className="nav-icon">
             <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
@@ -76,6 +80,7 @@ const NAV_GROUPS: NavGroup[] = [
         href: "/dashboard/campanhas",
         label: "Campanhas",
         permission: "campanhas_view",
+        hiddenForCrm: true,
         icon: (
           <svg viewBox="0 0 20 20" fill="currentColor" className="nav-icon">
             <path d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" />
@@ -86,6 +91,7 @@ const NAV_GROUPS: NavGroup[] = [
         href: "/dashboard/criativos",
         label: "Criativos",
         permission: "criativos",
+        hiddenForCrm: true,
         icon: (
           <svg viewBox="0 0 20 20" fill="currentColor" className="nav-icon">
             <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.001z" />
@@ -96,6 +102,7 @@ const NAV_GROUPS: NavGroup[] = [
         href: "/dashboard/formularios",
         label: "Lead Express",
         permission: "formularios_view",
+        hiddenForCrm: true,
         icon: (
           <svg viewBox="0 0 20 20" fill="currentColor" className="nav-icon">
             <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
@@ -157,6 +164,7 @@ const NAV_GROUPS: NavGroup[] = [
         href: "/dashboard/disparos",
         label: "Envios em Massa",
         permission: "disparos",
+        hiddenForCrm: true,
         icon: (
           <svg viewBox="0 0 20 20" fill="currentColor" className="nav-icon">
             <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
@@ -167,6 +175,7 @@ const NAV_GROUPS: NavGroup[] = [
         href: "/dashboard/grupos",
         label: "Grupos",
         permission: "campanhas_view",
+        hiddenForCrm: true,
         icon: (
           <svg viewBox="0 0 20 20" fill="currentColor" className="nav-icon">
             <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 14.094A5.973 5.973 0 004 17v1H1v-1a3 3 0 013.75-2.906z" />
@@ -192,6 +201,7 @@ const NAV_GROUPS: NavGroup[] = [
         href: "/dashboard/relatorio",
         label: "Relatórios",
         permission: "relatorio",
+        hiddenForCrm: true,
         icon: (
           <svg viewBox="0 0 20 20" fill="currentColor" className="nav-icon">
             <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clipRule="evenodd" />
@@ -202,6 +212,7 @@ const NAV_GROUPS: NavGroup[] = [
         href: "/dashboard/financeiro",
         label: "Financeiro",
         permission: "investimentos",
+        hiddenForCrm: true,
         icon: (
           <svg viewBox="0 0 20 20" fill="currentColor" className="nav-icon">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
@@ -212,6 +223,7 @@ const NAV_GROUPS: NavGroup[] = [
         href: "/dashboard/investimentos",
         label: "Investimentos",
         permission: "investimentos",
+        hiddenForCrm: true,
         icon: (
           <svg viewBox="0 0 20 20" fill="currentColor" className="nav-icon">
             <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
@@ -288,9 +300,13 @@ export async function DashboardSidebar({
   const isAdmin = user?.role === "agency_admin" || user?.kind === "env_admin";
   const isEnvAdmin = user?.kind === "env_admin";
 
+  const billing = user ? await getCachedBillingStatus(user.id).catch(() => null) : null;
+  const isCrm = isCrmPlan(billing?.subscriptionPlan);
+
   const filteredGroups = NAV_GROUPS.map((group) => ({
     ...group,
     items: group.items.filter((item) => {
+      if (item.hiddenForCrm && isCrm) return false;
       if (item.adminOnly && !isAdmin) return false;
       if (item.notEnvAdmin && isEnvAdmin) return false;
       if (!item.permission) return true;

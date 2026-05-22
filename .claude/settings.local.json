@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git diff *)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "Bash(PGPASSWORD=\"npg_WGOdkSo5J9aV\" psql \"postgresql://neondb_owner@ep-cool-cherry-acrw1u15-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require\" -c \"SELECT column_name FROM information_schema.columns WHERE table_name='users' ORDER BY ordinal_position;\")",
+      "Bash(node -e ' *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\adria\\.claude\\projects\\c--Users-adria-Desktop-SITES-whatsapp-redirect-hub-vercel\\memory"
+    ]
+  }
+}

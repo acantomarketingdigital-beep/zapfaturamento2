@@ -170,6 +170,21 @@ export function KanbanBoard({ leads, trafficOnly = false }: KanbanBoardProps) {
   const [followUpNote, setFollowUpNote] = useState("");
   const [busyReplyId, setBusyReplyId] = useState<number | null>(null);
   const [busyFollowUpId, setBusyFollowUpId] = useState<number | null>(null);
+  const [showNewLead, setShowNewLead] = useState(false);
+  const [newLeadName, setNewLeadName] = useState("");
+  const [newLeadPhone, setNewLeadPhone] = useState("");
+  const [newLeadEmail, setNewLeadEmail] = useState("");
+  const [newLeadNote, setNewLeadNote] = useState("");
+  const [busyNewLead, setBusyNewLead] = useState(false);
+
+  // CRM detail modal
+  const [detailLead, setDetailLead] = useState<KanbanLead | null>(null);
+  const [detailNotes, setDetailNotes] = useState<{ id: number; author: string; note: string; created_at: string }[]>([]);
+  const [newNote, setNewNote] = useState("");
+  const [busyNote, setBusyNote] = useState(false);
+  const [newTag, setNewTag] = useState("");
+  const [busyCrm, setBusyCrm] = useState(false);
+  const [detailAssignedTo, setDetailAssignedTo] = useState("");
 
   // tick every 30s so staleness alerts update automatically
   useEffect(() => {
@@ -326,6 +341,101 @@ export function KanbanBoard({ leads, trafficOnly = false }: KanbanBoardProps) {
     setFollowUpNote(lead.follow_up_note || "");
   }
 
+  async function submitNewLead() {
+    if (!newLeadName.trim() && !newLeadPhone.trim()) return;
+    setBusyNewLead(true);
+    try {
+      await fetch("/api/leads/manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadName: newLeadName.trim() || null,
+          leadPhone: newLeadPhone.trim() || null,
+          leadEmail: newLeadEmail.trim() || null,
+          note: newLeadNote.trim() || null,
+        }),
+      });
+      setShowNewLead(false);
+      setNewLeadName(""); setNewLeadPhone(""); setNewLeadEmail(""); setNewLeadNote("");
+      router.refresh();
+    } finally { setBusyNewLead(false); }
+  }
+
+  async function openDetail(lead: KanbanLead) {
+    setDetailLead(lead);
+    setDetailAssignedTo(lead.assigned_to ?? "");
+    setNewNote("");
+    setNewTag("");
+    try {
+      const r = await fetch(`/api/leads/${lead.id}/notes`);
+      const data = (await r.json()) as { notes: typeof detailNotes };
+      setDetailNotes(data.notes ?? []);
+    } catch { setDetailNotes([]); }
+  }
+
+  async function submitNote() {
+    if (!detailLead || !newNote.trim()) return;
+    setBusyNote(true);
+    try {
+      const r = await fetch(`/api/leads/${detailLead.id}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: newNote.trim() }),
+      });
+      const data = (await r.json()) as { id: number };
+      setDetailNotes((prev) => [...prev, { id: data.id, author: "você", note: newNote.trim(), created_at: new Date().toISOString() }]);
+      setNewNote("");
+    } finally { setBusyNote(false); }
+  }
+
+  async function addTag() {
+    if (!detailLead || !newTag.trim()) return;
+    const tag = newTag.trim().toLowerCase();
+    const current = detailLead.tags ?? [];
+    if (current.includes(tag)) { setNewTag(""); return; }
+    const updated = [...current, tag];
+    setBusyCrm(true);
+    try {
+      await fetch(`/api/leads/${detailLead.id}/crm`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags: updated }),
+      });
+      setDetailLead((l) => l ? { ...l, tags: updated } : l);
+      setNewTag("");
+      router.refresh();
+    } finally { setBusyCrm(false); }
+  }
+
+  async function removeTag(tag: string) {
+    if (!detailLead) return;
+    const updated = (detailLead.tags ?? []).filter((t) => t !== tag);
+    setBusyCrm(true);
+    try {
+      await fetch(`/api/leads/${detailLead.id}/crm`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags: updated }),
+      });
+      setDetailLead((l) => l ? { ...l, tags: updated } : l);
+      router.refresh();
+    } finally { setBusyCrm(false); }
+  }
+
+  async function saveAssignedTo() {
+    if (!detailLead) return;
+    setBusyCrm(true);
+    try {
+      await fetch(`/api/leads/${detailLead.id}/crm`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignedTo: detailAssignedTo.trim() || null }),
+      });
+      setDetailLead((l) => l ? { ...l, assigned_to: detailAssignedTo.trim() || null } : l);
+      router.refresh();
+    } finally { setBusyCrm(false); }
+  }
+
   function setFollowUpQuick(option: "1h" | "tomorrow" | "3days") {
     const d = new Date();
     if (option === "1h") { d.setHours(d.getHours() + 1); }
@@ -356,6 +466,14 @@ export function KanbanBoard({ leads, trafficOnly = false }: KanbanBoardProps) {
             </span>
           </>
         ) : null}
+        <button
+          type="button"
+          className="dashboard-button dashboard-button--brand"
+          style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+          onClick={() => setShowNewLead(true)}
+        >
+          + Novo Lead
+        </button>
       </div>
 
       {/* ── traffic / todos toggle ── */}
@@ -649,6 +767,35 @@ export function KanbanBoard({ leads, trafficOnly = false }: KanbanBoardProps) {
                       </button>
                     </div>
 
+                    {/* ── tags ── */}
+                    {(lead.tags ?? []).length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                        {(lead.tags ?? []).map((tag) => (
+                          <span key={tag} style={{ fontSize: "0.62rem", padding: "1px 8px", borderRadius: 999, background: "rgba(99,102,241,0.12)", color: "#4F46E5", fontWeight: 600, border: "1px solid rgba(99,102,241,0.25)" }}>
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* ── responsável ── */}
+                    {lead.assigned_to && (
+                      <div style={{ fontSize: "0.67rem", color: "var(--muted)", marginTop: 3 }}>
+                        Resp.: <strong>{lead.assigned_to}</strong>
+                      </div>
+                    )}
+
+                    {/* ── botão detalhes CRM ── */}
+                    <div style={{ marginTop: 4 }}>
+                      <button
+                        type="button"
+                        className="kanban-followup-btn"
+                        onClick={() => void openDetail(lead)}
+                      >
+                        Notas / Tags / Responsável
+                      </button>
+                    </div>
+
                     {/* ── badges exportavel / sem e-mail ── */}
                     {EXPORTABLE_STATUSES.includes(lead.lead_status) ? (
                       <div className="dashboard-inline-actions" style={{ marginBottom: 0 }}>
@@ -734,6 +881,158 @@ export function KanbanBoard({ leads, trafficOnly = false }: KanbanBoardProps) {
                 Salvar pagamento
               </button>
               <button type="button" className="dashboard-button dashboard-button--ghost" onClick={() => setSelectedLead(null)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* ── modal: detalhes CRM ── */}
+      {detailLead ? (
+        <div className="dashboard-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDetailLead(null); }}>
+          <div className="dashboard-modal" style={{ maxWidth: 520, width: "100%" }}>
+            <h3>{detailLead.lead_name || detailLead.lead_phone || `Lead #${detailLead.id}`}</h3>
+
+            {/* Responsável */}
+            <div className="dashboard-form-stack" style={{ marginBottom: 16 }}>
+              <div className="dashboard-field">
+                <span>Responsável</span>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input
+                    type="text"
+                    value={detailAssignedTo}
+                    onChange={(e) => setDetailAssignedTo(e.target.value)}
+                    placeholder="Nome do responsável"
+                    style={{ flex: 1 }}
+                    onKeyDown={(e) => { if (e.key === "Enter") void saveAssignedTo(); }}
+                  />
+                  <button
+                    type="button"
+                    className="dashboard-button dashboard-button--brand"
+                    disabled={busyCrm}
+                    onClick={() => void saveAssignedTo()}
+                  >
+                    Salvar
+                  </button>
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div className="dashboard-field">
+                <span>Tags</span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
+                  {(detailLead.tags ?? []).map((tag) => (
+                    <span key={tag} style={{ fontSize: "0.72rem", padding: "2px 10px", borderRadius: 999, background: "rgba(99,102,241,0.12)", color: "#4F46E5", fontWeight: 600, border: "1px solid rgba(99,102,241,0.3)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                      {tag}
+                      <button
+                        type="button"
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "#4F46E5", fontWeight: 700, lineHeight: 1, fontSize: "0.9em" }}
+                        onClick={() => void removeTag(tag)}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input
+                    type="text"
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    placeholder="Nova tag (ex: quente, VIP)"
+                    style={{ flex: 1 }}
+                    onKeyDown={(e) => { if (e.key === "Enter") void addTag(); }}
+                  />
+                  <button
+                    type="button"
+                    className="dashboard-button dashboard-button--brand"
+                    disabled={busyCrm || !newTag.trim()}
+                    onClick={() => void addTag()}
+                  >
+                    + Tag
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Notas */}
+            <div>
+              <strong style={{ fontSize: "0.8rem", display: "block", marginBottom: 6 }}>Notas internas</strong>
+              <div style={{ maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
+                {detailNotes.length === 0 ? (
+                  <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>Nenhuma nota ainda.</span>
+                ) : detailNotes.map((n) => (
+                  <div key={n.id} style={{ background: "var(--surface-2, #f8f8f8)", borderRadius: 8, padding: "6px 10px", fontSize: "0.78rem" }}>
+                    <div style={{ color: "var(--muted)", fontSize: "0.68rem", marginBottom: 2 }}>
+                      {n.author} · {new Date(n.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                    {n.note}
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <textarea
+                  rows={2}
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  placeholder="Adicionar nota interna..."
+                  style={{ flex: 1, resize: "vertical" }}
+                />
+                <button
+                  type="button"
+                  className="dashboard-button dashboard-button--brand"
+                  disabled={busyNote || !newNote.trim()}
+                  onClick={() => void submitNote()}
+                  style={{ alignSelf: "flex-end" }}
+                >
+                  {busyNote ? "..." : "Enviar"}
+                </button>
+              </div>
+            </div>
+
+            <div className="dashboard-actions" style={{ marginTop: 12 }}>
+              <button type="button" className="dashboard-button dashboard-button--ghost" onClick={() => setDetailLead(null)}>
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* ── modal: novo lead manual ── */}
+      {showNewLead ? (
+        <div className="dashboard-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setShowNewLead(false); }}>
+          <div className="dashboard-modal">
+            <h3>Criar lead manualmente</h3>
+            <div className="dashboard-form-stack">
+              <label className="dashboard-field">
+                <span>Nome *</span>
+                <input type="text" value={newLeadName} onChange={(e) => setNewLeadName(e.target.value)} placeholder="Nome do contato" autoFocus />
+              </label>
+              <label className="dashboard-field">
+                <span>Telefone (WhatsApp)</span>
+                <input type="tel" value={newLeadPhone} onChange={(e) => setNewLeadPhone(e.target.value)} placeholder="5511999999999" />
+              </label>
+              <label className="dashboard-field">
+                <span>E-mail</span>
+                <input type="email" value={newLeadEmail} onChange={(e) => setNewLeadEmail(e.target.value)} placeholder="email@exemplo.com" />
+              </label>
+              <label className="dashboard-field">
+                <span>Observação inicial</span>
+                <textarea rows={2} value={newLeadNote} onChange={(e) => setNewLeadNote(e.target.value)} placeholder="Ex.: Cliente interessado em produto X" />
+              </label>
+            </div>
+            <div className="dashboard-actions">
+              <button
+                type="button"
+                className="dashboard-button dashboard-button--brand"
+                disabled={busyNewLead || (!newLeadName.trim() && !newLeadPhone.trim())}
+                onClick={() => void submitNewLead()}
+              >
+                {busyNewLead ? "Criando..." : "Criar lead"}
+              </button>
+              <button type="button" className="dashboard-button dashboard-button--ghost" onClick={() => setShowNewLead(false)}>
                 Cancelar
               </button>
             </div>

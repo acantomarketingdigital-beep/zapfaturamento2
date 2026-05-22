@@ -41,6 +41,8 @@ export type KanbanLead = {
   last_message_at: string | null;
   fbclid: string | null;
   gclid: string | null;
+  tags: string[];
+  assigned_to: string | null;
 };
 
 function toNullableNumber(value?: string | number | null) {
@@ -110,7 +112,7 @@ export async function listKanbanLeads(clientSlug?: string | null, trafficOnly = 
   }
 
   const values: unknown[] = [];
-  const parts: string[] = ["lead_phone IS NOT NULL"];
+  const parts: string[] = ["(lead_phone IS NOT NULL OR source_platform = 'manual')"];
   if (clientSlug) parts.push(`client_slug = $${values.push(clientSlug)}`);
   if (trafficOnly) {
     parts.push(
@@ -156,7 +158,9 @@ export async function listKanbanLeads(clientSlug?: string | null, trafficOnly = 
         message_text,
         last_message_at,
         fbclid,
-        gclid
+        gclid,
+        COALESCE(tags, '{}') AS tags,
+        assigned_to
       FROM whatsapp_leads
       ${whereSql}
       ORDER BY created_at DESC

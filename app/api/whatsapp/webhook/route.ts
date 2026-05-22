@@ -10,12 +10,26 @@ import {
   wasConversationAdminInitiated
 } from "@/lib/whatsapp-connections";
 import { isEvolutionConfigured, sendEvolutionTextMessage } from "@/lib/evolution-api";
-import { linkLeadContact, findRecentLeadForCapi, confirmLeadCapi } from "@/lib/leads";
+import { linkLeadContact, findRecentLeadForCapi, confirmLeadCapi, ensureWhatsappInboundLead } from "@/lib/leads";
+import { isCrmPlan } from "@/lib/plans";
+import { queryDb } from "@/lib/db";
 import { setLeadRepliedByPhone } from "@/lib/kanban";
 import { getClinicBackendConfigBySlug } from "@/lib/clinics";
 import { sendMetaCapiEvent, buildMetaExternalId, buildMetaFbc } from "@/lib/meta-capi";
 
 const VIM_DO_PHRASE = "Vim do";
+
+async function isClientOnCrmPlan(clientSlug: string): Promise<boolean> {
+  try {
+    const r = await queryDb<{ subscription_plan: string | null }>(
+      `SELECT subscription_plan FROM users WHERE client_slug = $1 AND role = 'agency_admin' LIMIT 1`,
+      [clientSlug]
+    );
+    return isCrmPlan(r.rows[0]?.subscription_plan);
+  } catch {
+    return false;
+  }
+}
 
 async function tryFireCapiForVimDo(clientSlug: string) {
   const lead = await findRecentLeadForCapi(clientSlug);
@@ -301,6 +315,10 @@ export async function POST(request: Request) {
           if (!adminStarted) {
             console.log("[WA WEBHOOK] inbound — linking lead", { clientSlug: connection.client_slug, contactPhone });
             await linkLeadContact(connection.client_slug, contactPhone, msg.pushName ?? null);
+            // For CRM-plan clients, auto-create a Kanban lead if none exists
+            if (await isClientOnCrmPlan(connection.client_slug)) {
+              await ensureWhatsappInboundLead(connection.client_slug, contactPhone, msg.pushName ?? null);
+            }
           } else {
             console.log("[WA WEBHOOK] inbound — skipping link (admin-initiated conversation)", { clientSlug: connection.client_slug, contactPhone });
           }

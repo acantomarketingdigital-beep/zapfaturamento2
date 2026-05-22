@@ -1,4 +1,4 @@
-export type PlanKey = "starter" | "agency" | "scale" | "enterprise";
+export type PlanKey = "starter" | "agency" | "scale" | "enterprise" | "crm";
 
 export type Plan = {
   key: PlanKey;
@@ -22,6 +22,25 @@ export type Plan = {
 };
 
 export const PLANS: Record<PlanKey, Plan> = {
+  crm: {
+    key: "crm",
+    name: "CRM",
+    priceMonthly: 79.90,
+    priceYearly: 799,
+    stripePriceMonthlyId:       "price_crm_monthly_placeholder",
+    stripePriceYearlyId:        "price_crm_yearly_placeholder",
+    stripeExtraFormPriceId:     null,
+    stripeExtraWhatsappPriceId: "price_crm_extra_wa_placeholder",
+    clientsIncluded: 1,
+    billableLeadsIncluded: 99999,
+    leadFormsIncluded: 0,
+    activeWhatsappsIncluded: 1,
+    leadOveragePrice: 0,
+    extraFormPriceMonthly: null,
+    extraWhatsappPriceMonthly: 29,
+    fullSystemIncluded: true,
+    badge: "Novo",
+  },
   starter: {
     key: "starter",
     name: "Starter",
@@ -104,6 +123,12 @@ export const PLAN_LIST: Plan[] = [
   PLANS.scale,
   PLANS.enterprise,
 ];
+
+export const CRM_PLAN_LIST: Plan[] = [PLANS.crm];
+
+export function isCrmPlan(plan: string | null | undefined): boolean {
+  return plan === "crm";
+}
 
 export function getPlanByKey(key: string | null | undefined): Plan | null {
   if (!key) return null;
