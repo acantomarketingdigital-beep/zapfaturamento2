@@ -189,6 +189,7 @@ export async function POST(request: Request) {
       case "checkout.session.completed": {
         const session        = event.data.object as Stripe.Checkout.Session;
         const userId         = session.metadata?.userId;
+        const addonType      = session.metadata?.addonType ?? null;
         const plan           = session.metadata?.plan    ?? "starter";
         const billing        = session.metadata?.billing ?? "monthly";
         const customerId     = session.customer as string | null;
@@ -196,7 +197,8 @@ export async function POST(request: Request) {
 
         console.log(
           `${TAG} checkout.session.completed — userId=${userId ?? "MISSING"}` +
-          ` plan=${plan} billing=${billing} customerId=${customerId ?? "null"} subscriptionId=${subscriptionId ?? "null"}`
+          ` addonType=${addonType ?? "none"} plan=${plan} billing=${billing}` +
+          ` customerId=${customerId ?? "null"} subscriptionId=${subscriptionId ?? "null"}`
         );
 
         if (!userId) {
@@ -204,24 +206,44 @@ export async function POST(request: Request) {
           break;
         }
 
-        // Persist Stripe IDs immediately (before subscription sync in case it throws)
+        // Persist customer ID immediately (always safe)
         await queryDb(
-          `UPDATE users SET
-             stripe_customer_id = COALESCE(stripe_customer_id, $2),
-             subscription_id    = COALESCE($3, subscription_id)
-           WHERE id = $1`,
-          [userId, customerId, subscriptionId]
-        );
-        console.log(
-          `${TAG} checkout — stripe_customer_id and subscription_id persisted for userId=${userId}`
+          `UPDATE users SET stripe_customer_id = COALESCE(stripe_customer_id, $2) WHERE id = $1`,
+          [userId, customerId]
         );
 
-        // Full subscription sync (passes plan and billing from metadata so it's stored immediately,
-        // not waiting for the subscription.updated event which may arrive without metadata)
+        // ── Add-on checkout: activate add-on, skip plan sync ──────────────────
+        if (addonType) {
+          const workspaceSlug = session.metadata?.workspaceSlug ?? null;
+          const dbAddonType   = addonType === "whatsapp" ? "extra_whatsapp" : `extra_${addonType}`;
+          const unitPrice     = addonType === "whatsapp" ? 29 : 49;
+
+          console.log(`${TAG} addon checkout — activating ${dbAddonType} for workspace=${workspaceSlug ?? "null"}`);
+
+          if (workspaceSlug) {
+            await queryDb(
+              `INSERT INTO billing_addons
+                 (workspace_slug, addon_type, quantity, stripe_subscription_item_id, stripe_price_id, unit_price, status)
+               VALUES ($1, $2, 1, NULL, NULL, $3, 'active')
+               ON CONFLICT (workspace_slug, addon_type) WHERE status = 'active'
+               DO UPDATE SET quantity = 1, updated_at = NOW()`,
+              [workspaceSlug, dbAddonType, unitPrice]
+            );
+            console.log(`${TAG} billing_addons upserted — workspace=${workspaceSlug} type=${dbAddonType}`);
+          }
+          break; // Do NOT sync subscription plan for add-on checkouts
+        }
+
+        // ── Regular plan checkout ─────────────────────────────────────────────
         if (subscriptionId) {
+          await queryDb(
+            `UPDATE users SET subscription_id = COALESCE($2, subscription_id) WHERE id = $1`,
+            [userId, subscriptionId]
+          );
           const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
           await syncSubscription(subscription, plan, billing);
         }
+        console.log(`${TAG} checkout — IDs persisted for userId=${userId}`);
         break;
       }
 

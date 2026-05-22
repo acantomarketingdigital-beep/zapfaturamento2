@@ -3,11 +3,12 @@ import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { getCurrentUser, isDashboardConfigured } from "@/lib/dashboard-auth";
 import { getCachedBillingStatus } from "@/lib/billing";
 import { isStripeConfigured } from "@/lib/stripe";
-import { hasDatabaseConfig } from "@/lib/db";
+import { hasDatabaseConfig, queryDb } from "@/lib/db";
 import SubscribePlansClient from "@/app/billing/subscribe/SubscribePlansClient";
 import { getWorkspaceBillingUsage, type WorkspaceBillingUsage } from "@/lib/billing-usage";
-import { getPlanById, getPlanByKey } from "@/lib/plans";
+import { getPlanById, getPlanByKey, isCrmPlan } from "@/lib/plans";
 import AddonsManagerClient from "@/components/dashboard/AddonsManagerClient";
+import { CrmAddonsClient } from "@/components/dashboard/CrmAddonsClient";
 
 const FEATURES = [
   "CAPI 100% de cobertura (Meta)",
@@ -97,6 +98,8 @@ export default async function DashboardAssinaturaPage() {
     ? (SUB_STATUS_LABELS[billing.subscriptionStatus] ?? null)
     : null;
 
+  const isCrm = isCrmPlan(activePlan);
+
   const knownPlan = getPlanById(activePlan);
   // subscription_plan can be "starter", "agency", "scale", "enterprise", "monthly" (legado), "yearly" (legado)
   const isYearlyPlan = activePlan?.endsWith("-yearly") ?? false;
@@ -120,6 +123,24 @@ export default async function DashboardAssinaturaPage() {
     } catch {
       // non-critical
     }
+  }
+
+  // CRM add-on status
+  let crmWhatsappAddonActive = false;
+  let crmDisparosAddonActive = false;
+  if (isCrm && databaseReady && !isEnvAdmin && user.clientSlug) {
+    try {
+      const r = await queryDb<{ addon_type: string }>(
+        `SELECT addon_type FROM billing_addons
+         WHERE workspace_slug = $1 AND status = 'active'
+           AND addon_type IN ('extra_whatsapp', 'extra_disparos')`,
+        [user.clientSlug]
+      );
+      for (const row of r.rows) {
+        if (row.addon_type === "extra_whatsapp") crmWhatsappAddonActive = true;
+        if (row.addon_type === "extra_disparos")  crmDisparosAddonActive = true;
+      }
+    } catch { /* non-critical */ }
   }
 
   return (
@@ -304,7 +325,7 @@ export default async function DashboardAssinaturaPage() {
         )}
 
         {/* Add-ons manager — only for active pro subscribers with a plan that supports extras */}
-        {usage && isPro && hasStripeCustomer && !isEnvAdmin && stripeReady && (() => {
+        {usage && isPro && hasStripeCustomer && !isEnvAdmin && stripeReady && !isCrm && (() => {
           const planData = getPlanByKey(activePlan);
           if (!planData) return null;
           const hasAddons = planData.stripeExtraFormPriceId !== null || planData.stripeExtraWhatsappPriceId !== null;
@@ -321,6 +342,15 @@ export default async function DashboardAssinaturaPage() {
             />
           );
         })()}
+
+        {/* CRM add-ons — for CRM plan users */}
+        {isCrm && !isEnvAdmin && (
+          <CrmAddonsClient
+            whatsappActive={crmWhatsappAddonActive}
+            disparosActive={crmDisparosAddonActive}
+            stripeReady={stripeReady}
+          />
+        )}
 
         {/* Features list */}
         <article className="dashboard-card">
