@@ -20,6 +20,8 @@ export function UserActionsCell({ userId, status, inviteUrl, inviteExpired, phon
   const [resending, setResending] = useState(false);
   const [resendUrl, setResendUrl] = useState<string | null>(null);
   const [resendPhone, setResendPhone] = useState<string | null>(null);
+  const [settingCrm, setSettingCrm] = useState(false);
+  const [crmDone, setCrmDone] = useState(false);
 
   function copyText(text: string, cb: (v: boolean) => void) {
     navigator.clipboard.writeText(text).then(() => {
@@ -43,6 +45,17 @@ export function UserActionsCell({ userId, status, inviteUrl, inviteExpired, phon
       }
     } finally {
       setResending(false);
+    }
+  }
+
+  async function handleSetCrm() {
+    setSettingCrm(true);
+    try {
+      await fetch(`/api/admin/users/${userId}/set-crm`, { method: "POST" });
+      setCrmDone(true);
+      window.location.reload();
+    } finally {
+      setSettingCrm(false);
     }
   }
 
@@ -120,6 +133,14 @@ export function UserActionsCell({ userId, status, inviteUrl, inviteExpired, phon
   if (status === "active") {
     return (
       <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
+        <button
+          type="button"
+          className="dashboard-button dashboard-button--brand dashboard-button--sm"
+          onClick={handleSetCrm}
+          disabled={settingCrm || crmDone}
+        >
+          {crmDone ? "CRM ✓" : settingCrm ? "..." : "Definir CRM"}
+        </button>
         {magicUrl ? (
           <>
             <button
