@@ -8,7 +8,7 @@ import SubscribePlansClient from "./SubscribePlansClient";
 export default async function BillingSubscribePage() {
   const user = await getCurrentUser();
 
-  let activePlan: "monthly" | "yearly" | null = null;
+  let activePlan: string | null = null;
 
   if (user && hasDatabaseConfig() && user.kind !== "env_admin") {
     try {

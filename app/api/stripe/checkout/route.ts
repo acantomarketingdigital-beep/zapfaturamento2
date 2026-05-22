@@ -5,8 +5,9 @@ import {
   getPriceIdForPlan,
   isStripeConfigured,
   getBaseUrl,
-  type StripePlan,
+  type BillingCycle,
 } from "@/lib/stripe";
+import { PLANS, type PlanKey } from "@/lib/plans";
 import { queryDb, hasDatabaseConfig } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -33,29 +34,33 @@ export async function POST(request: Request) {
     return NextResponse.redirect(subscribeUrl, 303);
   }
   if (!isStripeConfigured()) {
-    console.error("[stripe/checkout] Stripe not configured — check STRIPE_SECRET_KEY, STRIPE_PRICE_MONTHLY, STRIPE_PRICE_YEARLY");
+    console.error("[stripe/checkout] Stripe not configured — check STRIPE_SECRET_KEY");
     return NextResponse.redirect(subscribeUrl, 303);
   }
 
-  // ── Read plan from form data ──────────────────────────────────────────────
-  let plan: StripePlan = "monthly";
+  // ── Read plan and billing cycle from form data ────────────────────────────
+  let planKey: PlanKey = "starter";
+  let billing: BillingCycle = "monthly";
   try {
     const formData = await request.formData();
-    const raw = formData.get("plan");
-    if (raw === "yearly") plan = "yearly";
+    const rawPlan = formData.get("plan");
+    const rawBilling = formData.get("billing");
+    if (rawPlan && typeof rawPlan === "string" && PLANS[rawPlan as PlanKey]) {
+      planKey = rawPlan as PlanKey;
+    }
+    if (rawBilling === "yearly") billing = "yearly";
   } catch (err) {
     console.error("[stripe/checkout] Failed to parse formData:", err);
-    // fall through to monthly
   }
 
   // ── Resolve price ID ──────────────────────────────────────────────────────
-  const priceId = getPriceIdForPlan(plan);
+  const priceId = getPriceIdForPlan(planKey, billing);
   if (!priceId) {
-    console.error(`[stripe/checkout] No price ID for plan="${plan}". Check STRIPE_PRICE_MONTHLY / STRIPE_PRICE_YEARLY env vars.`);
+    console.error(`[stripe/checkout] No price ID for plan="${planKey}" billing="${billing}".`);
     return NextResponse.redirect(subscribeUrl, 303);
   }
 
-  console.log(`[stripe/checkout] userId=${user.id} plan=${plan} priceId=${priceId}`);
+  console.log(`[stripe/checkout] userId=${user.id} plan=${planKey} billing=${billing} priceId=${priceId}`);
 
   // ── DB: get or prepare Stripe customer ───────────────────────────────────
   let customerId: string | null = null;
@@ -115,9 +120,9 @@ export async function POST(request: Request) {
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: trialEnd ? { trial_end: trialEnd } : undefined,
-      success_url: `${base}/billing/success?plan=${plan}`,
+      success_url: `${base}/billing/success?plan=${planKey}`,
       cancel_url: cancelUrl,
-      metadata: { userId: user.id, plan },
+      metadata: { userId: user.id, plan: planKey, billing },
       allow_promotion_codes: true,
       billing_address_collection: "auto",
       locale: "pt-BR",

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser, isAgencyAdmin, canAccessClient } from "@/lib/dashboard-auth";
-import { getLeadFormById, saveLeadForm, deleteLeadForm, toggleLeadFormStatus } from "@/lib/lead-forms";
+import { getLeadFormById, saveLeadForm, deleteLeadForm, toggleLeadFormStatus, type CustomQuestion } from "@/lib/lead-forms";
 import { slugifyClinicName } from "@/lib/clinic-shared";
 
 export const runtime = "nodejs";
@@ -69,6 +69,13 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         showProcedure: body.showProcedure !== undefined ? Boolean(body.showProcedure) : form.showProcedure,
         showCity: body.showCity !== undefined ? Boolean(body.showCity) : form.showCity,
         showObservation: body.showObservation !== undefined ? Boolean(body.showObservation) : form.showObservation,
+        campaignSource: body.campaignSource !== undefined ? String(body.campaignSource) : form.campaignSource,
+        seoKeywords: Array.isArray(body.seoKeywords) ? (body.seoKeywords as string[]) : form.seoKeywords,
+        seoLocations: Array.isArray(body.seoLocations) ? (body.seoLocations as string[]) : form.seoLocations,
+        seoTitle: body.seoTitle !== undefined ? (String(body.seoTitle).trim() || null) : form.seoTitle,
+        seoDescription: body.seoDescription !== undefined ? (String(body.seoDescription).trim() || null) : form.seoDescription,
+        seoBullets: Array.isArray(body.seoBullets) ? (body.seoBullets as string[]).filter(Boolean) : form.seoBullets,
+        customQuestions: Array.isArray(body.customQuestions) ? (body.customQuestions as CustomQuestion[]) : form.customQuestions,
       },
       id
     );

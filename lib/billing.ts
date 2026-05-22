@@ -12,7 +12,8 @@ export type BillingStatus = {
   planExpiresAt: Date | null;
   daysLeft: number | null;
   subscriptionStatus: string | null;
-  subscriptionPlan: "monthly" | "yearly" | null;
+  subscriptionPlan: string | null;
+  billingCycle: "monthly" | "yearly" | null;
   stripeCustomerId: string | null;
   paidAccess: boolean | null;
 };
@@ -25,11 +26,12 @@ async function fetchUserBillingStatus(userId: string): Promise<BillingStatus> {
     plan_expires_at: string | null;
     subscription_status: string | null;
     subscription_plan: string | null;
+    billing_cycle: string | null;
     stripe_customer_id: string | null;
     paid_access: boolean | null;
   }>(
     `SELECT plan_type, is_active, trial_expires_at, plan_expires_at,
-            subscription_status, subscription_plan,
+            subscription_status, subscription_plan, billing_cycle,
             stripe_customer_id, paid_access
      FROM users WHERE id = $1 LIMIT 1`,
     [userId]
@@ -39,7 +41,8 @@ async function fetchUserBillingStatus(userId: string): Promise<BillingStatus> {
 
   const emptyMeta = {
     subscriptionStatus: null as string | null,
-    subscriptionPlan:   null as "monthly" | "yearly" | null,
+    subscriptionPlan:   null as string | null,
+    billingCycle:       null as "monthly" | "yearly" | null,
     stripeCustomerId:   null as string | null,
     paidAccess:         null as boolean | null,
   };
@@ -60,13 +63,15 @@ async function fetchUserBillingStatus(userId: string): Promise<BillingStatus> {
   const trialExpAt = row.trial_expires_at ? new Date(row.trial_expires_at) : null;
   const planExpAt  = row.plan_expires_at  ? new Date(row.plan_expires_at)  : null;
   const subStatus  = row.subscription_status ?? null;
-  const subPlan    = (row.subscription_plan ?? null) as "monthly" | "yearly" | null;
-  const stripeCid  = row.stripe_customer_id  ?? null;
+  const subPlan    = row.subscription_plan  ?? null;
+  const billCycle  = (row.billing_cycle ?? null) as "monthly" | "yearly" | null;
+  const stripeCid  = row.stripe_customer_id ?? null;
   const paidAccess = row.paid_access ?? null;
 
   const meta = {
     subscriptionStatus: subStatus,
     subscriptionPlan:   subPlan,
+    billingCycle:       billCycle,
     stripeCustomerId:   stripeCid,
     paidAccess,
   };

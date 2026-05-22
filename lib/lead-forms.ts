@@ -5,6 +5,14 @@ export const MAX_FORMS_PER_CLIENT = 3;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
+export type CustomQuestion = {
+  id: string;
+  type: "multiple_choice" | "open_text";
+  question: string;
+  required: boolean;
+  options: string[];
+};
+
 export type LeadForm = {
   id: string;
   clientSlug: string;
@@ -23,6 +31,13 @@ export type LeadForm = {
   showProcedure: boolean;
   showCity: boolean;
   showObservation: boolean;
+  campaignSource: string;
+  seoKeywords: string[];
+  seoLocations: string[];
+  seoTitle: string | null;
+  seoDescription: string | null;
+  seoBullets: string[] | null;
+  customQuestions: CustomQuestion[];
   createdAt: string;
   updatedAt: string;
 };
@@ -45,6 +60,13 @@ type LeadFormRow = {
   show_procedure: boolean;
   show_city: boolean;
   show_observation: boolean;
+  campaign_source: string;
+  seo_keywords: string[] | null;
+  seo_locations: string[] | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_bullets: string[] | null;
+  custom_questions: unknown | null;
   created_at: string;
   updated_at: string;
 };
@@ -66,6 +88,13 @@ export type SaveLeadFormInput = {
   showProcedure: boolean;
   showCity: boolean;
   showObservation: boolean;
+  campaignSource?: string;
+  seoKeywords?: string[];
+  seoLocations?: string[];
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoBullets?: string[] | null;
+  customQuestions?: CustomQuestion[];
 };
 
 export type CreateSubmissionInput = {
@@ -90,6 +119,7 @@ export type CreateSubmissionInput = {
   ipAddress?: string;
   userAgent?: string;
   pageUrl?: string;
+  customAnswers?: Record<string, string>;
 };
 
 // ── Mappers ──────────────────────────────────────────────────────────────────
@@ -113,6 +143,13 @@ function mapRow(row: LeadFormRow): LeadForm {
     showProcedure: Boolean(row.show_procedure),
     showCity: Boolean(row.show_city),
     showObservation: Boolean(row.show_observation),
+    campaignSource: row.campaign_source ?? "direct",
+    seoKeywords: row.seo_keywords ?? [],
+    seoLocations: row.seo_locations ?? [],
+    seoTitle: row.seo_title ?? null,
+    seoDescription: row.seo_description ?? null,
+    seoBullets: row.seo_bullets ?? null,
+    customQuestions: Array.isArray(row.custom_questions) ? (row.custom_questions as CustomQuestion[]) : [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -164,21 +201,28 @@ export async function saveLeadForm(
   id?: string
 ): Promise<LeadForm> {
   const fields = [
-    input.name,             // $1
-    input.slug,             // $2
-    input.title,            // $3
-    input.subtitle,         // $4
-    input.buttonText,       // $5
-    input.logoUrl,          // $6
-    input.imageUrl,         // $7
-    input.primaryColor,     // $8
-    input.backgroundColor,  // $9
-    input.status,           // $10
-    input.successMessage,   // $11
-    input.showEmail,        // $12
-    input.showProcedure,    // $13
-    input.showCity,         // $14
-    input.showObservation,  // $15
+    input.name,                          // $1
+    input.slug,                          // $2
+    input.title,                         // $3
+    input.subtitle,                      // $4
+    input.buttonText,                    // $5
+    input.logoUrl,                       // $6
+    input.imageUrl,                      // $7
+    input.primaryColor,                  // $8
+    input.backgroundColor,               // $9
+    input.status,                        // $10
+    input.successMessage,                // $11
+    input.showEmail,                     // $12
+    input.showProcedure,                 // $13
+    input.showCity,                      // $14
+    input.showObservation,               // $15
+    input.campaignSource ?? "direct",    // $16
+    input.seoKeywords ?? [],             // $17
+    input.seoLocations ?? [],            // $18
+    input.seoTitle ?? null,              // $19
+    input.seoDescription ?? null,        // $20
+    input.seoBullets ?? null,            // $21
+    JSON.stringify(input.customQuestions ?? []), // $22
   ];
 
   let result: { rows: LeadFormRow[] };
@@ -190,8 +234,11 @@ export async function saveLeadForm(
            logo_url=$6, image_url=$7, primary_color=$8, background_color=$9,
            status=$10, success_message=$11,
            show_email=$12, show_procedure=$13, show_city=$14, show_observation=$15,
+           campaign_source=$16, seo_keywords=$17, seo_locations=$18,
+           seo_title=$19, seo_description=$20, seo_bullets=$21,
+           custom_questions=$22::jsonb,
            updated_at=NOW()
-       WHERE id=$16 AND client_slug=$17
+       WHERE id=$23 AND client_slug=$24
        RETURNING *`,
       [...fields, id, input.clientSlug]
     );
@@ -204,8 +251,10 @@ export async function saveLeadForm(
       `INSERT INTO lead_forms (
          client_slug, name, slug, title, subtitle, button_text,
          logo_url, image_url, primary_color, background_color,
-         status, success_message, show_email, show_procedure, show_city, show_observation
-       ) VALUES ($16, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+         status, success_message, show_email, show_procedure, show_city, show_observation,
+         campaign_source, seo_keywords, seo_locations, seo_title, seo_description, seo_bullets,
+         custom_questions
+       ) VALUES ($23, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22::jsonb)
        RETURNING *`,
       [...fields, input.clientSlug]
     );
@@ -253,10 +302,12 @@ export async function createFormSubmission(
        form_id, client_slug, lead_name, lead_phone, lead_email,
        lead_procedure, lead_city, lead_observation, whatsapp_lead_id,
        utm_source, utm_medium, utm_campaign, utm_content, utm_term,
-       fbclid, gclid, fbp, fbc, ip_address, user_agent, page_url
+       fbclid, gclid, fbp, fbc, ip_address, user_agent, page_url,
+       custom_answers
      ) VALUES (
        $1, $2, $3, $4, $5, $6, $7, $8, $9,
-       $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
+       $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21,
+       $22::jsonb
      ) RETURNING id`,
     [
       input.formId,
@@ -280,6 +331,7 @@ export async function createFormSubmission(
       input.ipAddress ?? null,
       input.userAgent ?? null,
       input.pageUrl ?? null,
+      JSON.stringify(input.customAnswers ?? {}),
     ]
   );
   return result.rows[0]?.id ?? "";

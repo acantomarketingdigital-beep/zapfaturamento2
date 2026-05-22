@@ -455,6 +455,37 @@ export async function updateLeadEventStatus(
   );
 }
 
+export async function findRecentLeadForCapi(clientSlug: string): Promise<LeadEventRecord | null> {
+  if (!hasDatabaseConfig()) return null;
+  const result = await queryDb<LeadEventRecord>(
+    `SELECT * FROM whatsapp_leads
+     WHERE client_slug = $1
+       AND meta_capi_success IS NULL
+       AND source_platform != 'form'
+       AND is_test = false
+       AND created_at > NOW() - INTERVAL '60 minutes'
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [clientSlug]
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function confirmLeadCapi(
+  leadId: number,
+  success: boolean,
+  eventId: string | null,
+  error: string | null
+): Promise<void> {
+  if (!hasDatabaseConfig()) return;
+  await queryDb(
+    `UPDATE whatsapp_leads
+     SET meta_capi_success = $2, meta_capi_event_id = $3, meta_capi_error = $4
+     WHERE id = $1`,
+    [leadId, success, eventId, error ?? null]
+  );
+}
+
 export type DeleteLeadsMode =
   | "test_only"
   | "client_all"

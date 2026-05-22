@@ -1,10 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { LeadForm } from "@/lib/lead-forms";
+import type { LeadForm, CustomQuestion } from "@/lib/lead-forms";
 import { initializeTrackingConfig, trackFormLead, type TrackingConfig } from "@/lib/tracking";
+import type { SeoContent } from "@/lib/seo-content-generator";
 
-type Props = { form: LeadForm; tracking?: TrackingConfig };
+type Props = { form: LeadForm; tracking?: TrackingConfig; seoContent?: SeoContent | null };
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" style={{ width: 16, height: 16, flexShrink: 0 }}>
+      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+    </svg>
+  );
+}
 
 type UTMs = {
   utmSource: string; utmMedium: string; utmCampaign: string;
@@ -39,7 +48,7 @@ function formatPhoneDisplay(value: string): string {
   return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9, 13)}`;
 }
 
-export function LeadFormPublic({ form, tracking = {} }: Props) {
+export function LeadFormPublic({ form, tracking = {}, seoContent }: Props) {
   const [name, setName]             = useState("");
   const [phone, setPhone]           = useState("");
   const [email, setEmail]           = useState("");
@@ -49,6 +58,7 @@ export function LeadFormPublic({ form, tracking = {} }: Props) {
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState("");
   const [success, setSuccess]       = useState(false);
+  const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
   const utmsRef                     = useRef<UTMs | null>(null);
 
   useEffect(() => {
@@ -78,6 +88,13 @@ export function LeadFormPublic({ form, tracking = {} }: Props) {
     const digits = phone.replace(/\D/g, "");
     if (digits.length < 10) { setError("Informe um WhatsApp valido."); return; }
 
+    for (const q of (form.customQuestions ?? [])) {
+      if (q.required && !customAnswers[q.id]?.trim()) {
+        setError(`Responda: "${q.question}"`);
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const res = await fetch("/api/f/submit", {
@@ -92,6 +109,7 @@ export function LeadFormPublic({ form, tracking = {} }: Props) {
           leadProcedure:   procedure.trim() || undefined,
           leadCity:        city.trim() || undefined,
           leadObservation: observation.trim() || undefined,
+          customAnswers: Object.keys(customAnswers).length > 0 ? customAnswers : undefined,
           pageUrl:         window.location.href,
           ...utmsRef.current,
         }),
@@ -178,13 +196,29 @@ export function LeadFormPublic({ form, tracking = {} }: Props) {
           </div>
         ) : null}
 
-        {/* Headline */}
-        {form.title ? (
-          <h1 className="lf-title">{form.title}</h1>
-        ) : null}
-        {form.subtitle ? (
-          <p className="lf-subtitle">{form.subtitle}</p>
-        ) : null}
+        {/* SEO block — only for Google Ads forms, never for Meta */}
+        {seoContent ? (
+          <div className="lf-seo-block">
+            <div className="smart-badge">⭐ {seoContent.badgeText}</div>
+            <h1 className="lf-seo-headline">{seoContent.title}</h1>
+            <p className="lf-seo-desc">{seoContent.description}</p>
+            <ul className="smart-benefits" aria-label="Benefícios">
+              {seoContent.bullets.map((b, i) => (
+                <li key={i} className="smart-benefit">
+                  <span className="smart-benefit__icon" style={{ color: primary }}><CheckIcon /></span>
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="lf-seo-divider" />
+          </div>
+        ) : (
+          <>
+            {/* Default headline (only when no SEO content) */}
+            {form.title ? <h1 className="lf-title">{form.title}</h1> : null}
+            {form.subtitle ? <p className="lf-subtitle">{form.subtitle}</p> : null}
+          </>
+        )}
 
         {/* Form */}
         <form className="lf-form" onSubmit={handleSubmit} noValidate>
@@ -273,6 +307,38 @@ export function LeadFormPublic({ form, tracking = {} }: Props) {
               />
             </div>
           ) : null}
+
+          {(form.customQuestions ?? []).map((q: CustomQuestion) => (
+            <div key={q.id} className="lf-field">
+              <label className="lf-label">
+                {q.question}{q.required ? " *" : ""}
+              </label>
+              {q.type === "open_text" ? (
+                <input
+                  type="text"
+                  className="lf-input"
+                  placeholder="Sua resposta..."
+                  value={customAnswers[q.id] ?? ""}
+                  onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                />
+              ) : (
+                <div className="lf-options">
+                  {q.options.filter(Boolean).map((opt, oi) => (
+                    <label key={oi} className="lf-option">
+                      <input
+                        type="radio"
+                        name={`cq_${q.id}`}
+                        value={opt}
+                        checked={customAnswers[q.id] === opt}
+                        onChange={() => setCustomAnswers((prev) => ({ ...prev, [q.id]: opt }))}
+                      />
+                      <span>{opt}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
 
           {error ? <p className="lf-error">{error}</p> : null}
 

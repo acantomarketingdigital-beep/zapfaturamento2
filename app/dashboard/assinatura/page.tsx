@@ -6,7 +6,8 @@ import { isStripeConfigured } from "@/lib/stripe";
 import { hasDatabaseConfig } from "@/lib/db";
 import SubscribePlansClient from "@/app/billing/subscribe/SubscribePlansClient";
 import { getWorkspaceBillingUsage, type WorkspaceBillingUsage } from "@/lib/billing-usage";
-import { getPlanById } from "@/lib/plans";
+import { getPlanById, getPlanByKey } from "@/lib/plans";
+import AddonsManagerClient from "@/components/dashboard/AddonsManagerClient";
 
 const FEATURES = [
   "CAPI 100% de cobertura (Meta)",
@@ -97,13 +98,17 @@ export default async function DashboardAssinaturaPage() {
     : null;
 
   const knownPlan = getPlanById(activePlan);
+  // subscription_plan can be "starter", "agency", "scale", "enterprise", "monthly" (legado), "yearly" (legado)
+  const isYearlyPlan = activePlan?.endsWith("-yearly") ?? false;
   const planLabel = knownPlan
     ? `${knownPlan.name} — R$${knownPlan.priceMonthly}/mês`
     : activePlan === "yearly" ? "Pro Anual (legado)"
     : activePlan === "monthly" ? "Pro Mensal (legado)"
     : "Zap Faturamento";
   const planPrice = knownPlan
-    ? `R$${knownPlan.priceMonthly}/mês`
+    ? isYearlyPlan
+      ? `R$${knownPlan.priceYearly.toLocaleString("pt-BR")}/ano`
+      : `R$${knownPlan.priceMonthly}/mês`
     : activePlan === "yearly" ? "R$997/ano"
     : activePlan === "monthly" ? "R$97/mês"
     : "—";
@@ -297,6 +302,25 @@ export default async function DashboardAssinaturaPage() {
             })()}
           </article>
         )}
+
+        {/* Add-ons manager — only for active pro subscribers with a plan that supports extras */}
+        {usage && isPro && hasStripeCustomer && !isEnvAdmin && stripeReady && (() => {
+          const planData = getPlanByKey(activePlan);
+          if (!planData) return null;
+          const hasAddons = planData.stripeExtraFormPriceId !== null || planData.stripeExtraWhatsappPriceId !== null;
+          if (!hasAddons) return null;
+          return (
+            <AddonsManagerClient
+              planKey={planData.key}
+              extraFormPriceMonthly={planData.extraFormPriceMonthly}
+              extraWhatsappPriceMonthly={planData.extraWhatsappPriceMonthly}
+              formsIncluded={usage.formsIncluded}
+              whatsappsIncluded={usage.whatsappsIncluded}
+              initialForms={usage.extraFormsActive}
+              initialWhatsapps={usage.extraWhatsappsActive}
+            />
+          );
+        })()}
 
         {/* Features list */}
         <article className="dashboard-card">

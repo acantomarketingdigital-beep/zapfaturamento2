@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { getStripe, STRIPE_WEBHOOK_SECRET, getPlanFromPriceId } from "@/lib/stripe";
+import {
+  getStripe,
+  STRIPE_WEBHOOK_SECRET,
+  getPlanFromPriceId,
+  getBillingCycleFromPriceId,
+} from "@/lib/stripe";
 import { queryDb, hasDatabaseConfig } from "@/lib/db";
 
 export const runtime = "nodejs";
+
+const TAG = "[stripe-webhook]";
 
 // ─── User lookup helpers ──────────────────────────────────────────────────────
 
@@ -27,20 +34,31 @@ async function findBySubscriptionId(sid: string): Promise<{ id: string } | null>
 
 async function syncSubscription(
   subscription: Stripe.Subscription,
-  overridePlan?: string
+  overridePlan?: string,
+  overrideBilling?: string,
 ): Promise<void> {
   const user =
     (await findBySubscriptionId(subscription.id)) ??
     (await findByCustomerId(subscription.customer as string));
 
-  if (!user) return;
+  if (!user) {
+    console.warn(
+      `${TAG} syncSubscription — no user found for subscription=${subscription.id} customer=${subscription.customer}`
+    );
+    return;
+  }
 
   const status      = subscription.status;
   const periodEndTs = subscription.items.data[0]?.current_period_end ?? 0;
   const periodEnd   = new Date(periodEndTs * 1000);
   const priceId     = subscription.items.data[0]?.price?.id ?? null;
-  const plan        = overridePlan ?? (priceId ? getPlanFromPriceId(priceId) : "monthly");
-  const paidAccess  = status === "active" || status === "trialing";
+  const plan        = overridePlan   ?? (priceId ? getPlanFromPriceId(priceId)        : "starter");
+  const billing     = overrideBilling ?? (priceId ? getBillingCycleFromPriceId(priceId) : "monthly");
+
+  console.log(
+    `${TAG} syncSubscription — userId=${user.id} subscription=${subscription.id}` +
+    ` status=${status} plan=${plan} billing=${billing} priceId=${priceId ?? "null"}`
+  );
 
   if (status === "active") {
     await queryDb(
@@ -52,13 +70,16 @@ async function syncSubscription(
          subscription_id          = $2,
          stripe_price_id          = COALESCE($4, stripe_price_id),
          subscription_plan        = $5,
+         billing_cycle            = $6,
          plan_expires_at          = $3,
          subscription_started_at  = COALESCE(subscription_started_at, NOW()),
          subscription_canceled_at = NULL,
          next_payment_at          = $3
        WHERE id = $1`,
-      [user.id, subscription.id, periodEnd.toISOString(), priceId, plan]
+      [user.id, subscription.id, periodEnd.toISOString(), priceId, plan, billing]
     );
+    console.log(`${TAG} DB updated — userId=${user.id} status=active plan=${plan} billing=${billing} expires=${periodEnd.toISOString()}`);
+
   } else if (status === "trialing") {
     const trialEnd = subscription.trial_end
       ? new Date(subscription.trial_end * 1000)
@@ -70,10 +91,13 @@ async function syncSubscription(
          subscription_id          = $2,
          stripe_price_id          = COALESCE($4, stripe_price_id),
          subscription_plan        = $5,
+         billing_cycle            = $6,
          trial_expires_at         = COALESCE($3, trial_expires_at)
        WHERE id = $1`,
-      [user.id, subscription.id, trialEnd?.toISOString() ?? null, priceId, plan]
+      [user.id, subscription.id, trialEnd?.toISOString() ?? null, priceId, plan, billing]
     );
+    console.log(`${TAG} DB updated — userId=${user.id} status=trialing plan=${plan} billing=${billing} trialEnd=${trialEnd?.toISOString() ?? "null"}`);
+
   } else if (status === "past_due" || status === "unpaid") {
     await queryDb(
       `UPDATE users SET
@@ -82,6 +106,8 @@ async function syncSubscription(
        WHERE id = $1`,
       [user.id]
     );
+    console.log(`${TAG} DB updated — userId=${user.id} status=past_due (payment overdue)`);
+
   } else if (status === "incomplete_expired") {
     await queryDb(
       `UPDATE users SET
@@ -90,6 +116,8 @@ async function syncSubscription(
        WHERE id = $1`,
       [user.id]
     );
+    console.log(`${TAG} DB updated — userId=${user.id} status=incomplete_expired`);
+
   } else if (status === "canceled") {
     await queryDb(
       `UPDATE users SET
@@ -100,8 +128,9 @@ async function syncSubscription(
        WHERE id = $1`,
       [user.id]
     );
+    console.log(`${TAG} DB updated — userId=${user.id} status=canceled`);
+
   } else {
-    // Unknown/other status: revoke access to be safe
     await queryDb(
       `UPDATE users SET
          paid_access         = false,
@@ -109,10 +138,11 @@ async function syncSubscription(
        WHERE id = $1`,
       [user.id, status]
     );
+    console.log(`${TAG} DB updated — userId=${user.id} unknown status=${status} → access revoked`);
   }
 }
 
-// ─── Invoice helpers ──────────────────────────────────────────────────────────
+// ─── Invoice subscription ID helper ──────────────────────────────────────────
 
 function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
   const parent = invoice.parent as {
@@ -127,37 +157,54 @@ function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
 
 export async function POST(request: Request) {
   if (!hasDatabaseConfig()) {
+    console.error(`${TAG} DB not configured — rejecting`);
     return NextResponse.json({ error: "DB not configured" }, { status: 500 });
   }
 
+  // Raw body required for Stripe signature verification
   const body      = await request.text();
   const signature = request.headers.get("stripe-signature");
 
   if (!signature || !STRIPE_WEBHOOK_SECRET) {
+    console.error(
+      `${TAG} Missing stripe-signature=${!signature} or STRIPE_WEBHOOK_SECRET=${!STRIPE_WEBHOOK_SECRET}`
+    );
     return NextResponse.json({ error: "Missing signature or secret" }, { status: 400 });
   }
 
   let event: Stripe.Event;
   try {
     event = getStripe().webhooks.constructEvent(body, signature, STRIPE_WEBHOOK_SECRET);
-  } catch {
+  } catch (err) {
+    console.error(`${TAG} Signature verification failed:`, String(err));
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
+
+  console.log(`${TAG} ▶ event=${event.type} id=${event.id}`);
 
   try {
     switch (event.type) {
 
-      // ── Checkout completed ──────────────────────────────────────────────────
+      // ── Checkout session completed ──────────────────────────────────────────
       case "checkout.session.completed": {
         const session        = event.data.object as Stripe.Checkout.Session;
         const userId         = session.metadata?.userId;
-        const plan           = session.metadata?.plan ?? "monthly";
+        const plan           = session.metadata?.plan    ?? "starter";
+        const billing        = session.metadata?.billing ?? "monthly";
         const customerId     = session.customer as string | null;
         const subscriptionId = session.subscription as string | null;
 
-        if (!userId) break;
+        console.log(
+          `${TAG} checkout.session.completed — userId=${userId ?? "MISSING"}` +
+          ` plan=${plan} billing=${billing} customerId=${customerId ?? "null"} subscriptionId=${subscriptionId ?? "null"}`
+        );
 
-        // Persist Stripe customer and subscription IDs
+        if (!userId) {
+          console.error(`${TAG} checkout.session.completed — metadata.userId missing, skipping DB update`);
+          break;
+        }
+
+        // Persist Stripe IDs immediately (before subscription sync in case it throws)
         await queryDb(
           `UPDATE users SET
              stripe_customer_id = COALESCE(stripe_customer_id, $2),
@@ -165,26 +212,37 @@ export async function POST(request: Request) {
            WHERE id = $1`,
           [userId, customerId, subscriptionId]
         );
+        console.log(
+          `${TAG} checkout — stripe_customer_id and subscription_id persisted for userId=${userId}`
+        );
 
-        // Sync full subscription state (pass plan from metadata so it's saved immediately)
+        // Full subscription sync (passes plan and billing from metadata so it's stored immediately,
+        // not waiting for the subscription.updated event which may arrive without metadata)
         if (subscriptionId) {
           const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
-          await syncSubscription(subscription, plan);
+          await syncSubscription(subscription, plan, billing);
         }
         break;
       }
 
       // ── Subscription created / updated ─────────────────────────────────────
+      // Handles renewals, plan changes, and billing cycle updates from Stripe
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
+        console.log(
+          `${TAG} ${event.type} — subscription=${subscription.id} status=${subscription.status}`
+        );
+        // billing cycle is inferred from price ID via getBillingCycleFromPriceId
         await syncSubscription(subscription);
         break;
       }
 
-      // ── Subscription deleted (fully canceled) ──────────────────────────────
+      // ── Subscription fully canceled ─────────────────────────────────────────
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
+        console.log(`${TAG} customer.subscription.deleted — subscription=${subscription.id}`);
+
         const user =
           (await findBySubscriptionId(subscription.id)) ??
           (await findByCustomerId(subscription.customer as string));
@@ -199,14 +257,22 @@ export async function POST(request: Request) {
              WHERE id = $1`,
             [user.id]
           );
+          console.log(`${TAG} DB updated — userId=${user.id} canceled (subscription deleted)`);
+        } else {
+          console.warn(
+            `${TAG} customer.subscription.deleted — no user found for subscription=${subscription.id}`
+          );
         }
         break;
       }
 
-      // ── Payment succeeded ──────────────────────────────────────────────────
+      // ── Payment succeeded ───────────────────────────────────────────────────
       case "invoice.payment_succeeded": {
         const invoice        = event.data.object as Stripe.Invoice;
         const subscriptionId = getInvoiceSubscriptionId(invoice);
+        console.log(
+          `${TAG} invoice.payment_succeeded — invoice=${invoice.id} subscription=${subscriptionId ?? "null"}`
+        );
 
         if (!subscriptionId) break;
 
@@ -218,18 +284,19 @@ export async function POST(request: Request) {
           (await findByCustomerId(invoice.customer as string));
 
         if (user) {
-          await queryDb(
-            `UPDATE users SET last_payment_at = NOW() WHERE id = $1`,
-            [user.id]
-          );
+          await queryDb(`UPDATE users SET last_payment_at = NOW() WHERE id = $1`, [user.id]);
+          console.log(`${TAG} last_payment_at updated — userId=${user.id}`);
         }
         break;
       }
 
-      // ── Payment failed ─────────────────────────────────────────────────────
+      // ── Payment failed ──────────────────────────────────────────────────────
       case "invoice.payment_failed": {
         const invoice        = event.data.object as Stripe.Invoice;
         const subscriptionId = getInvoiceSubscriptionId(invoice);
+        console.log(
+          `${TAG} invoice.payment_failed — invoice=${invoice.id} subscription=${subscriptionId ?? "null"}`
+        );
 
         const user = subscriptionId
           ? (await findBySubscriptionId(subscriptionId)) ??
@@ -244,12 +311,17 @@ export async function POST(request: Request) {
              WHERE id = $1`,
             [user.id]
           );
+          console.log(`${TAG} DB updated — userId=${user.id} past_due (payment failed)`);
         }
         break;
       }
+
+      default:
+        console.log(`${TAG} Unhandled event type=${event.type} — ignoring`);
+        break;
     }
   } catch (err) {
-    console.error("[stripe-webhook] handler error:", err);
+    console.error(`${TAG} Handler error for event=${event.type}:`, err);
     return NextResponse.json({ error: "Handler error" }, { status: 500 });
   }
 

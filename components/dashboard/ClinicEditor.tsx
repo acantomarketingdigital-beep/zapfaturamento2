@@ -2,10 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CustomerLogo } from "@/components/CustomerLogo";
-import {
-  getKommoCustomFieldDefinitions,
-  slugifyClinicName
-} from "@/lib/clinic-shared";
+import { slugifyClinicName } from "@/lib/clinic-shared";
 import type { ManagedClinicFormValues } from "@/lib/clinics";
 
 type ClinicEditorProps = {
@@ -33,7 +30,6 @@ export function ClinicEditor({
     values.logoUrl ? "loaded" : "empty"
   );
   const [whatsappNumber, setWhatsappNumber] = useState(values.whatsappNumber);
-  const [kommoEnabled, setKommoEnabled] = useState(values.kommoEnabled);
   const [isActive, setIsActive] = useState(values.isActive);
 
   useEffect(() => {
@@ -362,122 +358,6 @@ export function ClinicEditor({
             </div>
           </section>
 
-          {/* ── 5. CRM ──────────────────────────────────── */}
-          <section className="dashboard-section">
-            <div className="dashboard-section__header">
-              <h3>5. CRM</h3>
-              <p>
-                Escolha se o cliente usa Kommo. Se nao usar, o redirect continua
-                registrando tracking e leads normalmente.
-              </p>
-            </div>
-
-            <div className="dashboard-radio-grid">
-              <label
-                className={`dashboard-radio-card${
-                  kommoEnabled ? " dashboard-radio-card--active" : ""
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="kommoEnabled"
-                  value="true"
-                  checked={kommoEnabled}
-                  onChange={() => setKommoEnabled(true)}
-                />
-                <strong>Usa Kommo/CRM</strong>
-                <span>Ativa envio de lead para Kommo antes do redirect.</span>
-              </label>
-
-              <label
-                className={`dashboard-radio-card${
-                  !kommoEnabled ? " dashboard-radio-card--active" : ""
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="kommoEnabled"
-                  value="false"
-                  checked={!kommoEnabled}
-                  onChange={() => setKommoEnabled(false)}
-                />
-                <strong>Sem CRM</strong>
-                <span>
-                  Pula a Kommo e registra o lead apenas no dashboard interno.
-                </span>
-              </label>
-            </div>
-
-            {kommoEnabled ? (
-              <div className="dashboard-section__body">
-                <div className="dashboard-form-grid">
-                  <label className="dashboard-field">
-                    <span>Subdomínio Kommo</span>
-                    <input
-                      type="text"
-                      name="kommoSubdomain"
-                      defaultValue={values.kommoSubdomain ?? ""}
-                      placeholder="ex: suaempresa (de suaempresa.kommo.com)"
-                    />
-                  </label>
-
-                  <label className="dashboard-field">
-                    <span>Token de Acesso Kommo</span>
-                    <input
-                      type="password"
-                      name="kommoAccessToken"
-                      defaultValue=""
-                      placeholder={values.kommoAccessTokenConfigured ? "Token salvo — cole novo para substituir" : "Cole o access token aqui"}
-                      autoComplete="off"
-                    />
-                    <input type="hidden" name="preserveKommoAccessToken" value={values.kommoAccessTokenConfigured ? "true" : "false"} />
-                  </label>
-                </div>
-
-                <div className="dashboard-form-grid">
-                  <label className="dashboard-field">
-                    <span>Kommo Pipeline ID</span>
-                    <input
-                      type="text"
-                      name="kommoPipelineId"
-                      defaultValue={values.kommoPipelineId ?? ""}
-                    />
-                  </label>
-
-                  <label className="dashboard-field">
-                    <span>Kommo Status ID</span>
-                    <input
-                      type="text"
-                      name="kommoStatusId"
-                      defaultValue={values.kommoStatusId ?? ""}
-                    />
-                  </label>
-                </div>
-
-                <div className="dashboard-custom-grid">
-                  {getKommoCustomFieldDefinitions().map((field) => (
-                    <label key={field.key} className="dashboard-field">
-                      <span>{field.label}</span>
-                      <input
-                        type="text"
-                        name={`kommoCustomFields.${field.key}`}
-                        defaultValue={values.kommoCustomFields[field.key] ?? ""}
-                      />
-                      <small className="dashboard-field__help">
-                        {field.description}
-                      </small>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="dashboard-alert dashboard-alert--info">
-                Este cliente vai funcionar sem CRM: tracking, salvamento
-                interno e redirect para WhatsApp continuam ativos.
-              </div>
-            )}
-          </section>
-
           <div className="dashboard-actions">
             <button
               type="submit"
@@ -532,10 +412,6 @@ export function ClinicEditor({
             <div>
               <span>Status</span>
               <strong>{isActive ? "Ativo" : "Inativo"}</strong>
-            </div>
-            <div>
-              <span>CRM</span>
-              <strong>{kommoEnabled ? "Kommo ativo" : "Sem CRM"}</strong>
             </div>
             <div>
               <span>Meta CAPI</span>

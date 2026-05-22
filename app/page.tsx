@@ -80,8 +80,7 @@ const resources = [
   "Google Tag Manager",
   "Kanban manual ou automático",
   "Dashboard por cliente",
-  "Follow-up agendado",
-  "Kommo CRM opcional"
+  "Follow-up agendado"
 ];
 
 const nolpBenefits = [

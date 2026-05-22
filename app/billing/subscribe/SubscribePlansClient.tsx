@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { PLAN_LIST, type Plan } from "@/lib/plans";
 
+type Billing = "monthly" | "yearly";
+
 function CheckIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 13, height: 13, flexShrink: 0, color: "var(--brand)" }}>
@@ -35,6 +37,7 @@ const SYSTEM_FEATURES = [
 
 interface PlanCardProps {
   plan: Plan;
+  billing: Billing;
   isActive: boolean;
   isLoggedIn: boolean;
   loadingId: string | null;
@@ -42,11 +45,15 @@ interface PlanCardProps {
   showAddons?: boolean;
 }
 
-function PlanCard({ plan, isActive, isLoggedIn, loadingId, onLoadingChange, showAddons = true }: PlanCardProps) {
+function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingChange, showAddons = true }: PlanCardProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const loadingOther = loadingId !== null && loadingId !== plan.key;
   const disabled = loading || loadingOther || isActive || !isLoggedIn;
+
+  const isYearly = billing === "yearly";
+  const yearlyPrice = plan.priceYearly;
+  const savings = plan.priceMonthly * 12 - yearlyPrice;
 
   function handleClick() {
     if (disabled) return;
@@ -82,18 +89,42 @@ function PlanCard({ plan, isActive, isLoggedIn, loadingId, onLoadingChange, show
         </div>
       )}
 
-      {/* Price */}
-      <div>
-        <div style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: plan.featured ? "var(--brand)" : "var(--muted, #64748b)", marginBottom: 4 }}>
-          {plan.name}
-        </div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
-          <span style={{ fontSize: "1.9rem", fontWeight: 900, color: "var(--dark, #111)", lineHeight: 1, letterSpacing: "-0.03em" }}>
-            R${plan.priceMonthly}
-          </span>
-          <span style={{ fontSize: "0.78rem", color: "var(--muted, #64748b)" }}>/mês</span>
-        </div>
+      {/* Plan name */}
+      <div style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: plan.featured ? "var(--brand)" : "var(--muted, #64748b)" }}>
+        {plan.name}
       </div>
+
+      {/* Price block */}
+      {isYearly ? (
+        <div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
+            <span style={{ fontSize: "1.9rem", fontWeight: 900, color: "var(--dark, #111)", lineHeight: 1, letterSpacing: "-0.03em" }}>
+              R${yearlyPrice.toLocaleString("pt-BR")}
+            </span>
+            <span style={{ fontSize: "0.78rem", color: "var(--muted, #64748b)" }}>/ano</span>
+          </div>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 5, marginTop: 6,
+            background: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.25)",
+            borderRadius: 8, padding: "3px 9px",
+            fontSize: "0.72rem", fontWeight: 700, color: "#15803d",
+          }}>
+            <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 11, height: 11 }}>
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            Economize R${savings.toLocaleString("pt-BR")}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
+            <span style={{ fontSize: "1.9rem", fontWeight: 900, color: "var(--dark, #111)", lineHeight: 1, letterSpacing: "-0.03em" }}>
+              R${plan.priceMonthly}
+            </span>
+            <span style={{ fontSize: "0.78rem", color: "var(--muted, #64748b)" }}>/mês</span>
+          </div>
+        </div>
+      )}
 
       {/* Capacity limits */}
       <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
@@ -167,10 +198,11 @@ function PlanCard({ plan, isActive, isLoggedIn, loadingId, onLoadingChange, show
             Fazer login para assinar
           </a>
         ) : (
-          // TODO (Stripe): criar price_id por plano (starter/agency/scale/enterprise)
-          // TODO (Stripe): atualizar checkout API para mapear plan.key → price_id correto
+          // TODO (Stripe anual): passar billing para o checkout e mapear plan.key + billing → price_id correto
+          // TODO (Stripe anual): após criar price IDs no Stripe, implementar em getPriceIdForPlan() em lib/stripe.ts
           <form ref={formRef} action="/api/stripe/checkout" method="post">
             <input type="hidden" name="plan" value={plan.key} />
+            <input type="hidden" name="billing" value={billing} />
             <button
               type="button"
               onClick={handleClick}
@@ -201,6 +233,7 @@ interface Props {
 }
 
 export default function SubscribePlansClient({ isLoggedIn, activePlan, showAddons = true }: Props) {
+  const [billing, setBilling] = useState<Billing>("monthly");
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   return (
@@ -210,12 +243,40 @@ export default function SubscribePlansClient({ isLoggedIn, activePlan, showAddon
         .subscribe-plan-card { transition: transform 0.15s, box-shadow 0.15s; }
         .subscribe-plan-card:hover { transform: translateY(-2px); box-shadow: 0 10px 36px rgba(0,0,0,0.10) !important; }
         .subscribe-plan-card[data-featured="true"]:hover { box-shadow: 0 10px 36px rgba(22,163,74,0.18) !important; }
+        .billing-toggle { display: inline-flex; align-items: center; background: var(--bg, #f8fafc); border: 1.5px solid var(--border, #e5e7eb); border-radius: 12px; padding: 3px; gap: 2px; }
+        .billing-toggle button { border: none; background: transparent; cursor: pointer; padding: 8px 18px; border-radius: 9px; font-size: 0.82rem; font-weight: 600; font-family: inherit; transition: all 0.15s; color: var(--muted, #64748b); line-height: 1; }
+        .billing-toggle button.active { background: var(--surface, #fff); color: var(--dark, #111); box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
+        .billing-toggle .yearly-badge { display: inline-flex; align-items: center; gap: 4px; margin-left: 4px; background: #dcfce7; color: #15803d; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.03em; padding: 2px 7px; border-radius: 20px; vertical-align: middle; }
       `}</style>
+
+      {/* Billing toggle */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+        <div className="billing-toggle" role="group" aria-label="Período de cobrança">
+          <button
+            type="button"
+            className={billing === "monthly" ? "active" : ""}
+            onClick={() => setBilling("monthly")}
+          >
+            Mensal
+          </button>
+          <button
+            type="button"
+            className={billing === "yearly" ? "active" : ""}
+            onClick={() => setBilling("yearly")}
+          >
+            Anual
+            <span className="yearly-badge">2 meses grátis</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Plan cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 18, width: "100%" }}>
         {PLAN_LIST.map((plan) => (
           <PlanCard
             key={plan.key}
             plan={plan}
+            billing={billing}
             isActive={activePlan === plan.key}
             isLoggedIn={isLoggedIn}
             loadingId={loadingId}

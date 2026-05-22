@@ -10,8 +10,67 @@ import {
   wasConversationAdminInitiated
 } from "@/lib/whatsapp-connections";
 import { isEvolutionConfigured, sendEvolutionTextMessage } from "@/lib/evolution-api";
-import { linkLeadContact } from "@/lib/leads";
+import { linkLeadContact, findRecentLeadForCapi, confirmLeadCapi } from "@/lib/leads";
 import { setLeadRepliedByPhone } from "@/lib/kanban";
+import { getClinicBackendConfigBySlug } from "@/lib/clinics";
+import { sendMetaCapiEvent, buildMetaExternalId, buildMetaFbc } from "@/lib/meta-capi";
+
+const VIM_DO_PHRASE = "Vim do";
+
+async function tryFireCapiForVimDo(clientSlug: string) {
+  const lead = await findRecentLeadForCapi(clientSlug);
+  if (!lead) return;
+
+  const client = await getClinicBackendConfigBySlug(clientSlug) as {
+    metaPixelId?: string;
+    metaCapiAccessToken?: string;
+    metaTestEventCode?: string;
+  } | null;
+
+  if (!client?.metaPixelId || !client?.metaCapiAccessToken) return;
+
+  const eventId = lead.meta_capi_event_id ?? `vim-do-${lead.id}-${Date.now()}`;
+  const fbc = lead.fbclid ? buildMetaFbc(lead.fbclid) : undefined;
+
+  try {
+    await sendMetaCapiEvent({
+      pixelId: client.metaPixelId,
+      accessToken: client.metaCapiAccessToken,
+      testEventCode: client.metaTestEventCode || undefined,
+      eventName: "Lead",
+      eventId,
+      eventTime: Math.floor(Date.now() / 1000),
+      actionSource: "website",
+      eventSourceUrl: lead.page_url || "",
+      userData: {
+        client_user_agent: lead.user_agent || undefined,
+        fbc: fbc || undefined,
+        external_id: buildMetaExternalId(`${clientSlug}:${lead.whatsapp_number}:${eventId}`)
+      },
+      customData: {
+        client_slug: clientSlug,
+        utm_source: lead.utm_source,
+        utm_medium: lead.utm_medium,
+        utm_campaign: lead.utm_campaign,
+        utm_content: lead.utm_content,
+        utm_term: lead.utm_term,
+        campaign_id: lead.campaign_id,
+        adset_id: lead.adset_id,
+        ad_id: lead.ad_id,
+        placement: lead.placement,
+        fbclid: lead.fbclid,
+        gclid: lead.gclid,
+        whatsapp_number: lead.whatsapp_number
+      }
+    });
+    await confirmLeadCapi(lead.id, true, eventId, null);
+    console.log("[WA WEBHOOK] CAPI Lead disparado via 'Vim do'", { clientSlug, leadId: lead.id, eventId });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await confirmLeadCapi(lead.id, false, eventId, msg).catch(() => {});
+    console.error("[WA WEBHOOK] CAPI via 'Vim do' falhou", { clientSlug, leadId: lead.id, err: msg });
+  }
+}
 
 export async function GET() {
   return NextResponse.json({ ok: true, endpoint: "whatsapp-webhook", ts: new Date().toISOString() });
@@ -82,6 +141,11 @@ export async function POST(request: Request) {
               console.log("[WA WEBHOOK] fallback inbound — skipping link (admin-initiated conversation)", { fallbackSlug, contactPhone });
             }
             await setLeadRepliedByPhone(fallbackSlug, contactPhone);
+
+            const fallbackText = (msg as { message?: { conversation?: string } }).message?.conversation ?? "";
+            if (fallbackText.includes(VIM_DO_PHRASE)) {
+              tryFireCapiForVimDo(fallbackSlug).catch(() => {});
+            }
           }
         }
         return NextResponse.json({ ok: true });
@@ -241,6 +305,10 @@ export async function POST(request: Request) {
             console.log("[WA WEBHOOK] inbound — skipping link (admin-initiated conversation)", { clientSlug: connection.client_slug, contactPhone });
           }
           await setLeadRepliedByPhone(connection.client_slug, contactPhone);
+
+          if (text && text.includes(VIM_DO_PHRASE)) {
+            tryFireCapiForVimDo(connection.client_slug).catch(() => {});
+          }
         } catch (err) {
           console.error("[WA WEBHOOK] linkLead failed (non-fatal)", { err: String(err) });
         }

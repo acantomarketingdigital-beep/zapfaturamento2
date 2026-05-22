@@ -1,8 +1,4 @@
-import {
-  getKommoCustomFieldDefinitions,
-  type ManagedClinicFormValues,
-  type ManagedClinicRecord
-} from "@/lib/clinics";
+import type { ManagedClinicFormValues, ManagedClinicRecord } from "@/lib/clinics";
 
 type ClinicFormProps = {
   values: ManagedClinicFormValues;
@@ -15,8 +11,6 @@ export function ClinicForm({
   selectedClinic,
   databaseReady
 }: ClinicFormProps) {
-  const customFieldDefinitions = getKommoCustomFieldDefinitions();
-
   return (
     <article className="dashboard-card">
       <div className="dashboard-card__header">
@@ -150,26 +144,6 @@ export function ClinicForm({
           </div>
         </div>
 
-        <label className="dashboard-field">
-          <span>Kommo Pipeline ID</span>
-          <input
-            type="text"
-            name="kommoPipelineId"
-            defaultValue={values.kommoPipelineId ?? ""}
-            disabled={!databaseReady}
-          />
-        </label>
-
-        <label className="dashboard-field">
-          <span>Kommo Status ID</span>
-          <input
-            type="text"
-            name="kommoStatusId"
-            defaultValue={values.kommoStatusId ?? ""}
-            disabled={!databaseReady}
-          />
-        </label>
-
         <label className="dashboard-toggle">
           <input
             type="checkbox"
@@ -179,32 +153,6 @@ export function ClinicForm({
           />
           <span>Clinica ativa para receber redirecionamentos</span>
         </label>
-
-        <div className="dashboard-card dashboard-card--nested dashboard-field--full">
-          <div className="dashboard-card__header">
-            <div>
-              <h3>Campos personalizados da Kommo</h3>
-              <p className="dashboard-helper">
-                Deixe vazio quando o campo ainda nao existir. O lead continua
-                sendo criado com a nota completa.
-              </p>
-            </div>
-          </div>
-
-          <div className="dashboard-custom-grid">
-            {customFieldDefinitions.map((field) => (
-              <label key={field.key} className="dashboard-field">
-                <span>{field.label}</span>
-                <input
-                  type="text"
-                  name={`kommoCustomFields.${field.key}`}
-                  defaultValue={values.kommoCustomFields[field.key] ?? ""}
-                  disabled={!databaseReady}
-                />
-              </label>
-            ))}
-          </div>
-        </div>
 
         <div className="dashboard-actions dashboard-field--full">
           <button type="submit" className="dashboard-button" disabled={!databaseReady}>

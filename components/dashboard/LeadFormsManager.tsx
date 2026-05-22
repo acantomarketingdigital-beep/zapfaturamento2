@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { LeadForm } from "@/lib/lead-forms";
+import type { LeadForm, CustomQuestion } from "@/lib/lead-forms";
 import { CopyButton } from "@/components/dashboard/CopyButton";
 
 type Client = { slug: string; name: string };
@@ -35,6 +35,13 @@ type ModalState = {
   showCity: boolean;
   showObservation: boolean;
   slugTouched: boolean;
+  campaignSource: string;
+  seoKeywords: string[];
+  seoLocations: string[];
+  seoTitle: string;
+  seoDescription: string;
+  seoBullets: string[];
+  customQuestions: CustomQuestion[];
 };
 
 function slugify(text: string): string {
@@ -66,7 +73,18 @@ function emptyModal(clientSlug: string): ModalState {
     showCity: false,
     showObservation: false,
     slugTouched: false,
+    campaignSource: "direct",
+    seoKeywords: [],
+    seoLocations: [],
+    seoTitle: "",
+    seoDescription: "",
+    seoBullets: [],
+    customQuestions: [],
   };
+}
+
+function makeQuestionId() {
+  return `q_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 }
 
 export function LeadFormsManager({
@@ -156,6 +174,13 @@ export function LeadFormsManager({
       showCity: f.showCity,
       showObservation: f.showObservation,
       slugTouched: true,
+      campaignSource: f.campaignSource ?? "direct",
+      seoKeywords: f.seoKeywords ?? [],
+      seoLocations: f.seoLocations ?? [],
+      seoTitle: f.seoTitle ?? "",
+      seoDescription: f.seoDescription ?? "",
+      seoBullets: f.seoBullets ?? [],
+      customQuestions: f.customQuestions ?? [],
     });
   }
 
@@ -181,6 +206,13 @@ export function LeadFormsManager({
       showProcedure:   modal.showProcedure,
       showCity:        modal.showCity,
       showObservation: modal.showObservation,
+      campaignSource:  modal.campaignSource,
+      seoKeywords:     modal.seoKeywords,
+      seoLocations:    modal.seoLocations,
+      seoTitle:        modal.seoTitle.trim() || null,
+      seoDescription:  modal.seoDescription.trim() || null,
+      seoBullets:      modal.seoBullets.filter(Boolean),
+      customQuestions: modal.customQuestions,
     };
 
     try {
@@ -592,6 +624,111 @@ export function LeadFormsManager({
                 </label>
               </div>
 
+              {/* Fonte da campanha */}
+              <label className="dashboard-field">
+                <span>Fonte da campanha</span>
+                <select
+                  className="dashboard-select"
+                  value={modal.campaignSource}
+                  onChange={(e) => setModal((m) => m ? { ...m, campaignSource: e.target.value } : m)}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: "0.9rem" }}
+                >
+                  <option value="direct">Direto / Orgânico</option>
+                  <option value="google">Google Ads</option>
+                  <option value="meta">Meta Ads (Facebook / Instagram)</option>
+                  <option value="tiktok">TikTok Ads</option>
+                  <option value="other">Outro</option>
+                </select>
+              </label>
+
+              {/* Bloco SEO — apenas para Google Ads */}
+              {modal.campaignSource === "google" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10 }}>
+                  <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#15803d", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                    Otimização Google Ads — Landing Page
+                  </div>
+                  <p className="dashboard-helper" style={{ margin: 0 }}>
+                    Esses dados geram automaticamente o conteúdo exibido acima do formulário, melhorando o Quality Score.
+                  </p>
+
+                  <div className="dashboard-field" style={{ margin: 0 }}>
+                    <span>Localização(ões) atendida(s) *</span>
+                    <textarea
+                      rows={3}
+                      placeholder={"Londrina PR\nRegião Metropolitana de Londrina\nNorte do Paraná"}
+                      value={modal.seoLocations.join("\n")}
+                      onChange={(e) =>
+                        setModal((m) => m ? {
+                          ...m,
+                          seoLocations: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
+                        } : m)
+                      }
+                    />
+                    <span className="dashboard-helper">Uma por linha. Ex: Londrina PR · Curitiba PR</span>
+                  </div>
+
+                  <div className="dashboard-field" style={{ margin: 0 }}>
+                    <span>
+                      Palavras-chave *{" "}
+                      <span style={{ fontWeight: 400, color: modal.seoKeywords.length < 10 ? "#dc2626" : "#15803d" }}>
+                        ({modal.seoKeywords.length}/10 mínimo)
+                      </span>
+                    </span>
+                    <textarea
+                      rows={6}
+                      placeholder={"botox londrina\nbotox perto de mim\naplicacao de botox londrina\nbotox facial londrina\nbotox testa londrina\nbotox rugas londrina\nclínica botox londrina\nbotox barato londrina\nbotox para homens londrina\nbotox avaliação gratuita londrina"}
+                      value={modal.seoKeywords.join("\n")}
+                      onChange={(e) => {
+                        const kws = e.target.value.split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 20);
+                        setModal((m) => m ? { ...m, seoKeywords: kws } : m);
+                      }}
+                    />
+                    <span className="dashboard-helper">Mínimo 10, máximo 20. Uma por linha. Use as mesmas do Google Ads.</span>
+                  </div>
+
+                  <details>
+                    <summary style={{ cursor: "pointer", fontSize: "0.85rem", color: "#15803d", fontWeight: 600 }}>
+                      Personalização avançada (opcional — gerado automaticamente se vazio)
+                    </summary>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
+                      <div className="dashboard-field" style={{ margin: 0 }}>
+                        <span>Título da página</span>
+                        <input
+                          type="text"
+                          placeholder='Se vazio → "[1ª keyword] em [localização]"'
+                          value={modal.seoTitle}
+                          onChange={(e) => setModal((m) => m ? { ...m, seoTitle: e.target.value } : m)}
+                        />
+                      </div>
+                      <div className="dashboard-field" style={{ margin: 0 }}>
+                        <span>Descrição</span>
+                        <textarea
+                          rows={3}
+                          placeholder="Se vazia, gerada automaticamente."
+                          value={modal.seoDescription}
+                          onChange={(e) => setModal((m) => m ? { ...m, seoDescription: e.target.value } : m)}
+                        />
+                      </div>
+                      <div className="dashboard-field" style={{ margin: 0 }}>
+                        <span>Benefícios (bullets)</span>
+                        <textarea
+                          rows={4}
+                          placeholder={"Atendemos Londrina e região\nAvaliação gratuita\nAgendamento pelo WhatsApp"}
+                          value={modal.seoBullets.join("\n")}
+                          onChange={(e) =>
+                            setModal((m) => m ? {
+                              ...m,
+                              seoBullets: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
+                            } : m)
+                          }
+                        />
+                        <span className="dashboard-helper">Um por linha. Se vazio, gerado automaticamente.</span>
+                      </div>
+                    </div>
+                  </details>
+                </div>
+              )}
+
               {/* Optional fields */}
               <div className="dashboard-field">
                 <span className="dashboard-field__label">Campos opcionais</span>
@@ -614,6 +751,139 @@ export function LeadFormsManager({
                     </label>
                   ))}
                 </div>
+              </div>
+
+              {/* Custom questions */}
+              <div className="dashboard-field">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                  <span className="dashboard-field__label">Perguntas personalizadas ({modal.customQuestions.length}/5)</span>
+                  <button
+                    type="button"
+                    className="dashboard-button dashboard-button--ghost"
+                    style={{ fontSize: "0.8rem", padding: "4px 10px" }}
+                    disabled={modal.customQuestions.length >= 5}
+                    onClick={() => {
+                      const newQ: CustomQuestion = { id: makeQuestionId(), type: "open_text", question: "", required: false, options: [""] };
+                      setModal((m) => m ? { ...m, customQuestions: [...m.customQuestions, newQ] } : m);
+                    }}
+                  >
+                    + Adicionar pergunta
+                  </button>
+                </div>
+                <small className="dashboard-field__help" style={{ display: "block", marginBottom: 8 }}>
+                  Ate 5 perguntas. Multipla escolha ou resposta livre — igual ao formulario nativo da Meta.
+                </small>
+
+                {modal.customQuestions.map((q, qi) => (
+                  <div key={q.id} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10, background: "var(--bg-card, #fafafa)" }}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", minWidth: 20 }}>#{qi + 1}</span>
+                      <select
+                        className="dashboard-select"
+                        style={{ fontSize: "0.8rem", padding: "4px 8px", flex: "0 0 auto" }}
+                        value={q.type}
+                        onChange={(e) => setModal((m) => {
+                          if (!m) return m;
+                          const qs = [...m.customQuestions];
+                          qs[qi] = { ...qs[qi], type: e.target.value as CustomQuestion["type"], options: e.target.value === "multiple_choice" ? (qs[qi].options.length ? qs[qi].options : [""]) : [] };
+                          return { ...m, customQuestions: qs };
+                        })}
+                      >
+                        <option value="open_text">Resposta livre</option>
+                        <option value="multiple_choice">Multipla escolha</option>
+                      </select>
+                      <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: "0.8rem", marginLeft: "auto" }}>
+                        <input
+                          type="checkbox"
+                          checked={q.required}
+                          onChange={(e) => setModal((m) => {
+                            if (!m) return m;
+                            const qs = [...m.customQuestions];
+                            qs[qi] = { ...qs[qi], required: e.target.checked };
+                            return { ...m, customQuestions: qs };
+                          })}
+                        />
+                        Obrigatoria
+                      </label>
+                      <button
+                        type="button"
+                        className="dashboard-button dashboard-button--ghost dashboard-button--danger"
+                        style={{ fontSize: "0.75rem", padding: "2px 8px" }}
+                        onClick={() => setModal((m) => m ? { ...m, customQuestions: m.customQuestions.filter((_, i) => i !== qi) } : m)}
+                      >
+                        Remover
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      className="dashboard-input"
+                      placeholder="Texto da pergunta..."
+                      value={q.question}
+                      onChange={(e) => setModal((m) => {
+                        if (!m) return m;
+                        const qs = [...m.customQuestions];
+                        qs[qi] = { ...qs[qi], question: e.target.value };
+                        return { ...m, customQuestions: qs };
+                      })}
+                    />
+
+                    {q.type === "multiple_choice" && (
+                      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+                        <small style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Opcoes de resposta:</small>
+                        {q.options.map((opt, oi) => (
+                          <div key={oi} style={{ display: "flex", gap: 6 }}>
+                            <input
+                              type="text"
+                              className="dashboard-input"
+                              style={{ flex: 1, fontSize: "0.85rem" }}
+                              placeholder={`Opcao ${oi + 1}`}
+                              value={opt}
+                              onChange={(e) => setModal((m) => {
+                                if (!m) return m;
+                                const qs = [...m.customQuestions];
+                                const opts = [...qs[qi].options];
+                                opts[oi] = e.target.value;
+                                qs[qi] = { ...qs[qi], options: opts };
+                                return { ...m, customQuestions: qs };
+                              })}
+                            />
+                            {q.options.length > 1 && (
+                              <button
+                                type="button"
+                                className="dashboard-button dashboard-button--ghost"
+                                style={{ fontSize: "0.75rem", padding: "2px 8px" }}
+                                onClick={() => setModal((m) => {
+                                  if (!m) return m;
+                                  const qs = [...m.customQuestions];
+                                  qs[qi] = { ...qs[qi], options: qs[qi].options.filter((_, i) => i !== oi) };
+                                  return { ...m, customQuestions: qs };
+                                })}
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {q.options.length < 8 && (
+                          <button
+                            type="button"
+                            className="dashboard-button dashboard-button--ghost"
+                            style={{ fontSize: "0.75rem", padding: "4px 10px", alignSelf: "flex-start" }}
+                            onClick={() => setModal((m) => {
+                              if (!m) return m;
+                              const qs = [...m.customQuestions];
+                              qs[qi] = { ...qs[qi], options: [...qs[qi].options, ""] };
+                              return { ...m, customQuestions: qs };
+                            })}
+                          >
+                            + Opcao
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
 
               {error ? <p className="dashboard-error-text">{error}</p> : null}

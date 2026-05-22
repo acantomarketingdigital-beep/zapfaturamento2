@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser, isAgencyAdmin } from "@/lib/dashboard-auth";
 import { canAccessClient } from "@/lib/dashboard-auth";
 import { getUserPermissions } from "@/lib/permissions";
-import { listLeadForms, saveLeadForm, MAX_FORMS_PER_CLIENT } from "@/lib/lead-forms";
+import { listLeadForms, saveLeadForm, MAX_FORMS_PER_CLIENT, type CustomQuestion } from "@/lib/lead-forms";
 import { slugifyClinicName } from "@/lib/clinic-shared";
 import { getCachedBillingStatus } from "@/lib/billing";
 import { checkFormLimit } from "@/lib/billing-usage";
@@ -91,6 +91,13 @@ export async function POST(request: Request) {
       showProcedure: Boolean(body.showProcedure),
       showCity: Boolean(body.showCity),
       showObservation: Boolean(body.showObservation),
+      campaignSource: String(body.campaignSource || "direct"),
+      seoKeywords: Array.isArray(body.seoKeywords) ? (body.seoKeywords as string[]) : [],
+      seoLocations: Array.isArray(body.seoLocations) ? (body.seoLocations as string[]) : [],
+      seoTitle: body.seoTitle ? String(body.seoTitle).trim() || null : null,
+      seoDescription: body.seoDescription ? String(body.seoDescription).trim() || null : null,
+      seoBullets: Array.isArray(body.seoBullets) ? (body.seoBullets as string[]).filter(Boolean) : null,
+      customQuestions: Array.isArray(body.customQuestions) ? (body.customQuestions as CustomQuestion[]) : [],
     });
     return NextResponse.json({ form }, { status: 201 });
   } catch (err) {

@@ -64,7 +64,7 @@ async function sendLeadToBackend(payload: LeadCapturePayload) {
     const response = await fetch("/api/kommo/create-lead", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, skipCapi: true }),
       signal: controller.signal
     });
 
@@ -80,6 +80,7 @@ async function sendLeadToBackend(payload: LeadCapturePayload) {
     window.clearTimeout(timeoutId);
   }
 }
+
 
 export function WhatsAppRedirectFlow({ client, campaign, creative }: WhatsAppRedirectFlowProps) {
   const router = useRouter();

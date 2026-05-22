@@ -70,6 +70,12 @@ export async function POST(request: Request) {
   const leadCity      = form.showCity      ? String(body.leadCity      || "").trim() || undefined : undefined;
   const leadObservation = form.showObservation ? String(body.leadObservation || "").trim() || undefined : undefined;
 
+  const rawAnswers = body.customAnswers;
+  const customAnswers =
+    rawAnswers && typeof rawAnswers === "object" && !Array.isArray(rawAnswers)
+      ? (rawAnswers as Record<string, string>)
+      : undefined;
+
   // Insert into whatsapp_leads
   const whatsappLeadId = await insertFormLeadToWhatsappLeads({
     clientSlug,
@@ -99,6 +105,7 @@ export async function POST(request: Request) {
     leadProcedure,
     leadCity,
     leadObservation,
+    customAnswers,
     whatsappLeadId,
     utmSource,
     utmMedium,

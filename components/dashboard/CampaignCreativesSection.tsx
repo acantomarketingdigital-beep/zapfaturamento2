@@ -66,6 +66,14 @@ function buildCreativeGoogleUrl(baseUrl: string, clientSlug: string, campaignSlu
   return `${base}?utm_source=google&utm_medium=cpc&utm_campaign={campaignid}&utm_content={creative}&utm_term={keyword}&gclid={gclid}&device={device}&network={network}&matchtype={matchtype}`;
 }
 
+const VIM_DO = "Vim do";
+
+function enforceVimDo(newValue: string, prevValue: string): string {
+  if (!newValue) return newValue;
+  if (newValue.includes(VIM_DO)) return newValue;
+  return prevValue;
+}
+
 function CharCounter({ value, max }: { value: string; max: number }) {
   const len = value.length;
   const over = len > max;
@@ -102,12 +110,13 @@ export function CampaignCreativesSection({ campaignId, campaignName, campaignSlu
 
   function openEdit(c: Creative) {
     setError("");
+    const msg = c.defaultMessage ?? "";
     setModal({
       mode: "edit",
       id: c.id,
       name: c.name,
       slug: c.slug,
-      defaultMessage: c.defaultMessage ?? "",
+      defaultMessage: msg && !msg.includes(VIM_DO) ? `${msg} ${VIM_DO}` : msg,
       metaAdsUrl: c.metaAdsUrl ?? "",
       isActive: c.isActive,
       slugTouched: true,
@@ -448,11 +457,16 @@ export function CampaignCreativesSection({ campaignId, campaignName, campaignSlu
                 <textarea
                   rows={3}
                   value={modal.defaultMessage}
-                  onChange={(e) => setModal({ ...modal, defaultMessage: e.target.value })}
-                  placeholder="Deixe vazio para usar a mensagem da campanha."
+                  onChange={(e) =>
+                    setModal({ ...modal, defaultMessage: enforceVimDo(e.target.value, modal.defaultMessage) })
+                  }
+                  placeholder={`Deixe vazio para usar a mensagem da campanha. Se preencher, deve conter "${VIM_DO}".`}
                 />
                 <span className="dashboard-helper">
                   Substitui a mensagem da campanha quando este criativo for acessado.
+                  {modal.defaultMessage
+                    ? <> A frase <strong>&ldquo;{VIM_DO}&rdquo;</strong> e obrigatoria e nao pode ser removida.</>
+                    : null}
                 </span>
               </div>
 

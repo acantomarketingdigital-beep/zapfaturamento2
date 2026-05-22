@@ -185,6 +185,7 @@ async function sendMetaLeadEvent(
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const skipCapi = body?.skipCapi === true;
     const payload = toSafePayload(body);
 
     if (!payload?.clientSlug) {
@@ -216,6 +217,9 @@ export async function POST(request: Request) {
         { status: 409 }
       );
     }
+
+    // Kommo integration disabled — all leads go to native CRM
+    client.kommoEnabled = false;
 
     if (!client.whatsappNumber) {
       return NextResponse.json(
@@ -271,7 +275,7 @@ export async function POST(request: Request) {
     let metaCapiError: string | null = null;
     const metaCapiEnabled = isMetaCapiConfigured(client);
 
-    if (metaCapiEnabled) {
+    if (metaCapiEnabled && !skipCapi) {
       try {
         await sendMetaLeadEvent(
           normalizedPayload,

@@ -4,6 +4,11 @@ export type Plan = {
   key: PlanKey;
   name: string;
   priceMonthly: number;
+  priceYearly: number;
+  stripePriceMonthlyId: string;
+  stripePriceYearlyId: string;
+  stripeExtraFormPriceId: string | null;
+  stripeExtraWhatsappPriceId: string | null;
   clientsIncluded: number | null;
   billableLeadsIncluded: number;
   leadFormsIncluded: number | null;
@@ -21,6 +26,11 @@ export const PLANS: Record<PlanKey, Plan> = {
     key: "starter",
     name: "Starter",
     priceMonthly: 97,
+    priceYearly: 970,
+    stripePriceMonthlyId:       "price_1TYAPpFvYZaPsKPDOGPhTGbK",
+    stripePriceYearlyId:        "price_1TYAQBFvYZaPsKPDu1om3O1Z",
+    stripeExtraFormPriceId:     "price_1TYAdzFvYZaPsKPD0jHL1vx8",
+    stripeExtraWhatsappPriceId: "price_1TYAf7FvYZaPsKPDrtCdgYnU",
     clientsIncluded: 3,
     billableLeadsIncluded: 2000,
     leadFormsIncluded: 3,
@@ -34,6 +44,11 @@ export const PLANS: Record<PlanKey, Plan> = {
     key: "agency",
     name: "Agency",
     priceMonthly: 197,
+    priceYearly: 1970,
+    stripePriceMonthlyId:       "price_1TYARRFvYZaPsKPDM1OHOGeG",
+    stripePriceYearlyId:        "price_1TYARtFvYZaPsKPDg0SISCXN",
+    stripeExtraFormPriceId:     "price_1TYAeOFvYZaPsKPDTZZhcSay",
+    stripeExtraWhatsappPriceId: "price_1TYAg1FvYZaPsKPDXLULtrr1",
     clientsIncluded: 10,
     billableLeadsIncluded: 5000,
     leadFormsIncluded: 6,
@@ -49,6 +64,11 @@ export const PLANS: Record<PlanKey, Plan> = {
     key: "scale",
     name: "Scale",
     priceMonthly: 297,
+    priceYearly: 2970,
+    stripePriceMonthlyId:       "price_1TYATGFvYZaPsKPDgr70EKRW",
+    stripePriceYearlyId:        "price_1TYATcFvYZaPsKPDWFW6f1RM",
+    stripeExtraFormPriceId:     "price_1TYAeqFvYZaPsKPDRdScDGRL",
+    stripeExtraWhatsappPriceId: "price_1TYAgMFvYZaPsKPDj0OCdk3a",
     clientsIncluded: 25,
     billableLeadsIncluded: 10000,
     leadFormsIncluded: 15,
@@ -62,6 +82,11 @@ export const PLANS: Record<PlanKey, Plan> = {
     key: "enterprise",
     name: "Enterprise",
     priceMonthly: 497,
+    priceYearly: 4970,
+    stripePriceMonthlyId:       "price_1TYAUrFvYZaPsKPDJk5mdTRc",
+    stripePriceYearlyId:        "price_1TYAVCFvYZaPsKPDv03BlWjg",
+    stripeExtraFormPriceId:     null, // ilimitado
+    stripeExtraWhatsappPriceId: null, // ilimitado
     clientsIncluded: null,
     billableLeadsIncluded: 30000,
     leadFormsIncluded: null,

@@ -198,6 +198,14 @@ function CampaignMediaSection({
   );
 }
 
+const VIM_DO = "Vim do";
+
+function enforceVimDo(newValue: string, prevValue: string): string {
+  if (!newValue) return newValue;
+  if (newValue.includes(VIM_DO)) return newValue;
+  return prevValue;
+}
+
 const CURRENCY_OPTIONS: { value: Currency; label: string }[] = [
   { value: "BRL", label: "BRL — Real" },
   { value: "USD", label: "USD — Dólar" },
@@ -247,7 +255,7 @@ export function CampaignSection({
       mode: "create",
       name: "",
       slug: "",
-      defaultMessage: "",
+      defaultMessage: VIM_DO,
       whatsappNumber: "",
       isActive: true,
       dailyBudget: "",
@@ -269,7 +277,11 @@ export function CampaignSection({
       id: campaign.id,
       name: campaign.name,
       slug: campaign.slug,
-      defaultMessage: campaign.defaultMessage,
+      defaultMessage: campaign.defaultMessage.includes(VIM_DO)
+        ? campaign.defaultMessage
+        : campaign.defaultMessage
+          ? `${campaign.defaultMessage} ${VIM_DO}`
+          : VIM_DO,
       whatsappNumber: campaign.whatsappNumber ?? "",
       isActive: campaign.isActive,
       dailyBudget: campaign.dailyBudgetCents > 0
@@ -532,11 +544,14 @@ export function CampaignSection({
                 <textarea
                   rows={3}
                   value={modal.defaultMessage}
-                  onChange={(e) => setModal({ ...modal, defaultMessage: e.target.value })}
-                  placeholder="Ola! Tenho interesse em..."
+                  onChange={(e) =>
+                    setModal({ ...modal, defaultMessage: enforceVimDo(e.target.value, modal.defaultMessage) })
+                  }
+                  placeholder={`Ola! Tenho interesse em... ${VIM_DO}`}
                 />
                 <span className="dashboard-helper">
                   Esta mensagem sera enviada automaticamente ao abrir o WhatsApp.
+                  A frase <strong>&ldquo;{VIM_DO}&rdquo;</strong> e obrigatoria e nao pode ser removida.
                 </span>
               </div>
 

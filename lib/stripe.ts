@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { PLANS, type PlanKey } from "./plans";
 
 // Lazy singleton — doesn't crash at build time when env var is absent
 let _client: Stripe | null = null;
@@ -15,36 +16,35 @@ export function getStripe(): Stripe {
   return _client;
 }
 
-export const STRIPE_PRICE_MONTHLY  = (process.env.STRIPE_PRICE_MONTHLY ?? "").trim();
-export const STRIPE_PRICE_YEARLY   = (process.env.STRIPE_PRICE_YEARLY  ?? "").trim();
 export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 
-// TODO: add per-plan Stripe price IDs when migrating to new pricing structure
-// STRIPE_PRICE_STARTER_MONTHLY, STRIPE_PRICE_AGENCY_MONTHLY, STRIPE_PRICE_SCALE_MONTHLY, STRIPE_PRICE_ENTERPRISE_MONTHLY
-// Env vars needed: STRIPE_PRICE_STARTER, STRIPE_PRICE_AGENCY, STRIPE_PRICE_SCALE, STRIPE_PRICE_ENTERPRISE
+export type BillingCycle = "monthly" | "yearly";
 
-export type StripePlan = "monthly" | "yearly" | "starter" | "agency" | "scale" | "enterprise";
-
-export function getPriceIdForPlan(plan: string): string {
-  // TODO: map new plan IDs to their Stripe price IDs
-  // case "starter": return process.env.STRIPE_PRICE_STARTER ?? "";
-  // case "agency":  return process.env.STRIPE_PRICE_AGENCY  ?? "";
-  // case "scale":   return process.env.STRIPE_PRICE_SCALE   ?? "";
-  // case "enterprise": return process.env.STRIPE_PRICE_ENTERPRISE ?? "";
-  if (plan === "yearly") return STRIPE_PRICE_YEARLY;
-  return STRIPE_PRICE_MONTHLY;
+export function getPriceIdForPlan(planKey: string, billing: BillingCycle = "monthly"): string {
+  const plan = PLANS[planKey as PlanKey];
+  if (!plan) return "";
+  return billing === "yearly" ? plan.stripePriceYearlyId : plan.stripePriceMonthlyId;
 }
 
-export function getPlanFromPriceId(priceId: string): StripePlan {
-  if (priceId && priceId === STRIPE_PRICE_YEARLY) return "yearly";
-  return "monthly";
+export function getPlanFromPriceId(priceId: string): string {
+  for (const plan of Object.values(PLANS)) {
+    if (plan.stripePriceMonthlyId === priceId || plan.stripePriceYearlyId === priceId) {
+      return plan.key;
+    }
+  }
+  return "starter"; // safe default for unrecognized price IDs
+}
+
+export function getBillingCycleFromPriceId(priceId: string): BillingCycle {
+  for (const plan of Object.values(PLANS)) {
+    if (plan.stripePriceYearlyId === priceId) return "yearly";
+    if (plan.stripePriceMonthlyId === priceId) return "monthly";
+  }
+  return "monthly"; // safe default
 }
 
 export function isStripeConfigured(): boolean {
-  return Boolean(
-    process.env.STRIPE_SECRET_KEY &&
-    (STRIPE_PRICE_MONTHLY || STRIPE_PRICE_YEARLY)
-  );
+  return Boolean(process.env.STRIPE_SECRET_KEY);
 }
 
 export function getBaseUrl(): string {

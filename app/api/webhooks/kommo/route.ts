@@ -91,39 +91,7 @@ async function parseWebhookPayload(request: Request) {
   };
 }
 
-export async function POST(request: Request) {
-  try {
-    const payload = await parseWebhookPayload(request);
-
-    if (!payload.kommoLeadId) {
-      return NextResponse.json(
-        { success: false, error: "Kommo lead ID nao encontrado." },
-        { status: 400 }
-      );
-    }
-
-    const status = mapKommoStatusToLeadStatus(payload.statusName);
-    const paidAmountCents =
-      status === "pago" && payload.price ? Math.round(payload.price * 100) : null;
-
-    await updateLeadByKommoLeadId({
-      kommoLeadId: payload.kommoLeadId,
-      status,
-      paidAmountCents
-    });
-
-    return NextResponse.json({
-      success: true,
-      kommoLeadId: payload.kommoLeadId,
-      status
-    });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Falha no webhook."
-      },
-      { status: 500 }
-    );
-  }
+export async function POST() {
+  // Kommo integration disabled
+  return NextResponse.json({ success: true, disabled: true });
 }
