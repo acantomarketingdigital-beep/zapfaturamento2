@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LEAD_STATUS_LABELS, type LeadStatus } from "@/lib/kanban-shared";
 import type { KanbanLead } from "@/lib/kanban";
-import { resolveKanbanLabel, type WorkspaceSettings } from "@/lib/workspace-settings";
+import { resolveKanbanLabel, type WorkspaceSettings } from "@/lib/workspace-settings-shared";
 import { formatCurrencyFromCents } from "@/lib/format";
 import { formatLeadPhone } from "@/lib/phone";
 

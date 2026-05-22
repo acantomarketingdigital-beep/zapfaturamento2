@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { LEAD_STATUS_LABELS, type LeadStatus } from "@/lib/kanban-shared";
-import type { WorkspaceSettings } from "@/lib/workspace-settings";
+import type { WorkspaceSettings } from "@/lib/workspace-settings-shared";
 
 const STATUS_ORDER: LeadStatus[] = [
   "novo_lead", "em_atendimento", "agendado", "compareceu",
