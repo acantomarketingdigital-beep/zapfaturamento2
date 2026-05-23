@@ -6,6 +6,13 @@
 
 // ── Replica do PLANS (mesmo dado de lib/plans.ts) ────────────────────────────
 const PLANS = {
+  crm: {
+    key: "crm",
+    stripePriceMonthlyId:       "price_1Ta3T8FvYZaPsKPDszuGDatC",
+    stripePriceYearlyId:        "price_1Ta3UTFvYZaPsKPDCmozIgyf",
+    stripeExtraFormPriceId:     null,
+    stripeExtraWhatsappPriceId: "price_crm_extra_wa_placeholder",
+  },
   starter: {
     key: "starter",
     stripePriceMonthlyId:       "price_1TYAPpFvYZaPsKPDOGPhTGbK",
@@ -56,6 +63,8 @@ function getBillingCycleFromPriceId(priceId) {
 
 // ── Casos de teste ────────────────────────────────────────────────────────────
 const PRICE_ID_CASES = [
+  { priceId: "price_1Ta3T8FvYZaPsKPDszuGDatC", expectedPlan: "crm",        expectedBilling: "monthly" },
+  { priceId: "price_1Ta3UTFvYZaPsKPDCmozIgyf", expectedPlan: "crm",        expectedBilling: "yearly"  },
   { priceId: "price_1TYAPpFvYZaPsKPDOGPhTGbK", expectedPlan: "starter",    expectedBilling: "monthly" },
   { priceId: "price_1TYAQBFvYZaPsKPDu1om3O1Z", expectedPlan: "starter",    expectedBilling: "yearly"  },
   { priceId: "price_1TYARRFvYZaPsKPDM1OHOGeG", expectedPlan: "agency",     expectedBilling: "monthly" },

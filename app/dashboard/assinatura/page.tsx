@@ -6,7 +6,7 @@ import { isStripeConfigured } from "@/lib/stripe";
 import { hasDatabaseConfig, queryDb } from "@/lib/db";
 import SubscribePlansClient from "@/app/billing/subscribe/SubscribePlansClient";
 import { getWorkspaceBillingUsage, type WorkspaceBillingUsage } from "@/lib/billing-usage";
-import { getPlanById, getPlanByKey, isCrmPlan } from "@/lib/plans";
+import { CRM_PLAN_LIST, fmtPrice, getPlanById, getPlanByKey, isCrmPlan } from "@/lib/plans";
 import AddonsManagerClient from "@/components/dashboard/AddonsManagerClient";
 import { CrmAddonsClient } from "@/components/dashboard/CrmAddonsClient";
 
@@ -19,6 +19,16 @@ const FEATURES = [
   "Relatórios de performance, CPL e ROAS",
   "Exportação de públicos para Meta (Lookalike)",
   "Rastreamento Google Ads + GA4 automático",
+];
+
+const CRM_FEATURES = [
+  "Kanban e Pipeline de leads",
+  "Inbox WhatsApp nativo",
+  "Conversas e atendimento CRM",
+  "Tags, notas e responsável por lead",
+  "1 número WhatsApp incluso",
+  "Respostas rápidas",
+  "Configurações personalizáveis",
 ];
 
 const SUB_STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
@@ -101,20 +111,22 @@ export default async function DashboardAssinaturaPage() {
   const isCrm = isCrmPlan(activePlan);
 
   const knownPlan = getPlanById(activePlan);
+  const activeBillingCycle = billing?.billingCycle ?? null;
   // subscription_plan can be "starter", "agency", "scale", "enterprise", "monthly" (legado), "yearly" (legado)
-  const isYearlyPlan = activePlan?.endsWith("-yearly") ?? false;
+  const isYearlyPlan = activeBillingCycle === "yearly" || activePlan === "yearly" || (activePlan?.endsWith("-yearly") ?? false);
   const planLabel = knownPlan
-    ? `${knownPlan.name} — R$${knownPlan.priceMonthly}/mês`
+    ? `${knownPlan.name} — ${isYearlyPlan ? "Anual" : "Mensal"}`
     : activePlan === "yearly" ? "Pro Anual (legado)"
     : activePlan === "monthly" ? "Pro Mensal (legado)"
     : "Zap Faturamento";
   const planPrice = knownPlan
     ? isYearlyPlan
-      ? `R$${knownPlan.priceYearly.toLocaleString("pt-BR")}/ano`
-      : `R$${knownPlan.priceMonthly}/mês`
+      ? `${fmtPrice(knownPlan.priceYearly)}/ano`
+      : `${fmtPrice(knownPlan.priceMonthly)}/mês`
     : activePlan === "yearly" ? "R$997/ano"
     : activePlan === "monthly" ? "R$97/mês"
     : "—";
+  const includedFeatures = isCrm ? CRM_FEATURES : FEATURES;
 
   let usage: WorkspaceBillingUsage | null = null;
   if (databaseReady && !isEnvAdmin) {
@@ -248,6 +260,21 @@ export default async function DashboardAssinaturaPage() {
           </div>
         )}
 
+        {isCrm && !isEnvAdmin && stripeReady && !isPro && (
+          <article className="dashboard-card">
+            <div className="dashboard-card__header">
+              <h3>Assinar CRM</h3>
+              <p>Escolha mensal ou anual para manter o CRM ativo depois do teste.</p>
+            </div>
+            <SubscribePlansClient
+              isLoggedIn={true}
+              activePlan={null}
+              plans={CRM_PLAN_LIST}
+              showAddons={false}
+            />
+          </article>
+        )}
+
         {/* Usage block */}
         {usage && (
           <article className="dashboard-card">
@@ -356,10 +383,14 @@ export default async function DashboardAssinaturaPage() {
         <article className="dashboard-card">
           <div className="dashboard-card__header">
             <h3>O que está incluído no plano</h3>
-            <p style={{ fontSize: "0.82rem", color: "var(--muted)" }}>Todos os planos incluem o ZapFaturamento completo. A diferença está na capacidade mensal da operação.</p>
+            <p style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
+              {isCrm
+                ? "Seu plano CRM inclui a estrutura de atendimento e acompanhamento por WhatsApp."
+                : "Todos os planos incluem o ZapFaturamento completo. A diferença está na capacidade mensal da operação."}
+            </p>
           </div>
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-            {FEATURES.map((f) => (
+            {includedFeatures.map((f) => (
               <li key={f} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "0.88rem", color: "var(--dark)" }}>
                 <CheckIcon />
                 {f}

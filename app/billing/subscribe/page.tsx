@@ -3,6 +3,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { getCurrentUser } from "@/lib/dashboard-auth";
 import { getCachedBillingStatus } from "@/lib/billing";
 import { hasDatabaseConfig } from "@/lib/db";
+import { CRM_PLAN_LIST, isCrmPlan } from "@/lib/plans";
 import SubscribePlansClient from "./SubscribePlansClient";
 
 export default async function BillingSubscribePage() {
@@ -25,6 +26,7 @@ export default async function BillingSubscribePage() {
   }
 
   const isLoggedIn = Boolean(user && user.kind !== "env_admin");
+  const isCrm = isCrmPlan(activePlan);
 
   return (
     <div className="assinatura-page">
@@ -45,7 +47,11 @@ export default async function BillingSubscribePage() {
         </div>
 
         {/* Plan cards */}
-        <SubscribePlansClient isLoggedIn={isLoggedIn} activePlan={activePlan} />
+        <SubscribePlansClient
+          isLoggedIn={isLoggedIn}
+          activePlan={activePlan}
+          plans={isCrm ? CRM_PLAN_LIST : undefined}
+        />
 
         {/* Footer */}
         <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0, textAlign: "center" }}>

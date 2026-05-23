@@ -2,6 +2,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { getCurrentUser } from "@/lib/dashboard-auth";
 import { getCachedBillingStatus } from "@/lib/billing";
 import { hasDatabaseConfig } from "@/lib/db";
+import { CRM_PLAN_LIST, isCrmPlan } from "@/lib/plans";
 import { redirect } from "next/navigation";
 import SubscribePlansClient from "@/app/billing/subscribe/SubscribePlansClient";
 
@@ -23,6 +24,7 @@ export default async function AssinaturaPage() {
   }
 
   const isLoggedIn = Boolean(user && user.kind !== "env_admin");
+  const isCrmCheckout = isCrmPlan(activePlan);
 
   return (
     <div className="assinatura-page">
@@ -59,17 +61,25 @@ export default async function AssinaturaPage() {
             letterSpacing: "-0.03em",
             lineHeight: 1.2,
           }}>
-            {isLoggedIn ? "Seu período de teste encerrou" : "Assine o Zap Faturamento"}
+            {isLoggedIn
+              ? isCrmCheckout ? "Assine o CRM para continuar" : "Seu período de teste encerrou"
+              : "Assine o Zap Faturamento"}
           </h1>
           <p style={{ color: "var(--muted)", fontSize: "0.95rem", margin: 0, lineHeight: 1.6 }}>
-            {isLoggedIn
+            {isLoggedIn && isCrmCheckout
+              ? "Escolha mensal ou anual para manter seu CRM ativo."
+              : isLoggedIn
               ? "Escolha um plano para continuar com acesso completo à plataforma."
               : "Acesso completo a todas as funcionalidades. Cancele quando quiser."}
           </p>
         </div>
 
         {/* Plan cards */}
-        <SubscribePlansClient isLoggedIn={isLoggedIn} activePlan={activePlan} />
+        <SubscribePlansClient
+          isLoggedIn={isLoggedIn}
+          activePlan={null}
+          plans={isCrmCheckout ? CRM_PLAN_LIST : undefined}
+        />
 
         {/* Footer */}
         <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}>

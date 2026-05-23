@@ -1,22 +1,28 @@
 import { BrandLogo } from "@/components/BrandLogo";
 import { getCurrentUser } from "@/lib/dashboard-auth";
+import { fmtPrice, getPlanByKey } from "@/lib/plans";
 
 interface Props {
-  searchParams: Promise<{ plan?: string }>;
+  searchParams: Promise<{ plan?: string; billing?: string }>;
 }
 
 export default async function BillingSuccessPage({ searchParams }: Props) {
   const user = await getCurrentUser();
-  const { plan: planParam } = await searchParams;
+  const { plan: planParam, billing: billingParam } = await searchParams;
 
-  const plan: "monthly" | "yearly" | null =
-    planParam === "yearly" ? "yearly" : planParam === "monthly" ? "monthly" : null;
+  const billing = billingParam === "yearly" || planParam === "yearly" ? "yearly" : "monthly";
+  const planData = getPlanByKey(planParam);
 
-  const planLabel = plan === "yearly" ? "Anual" : "Mensal";
-  const planPrice = plan === "yearly" ? "R$997/ano" : "R$97/mês";
-  const planDetail = plan === "yearly"
-    ? "Voce economizou R$167 ao escolher o plano anual."
-    : "Seu plano e renovado automaticamente todo mes.";
+  const planName = planData?.name ?? "Zap Faturamento Pro";
+  const planLabel = billing === "yearly" ? "Anual" : "Mensal";
+  const planPrice = planData
+    ? billing === "yearly"
+      ? `${fmtPrice(planData.priceYearly)}/ano`
+      : `${fmtPrice(planData.priceMonthly)}/mês`
+    : billing === "yearly" ? "R$997/ano" : "R$97/mês";
+  const planDetail = billing === "yearly"
+    ? "Sua assinatura anual será renovada automaticamente."
+    : "Seu plano é renovado automaticamente todo mês.";
 
   return (
     <div className="assinatura-page">
@@ -38,16 +44,14 @@ export default async function BillingSuccessPage({ searchParams }: Props) {
           <p className="assinatura-desc">
             Seu plano{" "}
             <strong>
-              Zap Faturamento Pro {plan ? `— ${planLabel} (${planPrice})` : ""}
+              {planName} — {planLabel} ({planPrice})
             </strong>{" "}
-            foi ativado com sucesso. Voce ja tem acesso completo a plataforma.
+            foi ativado com sucesso. Você já tem acesso completo à plataforma.
           </p>
 
-          {plan && (
-            <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 20px" }}>
-              {planDetail}
-            </p>
-          )}
+          <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 20px" }}>
+            {planDetail}
+          </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 320 }}>
             <a href="/dashboard" className="assinatura-cta assinatura-cta--stripe" style={{ textDecoration: "none", textAlign: "center" }}>

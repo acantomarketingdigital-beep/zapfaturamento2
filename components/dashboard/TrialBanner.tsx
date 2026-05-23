@@ -32,6 +32,7 @@ export async function TrialBanner({ userId, planKind }: TrialBannerProps) {
         : `${daysLeft} dias restantes no trial`;
 
   const urgency = daysLeft <= 2 ? "trial-banner--urgent" : "";
+  const ctaLabel = billing.subscriptionPlan === "crm" ? "Assinar CRM" : "Assinar Pro";
 
   return (
     <div className={`trial-banner ${urgency}`}>
@@ -40,7 +41,7 @@ export async function TrialBanner({ userId, planKind }: TrialBannerProps) {
       </svg>
       <div className="trial-banner__text">
         <strong>{label}</strong>
-        <a href="/dashboard/assinatura" className="trial-banner__cta">Assinar Pro</a>
+        <a href="/dashboard/assinatura" className="trial-banner__cta">{ctaLabel}</a>
       </div>
     </div>
   );

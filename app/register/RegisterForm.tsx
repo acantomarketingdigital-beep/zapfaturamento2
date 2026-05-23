@@ -95,7 +95,7 @@ export function RegisterForm({ error, plan }: Props) {
             fontSize: "0.72rem", fontWeight: 700, color: "var(--brand)",
             marginBottom: 4,
           }}>
-            Plano CRM · R$79,90/mês após o trial
+            Plano CRM · R$79,90/mês ou R$799/ano após o trial
           </div>
         )}
 

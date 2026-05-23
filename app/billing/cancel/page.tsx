@@ -1,12 +1,25 @@
 import { BrandLogo } from "@/components/BrandLogo";
 import { getCurrentUser } from "@/lib/dashboard-auth";
 import { isStripeConfigured } from "@/lib/stripe";
+import { fmtPrice, getPlanByKey } from "@/lib/plans";
 
 const SUPPORT_EMAIL = "suporte.zapfaturamento@gmail.com";
 
-export default async function BillingCancelPage() {
+interface Props {
+  searchParams: Promise<{ plan?: string; billing?: string }>;
+}
+
+export default async function BillingCancelPage({ searchParams }: Props) {
   const user = await getCurrentUser();
   const stripeReady = isStripeConfigured();
+  const { plan: planParam, billing: billingParam } = await searchParams;
+  const billing = billingParam === "yearly" ? "yearly" : "monthly";
+  const plan = getPlanByKey(planParam) ?? getPlanByKey("starter");
+  const retryPrice = plan
+    ? billing === "yearly"
+      ? `${fmtPrice(plan.priceYearly)}/ano`
+      : `${fmtPrice(plan.priceMonthly)}/mes`
+    : "R$97/mes";
 
   return (
     <div className="assinatura-page">
@@ -31,12 +44,14 @@ export default async function BillingCancelPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 320 }}>
             {user && stripeReady ? (
               <form action="/api/stripe/checkout" method="post" style={{ width: "100%" }}>
+                {plan && <input type="hidden" name="plan" value={plan.key} />}
+                <input type="hidden" name="billing" value={billing} />
                 <button type="submit" className="assinatura-cta assinatura-cta--stripe" style={{ width: "100%" }}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ width: 18, height: 18, flexShrink: 0 }}>
                     <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
                     <line x1="1" y1="10" x2="23" y2="10" />
                   </svg>
-                  Tentar novamente — R$ 97/mes
+                  Tentar novamente — {retryPrice}
                 </button>
               </form>
             ) : null}

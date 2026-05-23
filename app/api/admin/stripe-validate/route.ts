@@ -19,6 +19,8 @@ export const dynamic = "force-dynamic";
 
 // Todos os price IDs LIVE para validação
 const PRICE_ID_CASES = [
+  { priceId: "price_1Ta3T8FvYZaPsKPDszuGDatC", expectedPlan: "crm",        expectedBilling: "monthly" },
+  { priceId: "price_1Ta3UTFvYZaPsKPDCmozIgyf", expectedPlan: "crm",        expectedBilling: "yearly"  },
   { priceId: "price_1TYAPpFvYZaPsKPDOGPhTGbK", expectedPlan: "starter",    expectedBilling: "monthly" },
   { priceId: "price_1TYAQBFvYZaPsKPDu1om3O1Z", expectedPlan: "starter",    expectedBilling: "yearly"  },
   { priceId: "price_1TYARRFvYZaPsKPDM1OHOGeG", expectedPlan: "agency",     expectedBilling: "monthly" },

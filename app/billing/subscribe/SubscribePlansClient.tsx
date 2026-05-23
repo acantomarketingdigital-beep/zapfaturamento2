@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { PLAN_LIST, type Plan } from "@/lib/plans";
+import { fmtPrice, PLAN_LIST, type Plan } from "@/lib/plans";
 
 type Billing = "monthly" | "yearly";
 
@@ -35,6 +35,16 @@ const SYSTEM_FEATURES = [
   "Exportação de públicos para Meta",
 ];
 
+const CRM_FEATURES = [
+  "Kanban e Pipeline de leads",
+  "Inbox WhatsApp nativo",
+  "Conversas e atendimento CRM",
+  "Tags, notas e responsável por lead",
+  "1 número WhatsApp incluso",
+  "Respostas rápidas",
+  "Configurações personalizáveis",
+];
+
 interface PlanCardProps {
   plan: Plan;
   billing: Billing;
@@ -52,8 +62,22 @@ function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingCha
   const disabled = loading || loadingOther || isActive || !isLoggedIn;
 
   const isYearly = billing === "yearly";
+  const isCrm = plan.key === "crm";
   const yearlyPrice = plan.priceYearly;
   const savings = plan.priceMonthly * 12 - yearlyPrice;
+  const features = isCrm ? CRM_FEATURES : SYSTEM_FEATURES;
+  const capacityRows = isCrm
+    ? [
+        { label: "Workspace", value: "1 negócio" },
+        { label: "Leads no CRM", value: "Ilimitado" },
+        { label: "WhatsApps ativos", value: n(plan.activeWhatsappsIncluded) },
+      ]
+    : [
+        { label: "Clientes", value: n(plan.clientsIncluded) },
+        { label: "Leads/mês", value: n(plan.billableLeadsIncluded) },
+        { label: "Formulários Lead Express", value: n(plan.leadFormsIncluded) },
+        { label: "WhatsApps ativos", value: n(plan.activeWhatsappsIncluded) },
+      ];
 
   function handleClick() {
     if (disabled) return;
@@ -99,7 +123,7 @@ function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingCha
         <div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
             <span style={{ fontSize: "1.9rem", fontWeight: 900, color: "var(--dark, #111)", lineHeight: 1, letterSpacing: "-0.03em" }}>
-              R${yearlyPrice.toLocaleString("pt-BR")}
+              {fmtPrice(yearlyPrice)}
             </span>
             <span style={{ fontSize: "0.78rem", color: "var(--muted, #64748b)" }}>/ano</span>
           </div>
@@ -112,14 +136,14 @@ function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingCha
             <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 11, height: 11 }}>
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
-            Economize R${savings.toLocaleString("pt-BR")}
+            Economize {fmtPrice(savings)}
           </div>
         </div>
       ) : (
         <div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
             <span style={{ fontSize: "1.9rem", fontWeight: 900, color: "var(--dark, #111)", lineHeight: 1, letterSpacing: "-0.03em" }}>
-              R${plan.priceMonthly}
+              {fmtPrice(plan.priceMonthly)}
             </span>
             <span style={{ fontSize: "0.78rem", color: "var(--muted, #64748b)" }}>/mês</span>
           </div>
@@ -128,12 +152,7 @@ function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingCha
 
       {/* Capacity limits */}
       <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-        {[
-          { label: "Clientes", value: n(plan.clientsIncluded) },
-          { label: "Leads/mês", value: n(plan.billableLeadsIncluded) },
-          { label: "Formulários Lead Express", value: n(plan.leadFormsIncluded) },
-          { label: "WhatsApps ativos", value: n(plan.activeWhatsappsIncluded) },
-        ].map(({ label, value }) => (
+        {capacityRows.map(({ label, value }) => (
           <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.78rem" }}>
             <span style={{ color: "var(--muted, #64748b)" }}>{label}</span>
             <span style={{ fontWeight: 700, color: "var(--dark, #111)" }}>{value}</span>
@@ -146,12 +165,12 @@ function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingCha
       {/* Full system badge */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.75rem", fontWeight: 700, color: "var(--brand)", background: "rgba(22,163,74,0.07)", borderRadius: 7, padding: "5px 9px" }}>
         <CheckIcon />
-        Sistema completo liberado
+        {isCrm ? "CRM completo liberado" : "Sistema completo liberado"}
       </div>
 
       {/* System features */}
       <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-        {SYSTEM_FEATURES.map((f) => (
+        {features.map((f) => (
           <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 7, fontSize: "0.75rem", color: "var(--dark, #111)", lineHeight: 1.4 }}>
             <CheckIcon />
             {f}
@@ -182,9 +201,11 @@ function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingCha
       )}
 
       {/* Overage */}
-      <div style={{ fontSize: "0.7rem", color: "var(--muted, #64748b)" }}>
-        Excedente de lead: R${plan.leadOveragePrice.toFixed(2).replace(".", ",")}/lead
-      </div>
+      {plan.leadOveragePrice > 0 && (
+        <div style={{ fontSize: "0.7rem", color: "var(--muted, #64748b)" }}>
+          Excedente de lead: R${plan.leadOveragePrice.toFixed(2).replace(".", ",")}/lead
+        </div>
+      )}
 
       {/* CTA */}
       <div style={{ marginTop: "auto" }}>
@@ -198,8 +219,6 @@ function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingCha
             Fazer login para assinar
           </a>
         ) : (
-          // TODO (Stripe anual): passar billing para o checkout e mapear plan.key + billing → price_id correto
-          // TODO (Stripe anual): após criar price IDs no Stripe, implementar em getPriceIdForPlan() em lib/stripe.ts
           <form ref={formRef} action="/api/stripe/checkout" method="post">
             <input type="hidden" name="plan" value={plan.key} />
             <input type="hidden" name="billing" value={billing} />
@@ -229,10 +248,11 @@ function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingCha
 interface Props {
   isLoggedIn: boolean;
   activePlan: string | null;
+  plans?: Plan[];
   showAddons?: boolean;
 }
 
-export default function SubscribePlansClient({ isLoggedIn, activePlan, showAddons = true }: Props) {
+export default function SubscribePlansClient({ isLoggedIn, activePlan, plans = PLAN_LIST, showAddons = true }: Props) {
   const [billing, setBilling] = useState<Billing>("monthly");
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -272,7 +292,7 @@ export default function SubscribePlansClient({ isLoggedIn, activePlan, showAddon
 
       {/* Plan cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 18, width: "100%" }}>
-        {PLAN_LIST.map((plan) => (
+        {plans.map((plan) => (
           <PlanCard
             key={plan.key}
             plan={plan}

@@ -739,6 +739,9 @@ export default function HomePage() {
                 <p style={{ margin: "4px 0 0", fontSize: "0.75rem", color: "var(--brand)", fontWeight: 600 }}>
                   7 dias grátis · Sem cartão de crédito
                 </p>
+                <p style={{ margin: "8px 0 0", fontSize: "0.78rem", color: "var(--dark)", fontWeight: 700 }}>
+                  Anual: R$799/ano
+                </p>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>

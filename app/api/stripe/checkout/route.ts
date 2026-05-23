@@ -19,7 +19,7 @@ export function GET() {
 
 export async function POST(request: Request) {
   const base = getBaseUrl();
-  const cancelUrl = `${base}/billing/cancel`;
+  let cancelUrl = `${base}/billing/cancel`;
   const subscribeUrl = `${base}/assinatura`;
 
   // ── Auth check ────────────────────────────────────────────────────────────
@@ -52,6 +52,7 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error("[stripe/checkout] Failed to parse formData:", err);
   }
+  cancelUrl = `${base}/billing/cancel?plan=${planKey}&billing=${billing}`;
 
   // ── Resolve price ID ──────────────────────────────────────────────────────
   const priceId = getPriceIdForPlan(planKey, billing);
@@ -120,7 +121,7 @@ export async function POST(request: Request) {
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: trialEnd ? { trial_end: trialEnd } : undefined,
-      success_url: `${base}/billing/success?plan=${planKey}`,
+      success_url: `${base}/billing/success?plan=${planKey}&billing=${billing}`,
       cancel_url: cancelUrl,
       metadata: { userId: user.id, plan: planKey, billing },
       allow_promotion_codes: true,
