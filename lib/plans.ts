@@ -30,7 +30,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     stripePriceMonthlyId:       "price_1Ta3T8FvYZaPsKPDszuGDatC",
     stripePriceYearlyId:        "price_1Ta3UTFvYZaPsKPDCmozIgyf",
     stripeExtraFormPriceId:     null,
-    stripeExtraWhatsappPriceId: "price_crm_extra_wa_placeholder",
+    stripeExtraWhatsappPriceId: "price_1TYAf7FvYZaPsKPDrtCdgYnU",
     clientsIncluded: 1,
     billableLeadsIncluded: 99999,
     leadFormsIncluded: 0,
