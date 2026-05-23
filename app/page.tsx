@@ -753,8 +753,8 @@ export default function HomePage() {
                   "1 número WhatsApp incluso",
                   "Respostas rápidas",
                   "Configurações personalizáveis",
+                  "Disparos em massa inclusos",
                   "+ WhatsApp adicional: R$29/mês",
-                  "+ Disparos em massa: R$49/mês",
                 ].map((f) => (
                   <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: "0.78rem", color: f.startsWith("+") ? "var(--brand)" : "var(--dark)" }}>
                     <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 14, height: 14, color: "var(--brand)", flexShrink: 0, marginTop: 1 }}>

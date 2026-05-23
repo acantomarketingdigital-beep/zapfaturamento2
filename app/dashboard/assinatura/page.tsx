@@ -139,19 +139,15 @@ export default async function DashboardAssinaturaPage() {
 
   // CRM add-on status
   let crmWhatsappAddonActive = false;
-  let crmDisparosAddonActive = false;
   if (isCrm && databaseReady && !isEnvAdmin && user.clientSlug) {
     try {
       const r = await queryDb<{ addon_type: string }>(
         `SELECT addon_type FROM billing_addons
          WHERE workspace_slug = $1 AND status = 'active'
-           AND addon_type IN ('extra_whatsapp', 'extra_disparos')`,
+           AND addon_type = 'extra_whatsapp'`,
         [user.clientSlug]
       );
-      for (const row of r.rows) {
-        if (row.addon_type === "extra_whatsapp") crmWhatsappAddonActive = true;
-        if (row.addon_type === "extra_disparos")  crmDisparosAddonActive = true;
-      }
+      if (r.rows.length > 0) crmWhatsappAddonActive = true;
     } catch { /* non-critical */ }
   }
 
@@ -374,7 +370,6 @@ export default async function DashboardAssinaturaPage() {
         {isCrm && !isEnvAdmin && (
           <CrmAddonsClient
             whatsappActive={crmWhatsappAddonActive}
-            disparosActive={crmDisparosAddonActive}
             stripeReady={stripeReady}
           />
         )}

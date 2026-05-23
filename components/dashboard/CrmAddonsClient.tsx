@@ -4,11 +4,10 @@ import { useState } from "react";
 
 type Props = {
   whatsappActive: boolean;
-  disparosActive: boolean;
   stripeReady: boolean;
 };
 
-export function CrmAddonsClient({ whatsappActive, disparosActive, stripeReady }: Props) {
+export function CrmAddonsClient({ whatsappActive, stripeReady }: Props) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,13 +18,6 @@ export function CrmAddonsClient({ whatsappActive, disparosActive, stripeReady }:
       description: "Conecte mais números WhatsApp ao seu atendimento. 1 número já incluso no CRM.",
       price: 29,
       isActive: whatsappActive,
-    },
-    {
-      type: "disparos",
-      label: "Disparos em Massa",
-      description: "Envie mensagens em massa via API Oficial do WhatsApp Business.",
-      price: 49,
-      isActive: disparosActive,
     },
   ];
 

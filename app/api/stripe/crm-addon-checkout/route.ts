@@ -8,8 +8,7 @@ export const runtime = "nodejs";
 const TAG = "[stripe/crm-addon-checkout]";
 
 const ADDON_CONFIG: Record<string, { priceId: string; unitPrice: number }> = {
-  whatsapp: { priceId: "price_crm_extra_wa_placeholder",  unitPrice: 29 },
-  disparos: { priceId: "price_crm_disparos_placeholder",  unitPrice: 49 },
+  whatsapp: { priceId: "price_crm_extra_wa_placeholder", unitPrice: 29 },
 };
 
 export async function POST(request: Request) {
