@@ -18,6 +18,13 @@ function isMetaTraffic(sp: { [key: string]: string | string[] | undefined }) {
   return !!(fbclid || src.includes("facebook") || src.includes("instagram") || src.includes("meta"));
 }
 
+// gclid só existe quando um humano clicou no anúncio — o bot do Google nunca envia gclid.
+// Isso permite usar o mesmo redirect rápido para cliques reais do Google,
+// enquanto o bot ainda vê a landing SEO (sem gclid).
+function isGoogleClick(sp: { [key: string]: string | string[] | undefined }) {
+  return typeof sp.gclid === "string" && sp.gclid.length > 0;
+}
+
 export default async function CampaignRedirectPage({ params, searchParams }: PageProps) {
   const { slug, campaignSlug } = await params;
   const sp = await searchParams;
@@ -102,7 +109,7 @@ export default async function CampaignRedirectPage({ params, searchParams }: Pag
     media2Type: campaign.media2Type,
   };
 
-  if (isMetaTraffic(sp)) {
+  if (isMetaTraffic(sp) || isGoogleClick(sp)) {
     return <WhatsAppRedirectFlow client={effectiveClient} campaign={campaignCtx} />;
   }
 
