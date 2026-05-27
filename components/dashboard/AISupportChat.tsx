@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 type Message = {
   role: "user" | "assistant";
@@ -98,7 +99,11 @@ export function AISupportChat() {
     }
   }
 
-  return (
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
+
+  return createPortal(
     <>
       {/* Floating button */}
       <button
@@ -300,6 +305,7 @@ export function AISupportChat() {
           </div>
         </div>
       )}
-    </>
+    </>,
+    document.body
   );
 }
