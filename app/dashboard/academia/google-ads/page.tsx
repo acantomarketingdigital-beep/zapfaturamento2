@@ -1,7 +1,30 @@
+import { CopyButton } from "@/components/dashboard/CopyButton";
 import { DashboardLogin } from "@/components/dashboard/DashboardLogin";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { getCurrentUser, isDashboardConfigured } from "@/lib/dashboard-auth";
 import { hasDatabaseConfig } from "@/lib/db";
+
+const UTM_PASSTHROUGH_SCRIPT = `<script>
+(function() {
+  var params = window.location.search;
+  if (!params) return;
+  document.querySelectorAll('a[href*="/w/"]').forEach(function(a) {
+    var sep = a.href.includes('?') ? '&' : '?';
+    a.href = a.href + sep + params.slice(1);
+  });
+})();
+</script>`;
+
+const UTM_PASSTHROUGH_GTM = `<script>
+(function() {
+  var params = window.location.search;
+  if (!params) return;
+  document.querySelectorAll('a[href*="/w/"]').forEach(function(a) {
+    var sep = a.href.includes('?') ? '&' : '?';
+    a.href = a.href + sep + params.slice(1);
+  });
+})();
+</script>`;
 
 // ─── Passos comuns (sistema injeta tudo) ───────────────────────────────────
 const STEPS_SISTEMA = [
@@ -774,6 +797,140 @@ export default async function GoogleAdsPage() {
               </li>
             ))}
           </ol>
+        </article>
+
+        {/* ── UTM passthrough ── */}
+        <div className="dashboard-section-divider">
+          <span>Cenario C — Passar o rastreamento para o botao do WhatsApp</span>
+        </div>
+
+        <article className="dashboard-card" style={{ border: "2px solid #f59e0b" }}>
+          <div className="dashboard-card__header">
+            <div>
+              <h3>Por que o Google e a Meta nao aparecem no sistema? Leia isso.</h3>
+              <p className="dashboard-helper" style={{ marginBottom: 0 }}>
+                O problema mais comum de quem usa site proprio e nao ve origem dos leads no sistema.
+              </p>
+            </div>
+          </div>
+
+          {/* Explicacao simples */}
+          <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "14px 16px", marginBottom: 20 }}>
+            <strong style={{ fontSize: "0.88rem", color: "#92400e", display: "block", marginBottom: 8 }}>
+              O que acontece sem o script
+            </strong>
+            <p className="dashboard-helper" style={{ marginBottom: 10 }}>
+              Quando alguem clica no seu anuncio do Google, o Google adiciona automaticamente um codigo chamado <code>gclid</code> na URL do seu site. O mesmo vale para a Meta, que adiciona o <code>fbclid</code>.
+            </p>
+            <p className="dashboard-helper" style={{ marginBottom: 10 }}>
+              Esse codigo chega na URL da pagina, mas <strong>nao vai automaticamente para o botao do WhatsApp.</strong> Resultado: o lead aparece no sistema sem origem — o sistema nao sabe se veio do Google ou da Meta.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.8rem" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <span style={{ color: "#dc2626", fontWeight: 700, flexShrink: 0 }}>✗</span>
+                <div>
+                  <strong>URL do site recebe:</strong>{" "}
+                  <code style={{ fontSize: "0.75rem" }}>clinica.com.br/botox?gclid=ABC123</code>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <span style={{ color: "#dc2626", fontWeight: 700, flexShrink: 0 }}>✗</span>
+                <div>
+                  <strong>Botao do WhatsApp aponta para:</strong>{" "}
+                  <code style={{ fontSize: "0.75rem" }}>zapfaturamento.com.br/w/clinica/campanha</code>{" "}
+                  <span style={{ color: "#dc2626" }}>(sem gclid — origem perdida)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Solucao */}
+          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "14px 16px", marginBottom: 20 }}>
+            <strong style={{ fontSize: "0.88rem", color: "#14532d", display: "block", marginBottom: 8 }}>
+              Com o script — o rastreamento passa automaticamente
+            </strong>
+            <p className="dashboard-helper" style={{ marginBottom: 10 }}>
+              Um pequeno script no site detecta os parametros da URL atual e os adiciona automaticamente em todos os botoes que apontam para o sistema. Voce nao precisa mexer em cada botao — o script faz isso em tempo real.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.8rem" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <span style={{ color: "#15803d", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                <div>
+                  <strong>URL do site recebe:</strong>{" "}
+                  <code style={{ fontSize: "0.75rem" }}>clinica.com.br/botox?gclid=ABC123</code>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <span style={{ color: "#15803d", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                <div>
+                  <strong>Script detecta o gclid e atualiza o botao para:</strong>{" "}
+                  <code style={{ fontSize: "0.75rem" }}>zapfaturamento.com.br/w/clinica/campanha?gclid=ABC123</code>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <span style={{ color: "#15803d", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                <div>
+                  <strong>Sistema registra o lead com origem:</strong>{" "}
+                  <span style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 4, padding: "1px 6px", color: "#1d4ed8", fontWeight: 600 }}>Google Ads</span>
+                  {" "}ou{" "}
+                  <span style={{ background: "#fdf2f8", border: "1px solid #fbcfe8", borderRadius: 4, padding: "1px 6px", color: "#be185d", fontWeight: 600 }}>Meta Ads</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Opcao 1 — GTM */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", marginBottom: 10 }}>
+              Opcao 1 — Pelo GTM (recomendado, sem mexer no site)
+            </div>
+            <ol className="guide-steps">
+              <li className="guide-step">
+                <span className="guide-step__num">1</span>
+                <div className="guide-step__text">
+                  No GTM, clique em <strong>Tags → Nova tag → HTML personalizado</strong>.
+                </div>
+              </li>
+              <li className="guide-step">
+                <span className="guide-step__num">2</span>
+                <div className="guide-step__text">
+                  <div>Cole o codigo abaixo no campo de HTML:</div>
+                  <div style={{ marginTop: 10 }}>
+                    <code className="dashboard-code-block" style={{ display: "block", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{UTM_PASSTHROUGH_GTM}</code>
+                    <CopyButton value={UTM_PASSTHROUGH_GTM} label="Copiar script para GTM" />
+                  </div>
+                </div>
+              </li>
+              <li className="guide-step">
+                <span className="guide-step__num">3</span>
+                <div className="guide-step__text">
+                  Em <strong>Acionamento (Trigger)</strong>, escolha <strong>All Pages</strong>.
+                </div>
+              </li>
+              <li className="guide-step">
+                <span className="guide-step__num">4</span>
+                <div className="guide-step__text">
+                  Salve, publique o container e pronto. O script roda em todas as paginas automaticamente.
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          {/* Opcao 2 — direto no site */}
+          <div>
+            <div style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", marginBottom: 10 }}>
+              Opcao 2 — Direto no codigo do site (WordPress, Elementor, etc.)
+            </div>
+            <p className="dashboard-helper" style={{ marginBottom: 10 }}>
+              Adicione o codigo abaixo antes do fechamento da tag <code>&lt;/body&gt;</code> em todas as paginas que tem botao do WhatsApp. No WordPress, voce pode usar um plugin de &ldquo;Header and Footer Scripts&rdquo; ou o proprio tema.
+            </p>
+            <code className="dashboard-code-block" style={{ display: "block", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{UTM_PASSTHROUGH_SCRIPT}</code>
+            <CopyButton value={UTM_PASSTHROUGH_SCRIPT} label="Copiar script para o site" />
+          </div>
+
+          <div className="guide-tip guide-tip--info" style={{ marginTop: 20 }}>
+            <strong>Funciona para Google e Meta ao mesmo tempo.</strong> O script detecta qualquer parametro na URL — <code>gclid</code>, <code>fbclid</code>, <code>utm_source</code>, <code>utm_campaign</code> — e passa tudo para o botao do WhatsApp. Uma so instalacao resolve os dois canais.
+          </div>
         </article>
 
         {/* ── Tabela comparativa ── */}
