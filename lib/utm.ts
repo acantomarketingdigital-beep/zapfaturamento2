@@ -108,9 +108,21 @@ export function buildCampaignAwareWhatsAppMessage(
   _clientName: string,
   baseMessage: string,
   _params: CampaignParams,
-  _sourcePlatform: SourcePlatform
+  sourcePlatform: SourcePlatform
 ) {
-  return baseMessage.trim();
+  const msg = baseMessage.trim();
+
+  // Already has tracking phrase configured manually — don't duplicate
+  if (msg.toLowerCase().includes("vim do")) return msg;
+
+  if (sourcePlatform === "Google Ads") {
+    return msg ? `${msg}\nVim do Google` : "Vim do Google";
+  }
+  if (sourcePlatform === "Meta Ads") {
+    return msg ? `${msg}\nVim do Meta` : "Vim do Meta";
+  }
+
+  return msg;
 }
 
 export function buildWhatsAppUrl(number: string, message: string) {
