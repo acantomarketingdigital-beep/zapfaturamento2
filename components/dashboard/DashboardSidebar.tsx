@@ -2,6 +2,7 @@ import { Fragment, Suspense, type ReactNode } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import type { AppSession } from "@/lib/dashboard-auth";
 import { TrialBanner } from "@/components/dashboard/TrialBanner";
+import { AISupportChat } from "@/components/dashboard/AISupportChat";
 import { getUserPermissions, type UserPermissions } from "@/lib/permissions";
 import { getCachedBillingStatus } from "@/lib/billing";
 import { isCrmPlan } from "@/lib/plans";
@@ -386,6 +387,8 @@ export async function DashboardSidebar({
           </button>
         </form>
       </div>
+
+      <AISupportChat />
     </aside>
   );
 }
