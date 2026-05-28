@@ -138,8 +138,9 @@ export function UserActionsCell({ userId, status, inviteUrl, inviteExpired, phon
           className="dashboard-button dashboard-button--brand dashboard-button--sm"
           onClick={handleSetCrm}
           disabled={settingCrm || crmDone}
+          title="Ativa o plano CRM manualmente para este usuário, sem precisar de pagamento"
         >
-          {crmDone ? "CRM ✓" : settingCrm ? "..." : "Definir CRM"}
+          {crmDone ? "CRM ativado ✓" : settingCrm ? "..." : "Ativar plano CRM"}
         </button>
         {magicUrl ? (
           <>
@@ -148,7 +149,7 @@ export function UserActionsCell({ userId, status, inviteUrl, inviteExpired, phon
               className="dashboard-button dashboard-button--ghost dashboard-button--sm"
               onClick={() => copyText(magicUrl, setCopiedMagic)}
             >
-              {copiedMagic ? "Copiado!" : "Copiar link magico"}
+              {copiedMagic ? "Copiado!" : "Copiar link de acesso"}
             </button>
             {waMagicUrl ? (
               <a
@@ -158,7 +159,7 @@ export function UserActionsCell({ userId, status, inviteUrl, inviteExpired, phon
                 className="dashboard-button dashboard-button--ghost dashboard-button--sm"
                 style={{ textDecoration: "none" }}
               >
-                WhatsApp
+                Enviar no WhatsApp
               </a>
             ) : null}
           </>
@@ -168,8 +169,9 @@ export function UserActionsCell({ userId, status, inviteUrl, inviteExpired, phon
             className="dashboard-button dashboard-button--ghost dashboard-button--sm"
             onClick={handleGenerateMagic}
             disabled={loadingMagic}
+            title="Gera um link de acesso temporário (15 min) para o usuário entrar sem precisar de senha"
           >
-            {loadingMagic ? "..." : "Gerar link magico"}
+            {loadingMagic ? "..." : "Enviar acesso rápido"}
           </button>
         )}
       </div>
