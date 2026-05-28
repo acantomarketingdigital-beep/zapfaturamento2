@@ -153,6 +153,7 @@ export async function createAppUser(input: {
   phone?: string | null;
   name?: string | null;
   agencyName?: string | null;
+  cpfCnpj?: string | null;
 }) {
   if (!hasDatabaseConfig()) {
     throw new Error("DATABASE_URL nao configurada.");
@@ -187,8 +188,8 @@ export async function createAppUser(input: {
 
   const result = await queryDb<{ id: string }>(
     `
-      INSERT INTO users (email, password_hash, role, client_slug, phone, phone_normalized, name, agency_name)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO users (email, password_hash, role, client_slug, phone, phone_normalized, name, agency_name, cpf_cnpj)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       ON CONFLICT (email)
       DO UPDATE SET
         password_hash = EXCLUDED.password_hash,
@@ -197,7 +198,8 @@ export async function createAppUser(input: {
         phone = COALESCE(EXCLUDED.phone, users.phone),
         phone_normalized = COALESCE(EXCLUDED.phone_normalized, users.phone_normalized),
         name = COALESCE(EXCLUDED.name, users.name),
-        agency_name = COALESCE(EXCLUDED.agency_name, users.agency_name)
+        agency_name = COALESCE(EXCLUDED.agency_name, users.agency_name),
+        cpf_cnpj = COALESCE(EXCLUDED.cpf_cnpj, users.cpf_cnpj)
       RETURNING id
     `,
     [
@@ -209,6 +211,7 @@ export async function createAppUser(input: {
       phoneNormalized,
       input.name?.trim() || null,
       input.agencyName?.trim() || null,
+      input.cpfCnpj?.replace(/\D/g, "") || null,
     ]
   );
 

@@ -183,6 +183,68 @@ export async function acceptInvitePasswordless(
   };
 }
 
+export async function acceptInviteWithCredentials(
+  token: string,
+  opts: { name?: string; password: string; phone?: string; cpfCnpj?: string }
+): Promise<{
+  ok: boolean;
+  error?: string;
+  session?: { id: string; email: string; role: AppRole; clientSlug: string | null };
+}> {
+  if (!token?.trim()) return { ok: false, error: "Token invalido." };
+  if (!opts.password || opts.password.trim().length < 6) return { ok: false, error: "A senha precisa ter pelo menos 6 caracteres." };
+  if (!hasDatabaseConfig()) return { ok: false, error: "Banco nao configurado." };
+
+  const result = await queryDb<{
+    id: string;
+    email: string;
+    role: AppRole;
+    client_slug: string | null;
+    invite_expires_at: string;
+    status: string;
+  }>(
+    `SELECT id, email, role, client_slug, invite_expires_at, status FROM users
+     WHERE invite_token = $1 AND status = 'pending'
+     LIMIT 1`,
+    [token]
+  );
+
+  const user = result.rows[0];
+  if (!user) return { ok: false, error: "Link invalido ou ja utilizado." };
+
+  if (new Date(user.invite_expires_at) < new Date()) {
+    return { ok: false, error: "Link expirado. Solicite um novo convite ao administrador." };
+  }
+
+  const passwordHash = await hash(opts.password.trim(), 10);
+  const phoneNorm = opts.phone?.trim() ? normalizeBillingPhone(opts.phone.trim()) : null;
+  const cpf = opts.cpfCnpj?.replace(/\D/g, "") || null;
+
+  await queryDb(
+    `UPDATE users
+     SET status = 'active',
+         password_hash = $2,
+         invite_token = NULL,
+         invite_expires_at = NULL,
+         name = COALESCE($3, name),
+         phone = COALESCE($4, phone),
+         phone_normalized = COALESCE($5, phone_normalized),
+         cpf_cnpj = COALESCE($6, cpf_cnpj)
+     WHERE id = $1`,
+    [user.id, passwordHash, opts.name?.trim() || null, opts.phone?.trim() || null, phoneNorm, cpf]
+  );
+
+  return {
+    ok: true,
+    session: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      clientSlug: user.client_slug
+    }
+  };
+}
+
 // ─── Activation (password-based, backward compat) ─────────────────────────────
 
 export async function activateAccount(

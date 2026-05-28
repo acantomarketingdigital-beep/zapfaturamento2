@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getInviteByToken } from "@/lib/invites";
+import { InviteForm } from "./InviteForm";
 
 type PageProps = {
   params: Promise<{ token: string }>;
@@ -48,9 +49,9 @@ export default async function InvitePage({ params, searchParams }: PageProps) {
     <main className="auth-page-shell">
       <div className="auth-page-card">
         <BrandLogo variant="horizontal" className="auth-page-card__logo" priority />
-        <h1>Voce foi convidado</h1>
+        <h1>Você foi convidado</h1>
         <p className="auth-page-card__lead">
-          Acesse o Zap Faturamento sem precisar criar senha.
+          Complete o cadastro para acessar o sistema.
         </p>
 
         {error ? (
@@ -59,56 +60,13 @@ export default async function InvitePage({ params, searchParams }: PageProps) {
           </div>
         ) : null}
 
-        <form action="/api/auth/accept-invite" method="post" className="auth-page-form">
-          <input type="hidden" name="token" value={token} />
-
-          <label className="dashboard-field">
-            <span>Nome</span>
-            <input
-              type="text"
-              name="name"
-              defaultValue={invite.name ?? ""}
-              placeholder="Seu nome completo"
-              autoComplete="name"
-              autoFocus
-            />
-          </label>
-
-          <label className="dashboard-field">
-            <span>E-mail</span>
-            <input
-              type="email"
-              value={invite.email}
-              readOnly
-              disabled
-              style={{ opacity: 0.7, cursor: "not-allowed" }}
-            />
-          </label>
-
-          {invite.phone ? (
-            <label className="dashboard-field">
-              <span>WhatsApp</span>
-              <input
-                type="tel"
-                value={invite.phone}
-                readOnly
-                disabled
-                style={{ opacity: 0.7, cursor: "not-allowed" }}
-              />
-            </label>
-          ) : null}
-
-          <button
-            type="submit"
-            className="dashboard-button dashboard-button--brand"
-            style={{ marginTop: 4, height: 42 }}
-          >
-            Entrar sem senha
-          </button>
-        </form>
+        <InviteForm token={token} invite={invite} />
 
         <p style={{ marginTop: 16, fontSize: "0.78rem", color: "var(--muted)", textAlign: "center" }}>
-          Voce pode definir uma senha depois em Configuracoes.
+          Já tem uma conta?{" "}
+          <a href="/login" style={{ color: "var(--brand)", fontWeight: 600, textDecoration: "none" }}>
+            Fazer login
+          </a>
         </p>
       </div>
     </main>
@@ -120,9 +78,9 @@ function InvalidPage() {
     <main className="auth-page-shell">
       <div className="auth-page-card">
         <BrandLogo variant="horizontal" className="auth-page-card__logo" priority />
-        <h1>Link invalido</h1>
+        <h1>Link inválido</h1>
         <p className="auth-page-card__lead">
-          Este link de convite e invalido ou ja foi utilizado.
+          Este link de convite é inválido ou já foi utilizado.
         </p>
         <Link href="/login" className="dashboard-button" style={{ marginTop: 8 }}>
           Ir para o login

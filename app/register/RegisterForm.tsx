@@ -26,9 +26,30 @@ interface Props {
   plan?: string;
 }
 
+function formatPhone(value: string) {
+  const d = value.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3").replace(/-$/, "");
+  return d.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").replace(/-$/, "");
+}
+
+function formatCpfCnpj(value: string) {
+  const d = value.replace(/\D/g, "").slice(0, 14);
+  if (d.length <= 11) {
+    return d.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, "$1.$2.$3-$4")
+      .replace(/(\d{3})(\d{3})(\d{1,3})/, "$1.$2.$3")
+      .replace(/(\d{3})(\d{1,3})/, "$1.$2");
+  }
+  return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, "$1.$2.$3/$4-$5")
+    .replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/, "$1.$2.$3/$4")
+    .replace(/(\d{2})(\d{3})(\d{1,3})/, "$1.$2.$3")
+    .replace(/(\d{2})(\d{1,3})/, "$1.$2");
+}
+
 export function RegisterForm({ error, plan }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState("");
 
   const isCrm = plan === "crm";
 
@@ -138,6 +159,33 @@ export function RegisterForm({ error, plan }: Props) {
               name="email"
               placeholder="voce@empresa.com"
               autoComplete="email"
+              required
+            />
+          </label>
+
+          <label className="dashboard-field">
+            <span>Celular (WhatsApp)</span>
+            <input
+              type="tel"
+              name="phone"
+              value={phone}
+              onChange={(e) => setPhone(formatPhone(e.target.value))}
+              placeholder="(11) 99999-9999"
+              autoComplete="tel"
+              inputMode="numeric"
+              required
+            />
+          </label>
+
+          <label className="dashboard-field">
+            <span>CPF ou CNPJ</span>
+            <input
+              type="text"
+              name="cpf_cnpj"
+              value={cpfCnpj}
+              onChange={(e) => setCpfCnpj(formatCpfCnpj(e.target.value))}
+              placeholder="000.000.000-00 ou 00.000.000/0001-00"
+              inputMode="numeric"
               required
             />
           </label>

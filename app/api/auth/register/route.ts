@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     return redirectErr(base, "Sistema não configurado. Tente novamente em instantes.");
   }
 
-  let name: string, email: string, password: string, agencyName: string, plan: string;
+  let name: string, email: string, password: string, agencyName: string, plan: string, phone: string, cpfCnpj: string;
   try {
     const fd = await request.formData();
     name       = String(fd.get("name")        || "").trim();
@@ -30,6 +30,8 @@ export async function POST(request: Request) {
     password   = String(fd.get("password")    || "").trim();
     agencyName = String(fd.get("agency_name") || "").trim();
     plan       = String(fd.get("plan")        || "").trim().toLowerCase();
+    phone      = String(fd.get("phone")       || "").trim();
+    cpfCnpj    = String(fd.get("cpf_cnpj")    || "").replace(/\D/g, "");
   } catch {
     return redirectErr(base, "Erro ao ler os dados do formulário.");
   }
@@ -37,6 +39,8 @@ export async function POST(request: Request) {
   if (!name)       return redirectErr(base, "Informe seu nome completo.");
   if (!email)      return redirectErr(base, "Informe um e-mail válido.");
   if (!agencyName) return redirectErr(base, "Informe o nome da sua agência ou empresa.");
+  if (!phone || phone.replace(/\D/g, "").length < 10) return redirectErr(base, "Informe um celular válido com DDD.");
+  if (!cpfCnpj || (cpfCnpj.length !== 11 && cpfCnpj.length !== 14)) return redirectErr(base, "Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.");
   if (password.length < 6) return redirectErr(base, "A senha precisa ter pelo menos 6 caracteres.");
 
   const isCrmSignup = plan === "crm";
@@ -48,6 +52,8 @@ export async function POST(request: Request) {
       role: "agency_admin",
       name,
       agencyName,
+      phone,
+      cpfCnpj,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Erro ao criar conta.";
