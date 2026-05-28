@@ -85,6 +85,54 @@ export default async function AcademyPage() {
           </div>
         </header>
 
+        {/* Assinatura e pagamentos */}
+        <div className="dashboard-section-divider"><span>Assinatura e pagamentos</span></div>
+        <article className="dashboard-card" style={{ border: "1px solid #bfdbfe" }}>
+          <div className="dashboard-card__header">
+            <h3>Como assinar ou fazer upgrade de plano</h3>
+          </div>
+          <ol className="guide-steps">
+            <li className="guide-step">
+              <span className="guide-step__num">1</span>
+              <div className="guide-step__text">
+                <div>Acesse <strong>Dashboard &rarr; Assinatura</strong> ou clique em <strong>&ldquo;Ver planos&rdquo;</strong> em qualquer aviso de limite.</div>
+              </div>
+            </li>
+            <li className="guide-step">
+              <span className="guide-step__num">2</span>
+              <div className="guide-step__text">
+                <div>
+                  Informe seu <strong>CPF ou CNPJ</strong> no campo que aparece acima dos cards de plano.
+                </div>
+                <div className="guide-step__sub">
+                  O Asaas (nossa plataforma de pagamentos) exige CPF ou CNPJ para emitir cobranças no Brasil. Sem preencher esse campo, o botão &ldquo;Assinar&rdquo; não avança.
+                </div>
+              </div>
+            </li>
+            <li className="guide-step">
+              <span className="guide-step__num">3</span>
+              <div className="guide-step__text">
+                <div>Escolha o plano e clique em <strong>Assinar</strong>. Você será redirecionado para a página de pagamento.</div>
+                <div className="guide-step__sub">
+                  Métodos aceitos: <strong>PIX</strong> (aprovação instantânea), <strong>Boleto</strong> (1-3 dias úteis) ou <strong>Cartão de crédito</strong>.
+                </div>
+              </div>
+            </li>
+            <li className="guide-step">
+              <span className="guide-step__num">4</span>
+              <div className="guide-step__text">
+                <div>Após o pagamento confirmado, o plano é ativado automaticamente.</div>
+                <div className="guide-step__sub">
+                  O sistema recebe a confirmação em tempo real via webhook. Se escolheu PIX, a ativação é imediata após o pagamento.
+                </div>
+              </div>
+            </li>
+          </ol>
+          <div className="guide-tip guide-tip--info" style={{ marginTop: 12 }}>
+            <strong>Dica:</strong> O CPF/CNPJ só precisa ser informado uma vez por sessão, antes de clicar em &ldquo;Assinar&rdquo;. Não é salvo no sistema — é usado apenas para criar a cobrança no processador de pagamento.
+          </div>
+        </article>
+
         {/* Primeiros passos */}
         <div className="dashboard-section-divider"><span>Primeiros passos</span></div>
         <article className="dashboard-card">
