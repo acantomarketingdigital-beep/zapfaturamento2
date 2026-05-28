@@ -15,279 +15,6 @@ const UTM_PASSTHROUGH_SCRIPT = `<script>
 })();
 </script>`;
 
-const UTM_PASSTHROUGH_GTM = `<script>
-(function() {
-  var params = window.location.search;
-  if (!params) return;
-  document.querySelectorAll('a[href*="/w/"]').forEach(function(a) {
-    var sep = a.href.includes('?') ? '&' : '?';
-    a.href = a.href + sep + params.slice(1);
-  });
-})();
-</script>`;
-
-// ─── Passos comuns (sistema injeta tudo) ───────────────────────────────────
-const STEPS_SISTEMA = [
-  {
-    title: "Criar uma propriedade no Google Analytics 4",
-    body: (
-      <>
-        <div>
-          Acesse <strong>analytics.google.com</strong>, crie uma conta (ou use uma existente) e
-          adicione uma <strong>Propriedade GA4</strong> para o cliente.
-        </div>
-        <div className="guide-step__sub">
-          Ao terminar, copie o <strong>Measurement ID</strong> — formato{" "}
-          <code>G-XXXXXXXXXX</code>. Voce vai precisar dele no Passo 4.
-        </div>
-      </>
-    ),
-  },
-  {
-    title: "Criar um container no Google Tag Manager",
-    body: (
-      <>
-        <div>
-          Acesse <strong>tagmanager.google.com</strong>, crie uma conta e adicione um container
-          do tipo <strong>Web</strong>.
-        </div>
-        <div className="guide-step__sub">
-          Copie o <strong>Container ID</strong> — formato <code>GTM-XXXXXXX</code>. O sistema
-          vai injetar o GTM automaticamente; voce nao precisa colar codigo no site.
-        </div>
-      </>
-    ),
-  },
-  {
-    title: "Conectar o GA4 dentro do GTM",
-    body: (
-      <>
-        <div>
-          Dentro do GTM, crie uma <strong>Tag</strong> do tipo{" "}
-          <code>Google Analytics: GA4 Configuration</code>.
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 8 }}>
-          <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-            <span className="guide-step__sub" style={{ margin: 0, minWidth: 130 }}>Measurement ID:</span>
-            <code>G-XXXXXXXXXX</code>
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-            <span className="guide-step__sub" style={{ margin: 0, minWidth: 130 }}>Trigger:</span>
-            <strong>All Pages</strong>
-          </div>
-        </div>
-        <div className="guide-step__sub" style={{ marginTop: 6 }}>
-          Publique o container. Isso faz o GA4 receber os dados de navegacao.
-        </div>
-      </>
-    ),
-  },
-  {
-    title: "Criar uma acao de conversao no Google Ads",
-    body: (
-      <>
-        <div>
-          No Google Ads, acesse <strong>Ferramentas → Medicoes → Conversoes → + Nova conversao</strong>.
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 8 }}>
-          <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-            <span className="guide-step__sub" style={{ margin: 0, minWidth: 130 }}>Categoria:</span>
-            <strong>Lead</strong>
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-            <span className="guide-step__sub" style={{ margin: 0, minWidth: 130 }}>Origem:</span>
-            <strong>Website</strong>
-          </div>
-        </div>
-        <div className="guide-step__sub" style={{ marginTop: 6 }}>
-          Ao final, copie o <strong>Conversion ID</strong> (formato <code>AW-XXXXXXXXX</code>)
-          e o <strong>Conversion Label</strong>. Ambos ficam em{" "}
-          <em>Configuracoes da acao de conversao → Tag de acompanhamento</em>.
-        </div>
-      </>
-    ),
-  },
-  {
-    title: "Cadastrar os IDs no sistema",
-    body: (
-      <>
-        <div>
-          No painel do cliente (Clientes → selecionar o cliente → Tracking adicional), preencha:
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 8 }}>
-          {[
-            ["GTM ID",                "GTM-XXXXXXX"],
-            ["GA4 ID",                "G-XXXXXXXXXX"],
-            ["Google Ads ID",         "AW-XXXXXXXXX"],
-            ["Google Ads Conv. Label","AbCdEfGhIjK"],
-          ].map(([label, example]) => (
-            <div key={label} style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-              <span className="guide-step__sub" style={{ margin: 0, minWidth: 200 }}>{label}:</span>
-              <code style={{ fontSize: "0.78rem" }}>{example}</code>
-            </div>
-          ))}
-        </div>
-        <div className="guide-step__sub" style={{ marginTop: 6 }}>
-          Salve. A partir daqui o sistema cuida de tudo — injeta o GTM, carrega o GA4 e
-          dispara o evento <code>generate_lead</code> automaticamente quando o lead converte.
-        </div>
-      </>
-    ),
-  },
-  {
-    title: "Marcar 'generate_lead' como conversao no GA4 (CRITICO)",
-    body: (
-      <>
-        <div>
-          No GA4, va em <strong>Configurar → Eventos</strong>. Aguarde o primeiro lead chegar
-          e localize o evento <code>generate_lead</code>.
-        </div>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 6, padding: "4px 12px", margin: "8px 0", fontSize: "0.82rem", fontWeight: 600, color: "#15803d" }}>
-          ✓ Ative &quot;Marcar como evento-chave&quot;
-        </div>
-        <div className="guide-step__sub">
-          Depois, no Google Ads va em <strong>Ferramentas → Conversoes → Importar → Google
-          Analytics → generate_lead</strong> e importe como conversao primaria. O algoritmo
-          do Google passa a otimizar para leads reais.
-        </div>
-      </>
-    ),
-  },
-];
-
-// ─── Passos para quem tem site proprio ─────────────────────────────────────
-const STEPS_COM_SITE = [
-  {
-    title: "Instalar o GTM no site do cliente",
-    body: (
-      <>
-        <div>
-          Siga os passos 1, 2 e 3 acima (criar GA4, GTM e conectar). Depois instale o codigo
-          do GTM manualmente no <code>&lt;head&gt;</code> e <code>&lt;body&gt;</code> do site.
-        </div>
-        <div className="guide-step__sub">
-          O codigo e exibido pelo proprio GTM em <em>Administrador → Instalar GTM</em>.
-        </div>
-      </>
-    ),
-  },
-  {
-    title: "Criar a Tag de Conversao do Google Ads no GTM",
-    body: (
-      <>
-        <div>
-          Crie uma Tag do tipo <strong>Google Ads Conversion Tracking</strong> com o
-          Conversion ID e Label copiados no Passo 4.
-        </div>
-      </>
-    ),
-  },
-  {
-    title: "Configurar o Trigger para clique no WhatsApp",
-    body: (
-      <>
-        <div>
-          Crie um Trigger <strong>Click — All Elements</strong> com a condicao:
-        </div>
-        <div style={{ background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 14px", marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
-          <div className="guide-step__sub" style={{ margin: 0, fontWeight: 600 }}>
-            Click URL contiver:
-          </div>
-          <code style={{ fontSize: "0.78rem" }}>wa.me</code>
-          <code style={{ fontSize: "0.78rem" }}>api.whatsapp.com</code>
-        </div>
-        <div className="guide-step__sub" style={{ marginTop: 6 }}>
-          Associe o Trigger a Tag de conversao criada no passo anterior e publique.
-        </div>
-      </>
-    ),
-  },
-  {
-    title: "Marcar o evento como conversao no GA4",
-    body: (
-      <>
-        <div>
-          Siga o <strong>Passo 6</strong> descrito acima — localize <code>generate_lead</code>{" "}
-          ou o evento de clique no WhatsApp e marque como evento-chave.
-        </div>
-      </>
-    ),
-  },
-];
-
-// ─── Checklist Lead Express ─────────────────────────────────────────────────
-const STEPS_LEAD_EXPRESS = [
-  {
-    title: "Siga os Passos 1 a 5 acima",
-    body: (
-      <div>
-        Crie o GA4, o GTM, a conversao no Google Ads e cadastre os IDs no painel.
-        O Lead Express usa a mesma integracao automatica.
-      </div>
-    ),
-  },
-  {
-    title: "Crie o formulario no sistema",
-    body: (
-      <>
-        <div>
-          Va em <strong>Lead Express</strong> no menu lateral e clique em{" "}
-          <strong>+ Novo formulario</strong>.
-        </div>
-        <div className="guide-step__sub">
-          Defina titulo, subtitulo, cor e quais campos opcionais aparecem (email, procedimento,
-          cidade, observacao). Salve e copie o link publico gerado.
-        </div>
-      </>
-    ),
-  },
-  {
-    title: "Use o link do formulario no Google Ads",
-    body: (
-      <>
-        <div>
-          No Google Ads, ao criar o anuncio, cole o link do Lead Express no campo{" "}
-          <strong>URL final</strong>:
-        </div>
-        <div style={{ background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 14px", marginTop: 8 }}>
-          <code style={{ fontSize: "0.78rem", wordBreak: "break-all" }}>
-            https://zapfaturamento.com.br/f/nome-do-cliente/nome-do-form?utm_source=google&utm_medium=cpc&utm_campaign=&#123;campaignid&#125;&utm_content=&#123;adgroupid&#125;&gclid=&#123;gclid&#125;
-          </code>
-        </div>
-        <div className="guide-step__sub" style={{ marginTop: 6 }}>
-          As variaveis entre chaves <code>&#123;&#125;</code> sao preenchidas automaticamente
-          pelo Google. O sistema captura tudo antes de mostrar o formulario.
-        </div>
-      </>
-    ),
-  },
-  {
-    title: "O que acontece quando o lead envia o formulario",
-    body: (
-      <>
-        <div>
-          Assim que o lead clica em <strong>Enviar</strong>, o sistema automaticamente:
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
-          {[
-            ["Lead cadastrado", "Nome, telefone e dados aparecem no Kanban com origem Google."],
-            ["generate_lead disparado", "Evento enviado ao GA4 e ao Google Ads como conversao."],
-            ["UTMs preservadas", "Campanha, anuncio e gclid ficam gravados no lead."],
-          ].map(([titulo, desc]) => (
-            <div key={String(titulo)} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-              <span style={{ color: "#15803d", fontWeight: 700, marginTop: 1, flexShrink: 0 }}>✓</span>
-              <div>
-                <strong style={{ fontSize: "0.88rem" }}>{titulo}</strong>
-                <div className="guide-step__sub" style={{ marginTop: 2 }}>{desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </>
-    ),
-  },
-];
-
 export default async function GoogleAdsPage() {
   const user = await getCurrentUser();
   if (!user) {
@@ -306,147 +33,150 @@ export default async function GoogleAdsPage() {
         <header className="dashboard-topbar">
           <div>
             <span className="dashboard-eyebrow">Academia · Google Ads</span>
-            <h2>Rastreamento de leads no Google Ads</h2>
+            <h2>Google Ads — Rastreamento de leads</h2>
             <p>
-              O sistema detecta trafego do Google automaticamente e exibe uma pagina intermediaria com conteudo real — evitando a classificacao como bridge page. Para rastreamento, escolha entre disparo direto (sem GA4) ou via GA4 + GTM.
+              Guia completo passo a passo para quem nunca configurou rastreamento antes. Cada clique explicado.
             </p>
           </div>
         </header>
 
-        {/* ── Smart Redirect Page ── */}
-        <article className="dashboard-card" style={{ border: "2px solid #6366f1", marginBottom: 0 }}>
+        {/* Visão geral */}
+        <article className="dashboard-card" style={{ border: "1px solid #bfdbfe", background: "#f0f7ff" }}>
           <div className="dashboard-card__header">
-            <div>
-              <h3 style={{ color: "#4f46e5" }}>Pagina Intermediaria Google (Smart Redirect Page)</h3>
-              <p className="dashboard-helper" style={{ marginBottom: 0 }}>
-                Por que o sistema nao redireciona automaticamente para o WhatsApp quando o trafego vem do Google Ads.
-              </p>
-            </div>
+            <h3 style={{ color: "#1d4ed8" }}>Antes de começar — entenda o que você vai fazer</h3>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {[
+              {
+                icon: "🎯",
+                title: "Por que preciso configurar rastreamento?",
+                desc: "Sem rastreamento, o Google não sabe quem virou lead. A campanha fica rodando 'no escuro', mostrando anúncio para qualquer pessoa sem aprender. Com o rastreamento, o Google aprende quem clicou E virou lead — e passa a mostrar o anúncio para mais pessoas parecidas.",
+              },
+              {
+                icon: "🛣️",
+                title: "Qual caminho seguir?",
+                desc: "Se você nunca configurou nada: use o Método 1 abaixo (mais simples, 3 passos). Se já tem o GTM instalado e quer mais controle: use o Método 2. Ambos funcionam — escolha um só.",
+              },
+            ].map((item) => (
+              <div key={item.icon} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "#fff", borderRadius: 8, padding: "12px 14px", border: "1px solid #bfdbfe" }}>
+                <span style={{ fontSize: "1.3rem", flexShrink: 0, marginTop: 1 }}>{item.icon}</span>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: "0.88rem", color: "#1e3a5f", marginBottom: 4 }}>{item.title}</div>
+                  <div style={{ fontSize: "0.82rem", color: "#374151", lineHeight: 1.6 }}>{item.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        {/* Página Intermediária Google */}
+        <div className="dashboard-section-divider"><span>Como funciona o link do Google Ads</span></div>
+
+        <article className="dashboard-card" style={{ border: "2px solid #6366f1" }}>
+          <div className="dashboard-card__header">
+            <h3 style={{ color: "#4f46e5" }}>Por que aparece uma página antes do WhatsApp no Google Ads?</h3>
           </div>
 
-          {/* Por que existe */}
-          <div style={{ background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: 8, padding: "12px 16px", marginBottom: 16 }}>
-            <strong style={{ fontSize: "0.85rem", color: "#92400e" }}>O problema: pagina ponte (bridge page)</strong>
-            <p className="dashboard-helper" style={{ marginTop: 6, marginBottom: 0 }}>
-              Paginas que redirecionam automaticamente o usuario para outro destino (como um link do WhatsApp) sao classificadas pelo Google como <strong>bridge pages</strong> ou <strong>doorway pages</strong>. O resultado e <strong>zero impressoes</strong> — o Google para de veicular o anuncio por violacao de politica de qualidade da pagina de destino.
+          <div style={{ background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: 8, padding: "14px 16px", marginBottom: 16 }}>
+            <strong style={{ color: "#92400e", display: "block", marginBottom: 6 }}>⚠️ O problema com redirect direto</strong>
+            <p style={{ fontSize: "0.84rem", color: "#78350f", lineHeight: 1.6, margin: 0 }}>
+              O Google Ads proíbe páginas que redirecionam automaticamente o usuário para outro site (como um link do WhatsApp). Essas páginas são chamadas de <strong>&ldquo;bridge pages&rdquo;</strong>. O resultado: a campanha vai para <strong>zero impressões</strong> — o Google para de mostrar o anúncio sem avisar.
             </p>
           </div>
 
-          {/* Como funciona agora */}
-          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "12px 16px", marginBottom: 16 }}>
-            <strong style={{ fontSize: "0.85rem", color: "#14532d" }}>Como o sistema resolve isso automaticamente</strong>
-            <p className="dashboard-helper" style={{ marginTop: 6, marginBottom: 10 }}>
-              Quando o sistema detecta trafego do Google (presenca de <code>gclid</code> ou <code>utm_source=google</code> na URL), em vez de redirecionar, ele exibe uma pagina com conteudo real:
+          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "14px 16px", marginBottom: 16 }}>
+            <strong style={{ color: "#14532d", display: "block", marginBottom: 6 }}>✅ Como o sistema resolve isso automaticamente</strong>
+            <p style={{ fontSize: "0.84rem", color: "#166534", lineHeight: 1.6, marginBottom: 10 }}>
+              Quando alguém clica no seu anúncio do Google, o sistema detecta que o tráfego é do Google e, em vez de redirecionar, exibe uma página real com conteúdo:
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {[
-                ["Logo e nome do cliente", "Identidade visual da empresa no topo da pagina"],
-                ["Titulo e subtitulo", 'Ex: "Fale com Clinica X pelo WhatsApp"'],
-                ["3 beneficios do atendimento", "Texto que demonstra valor — nao e uma pagina vazia"],
-                ["Botao de acao manual", "O lead clica para abrir o WhatsApp — sem redirecionamento automatico"],
-                ["Rodape com Politica de Privacidade e Termos de Uso", "Conformidade LGPD e exigencia basica do Google Ads"],
-              ].map(([item, desc]) => (
-                <div key={String(item)} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                  <span style={{ color: "#15803d", fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✓</span>
-                  <div>
-                    <strong style={{ fontSize: "0.85rem" }}>{item}</strong>
-                    <div className="guide-step__sub" style={{ marginTop: 2 }}>{desc}</div>
-                  </div>
+                "Logo e nome do cliente",
+                "Título e subtítulo da oferta",
+                "3 benefícios do atendimento",
+                "Botão verde para o lead clicar e abrir o WhatsApp (manual, não automático)",
+                "Rodapé com Política de Privacidade — exigência do Google",
+              ].map((item) => (
+                <div key={item} style={{ display: "flex", gap: 8, fontSize: "0.83rem" }}>
+                  <span style={{ color: "#15803d", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span>{item}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Fluxo visual */}
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>Fluxo por tipo de trafego</div>
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Como o lead percorre o caminho</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-
               <div>
-                <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#4f46e5", marginBottom: 6 }}>Google Ads (gclid ou utm_source=google)</div>
+                <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#4f46e5", marginBottom: 6 }}>Quando vem do Google Ads (tem gclid ou utm_source=google na URL)</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: "0.78rem" }}>
-                  <span style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#1d4ed8" }}>Anuncio Google</span>
-                  <span style={{ color: "var(--muted)" }}>→</span>
-                  <span style={{ background: "#ede9fe", border: "1px solid #c4b5fd", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#6d28d9" }}>Pagina com conteudo (Zap)</span>
-                  <span style={{ color: "var(--muted)" }}>→</span>
-                  <span style={{ background: "#f3f4f6", border: "1px solid #d1d5db", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#374151" }}>Lead clica no botao</span>
-                  <span style={{ color: "var(--muted)" }}>→</span>
-                  <span style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#15803d" }}>WhatsApp</span>
+                  <span style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 5, padding: "3px 10px", fontWeight: 600, color: "#1d4ed8" }}>Anúncio Google</span>
+                  <span style={{ color: "#9ca3af" }}>→</span>
+                  <span style={{ background: "#ede9fe", border: "1px solid #c4b5fd", borderRadius: 5, padding: "3px 10px", fontWeight: 600, color: "#6d28d9" }}>Página com conteúdo real</span>
+                  <span style={{ color: "#9ca3af" }}>→</span>
+                  <span style={{ background: "#f3f4f6", border: "1px solid #d1d5db", borderRadius: 5, padding: "3px 10px", fontWeight: 600, color: "#374151" }}>Lead clica no botão</span>
+                  <span style={{ color: "#9ca3af" }}>→</span>
+                  <span style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 5, padding: "3px 10px", fontWeight: 600, color: "#15803d" }}>WhatsApp</span>
                 </div>
               </div>
-
               <div>
-                <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#db2777", marginBottom: 6 }}>Meta Ads / trafego direto / organico</div>
+                <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#db2777", marginBottom: 6 }}>Quando vem do Meta Ads, Instagram ou link direto</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: "0.78rem" }}>
-                  <span style={{ background: "#fdf2f8", border: "1px solid #fbcfe8", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#be185d" }}>Anuncio Meta / Link direto</span>
-                  <span style={{ color: "var(--muted)" }}>→</span>
-                  <span style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#15803d" }}>Redireciona para WhatsApp (automatico)</span>
+                  <span style={{ background: "#fdf2f8", border: "1px solid #fbcfe8", borderRadius: 5, padding: "3px 10px", fontWeight: 600, color: "#be185d" }}>Anúncio Meta / Link direto</span>
+                  <span style={{ color: "#9ca3af" }}>→</span>
+                  <span style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 5, padding: "3px 10px", fontWeight: 600, color: "#15803d" }}>Redireciona direto para WhatsApp</span>
                 </div>
               </div>
-
             </div>
           </div>
 
-          {/* O que voce precisa fazer */}
-          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "12px 16px" }}>
-            <strong style={{ fontSize: "0.85rem", color: "#14532d" }}>O que voce precisa fazer no Google Ads</strong>
-            <p className="dashboard-helper" style={{ marginTop: 6, marginBottom: 0 }}>
-              <strong>Nada diferente.</strong> Use o mesmo link <code>/w/slug/campanha</code> com os parametros UTM normais. O sistema detecta o trafego do Google automaticamente e exibe a pagina intermediaria — voce nao precisa configurar nada adicional.
+          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "12px 16px", marginTop: 4 }}>
+            <strong style={{ color: "#14532d", fontSize: "0.85rem" }}>O que você precisa fazer?</strong>
+            <p style={{ fontSize: "0.83rem", color: "#166534", lineHeight: 1.6, margin: "6px 0 0" }}>
+              <strong>Nada diferente.</strong> Use o link do sistema normalmente. Ele detecta o tráfego do Google automaticamente e exibe a página intermediária. Você não precisa criar landing page nem configurar nada extra.
             </p>
-            <div style={{ marginTop: 10, background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 14px" }}>
-              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>URL Final no anuncio</div>
-              <code style={{ fontSize: "0.78rem", wordBreak: "break-all" }}>
-                https://zapfaturamento.com.br/w/cliente/campanha?utm_source=google&utm_medium=cpc&utm_campaign=&#123;campaignid&#125;&utm_content=&#123;adgroupid&#125;&gclid=&#123;gclid&#125;
-              </code>
-            </div>
           </div>
         </article>
 
-        {/* ── NOVO: Sem GA4 ── */}
+        {/* MÉTODO 1 — Sem GA4, direto */}
         <div className="dashboard-section-divider">
-          <span>Nao aparece a opcao de importar do GA4? Use este metodo</span>
+          <span>Método 1 — O mais simples (recomendado para começar)</span>
         </div>
 
         <article className="dashboard-card" style={{ border: "2px solid #16a34a" }}>
           <div className="dashboard-card__header">
             <div>
-              <h3 style={{ color: "#15803d" }}>Conversao direta no Google Ads — sem GA4, sem importacao</h3>
+              <h3 style={{ color: "#15803d" }}>Conversão direta — sem GA4, sem GTM, 3 passos</h3>
               <p className="dashboard-helper" style={{ marginBottom: 0 }}>
-                Muitas contas do Google Ads nao exibem a opcao de importar do GA4. Neste caso, use o disparo direto via tag de conversao. O sistema faz tudo automaticamente — voce so precisa dos dois codigos abaixo.
+                O sistema dispara a conversão diretamente para o Google Ads quando o lead clica no WhatsApp. Você só precisa de dois códigos.
               </p>
             </div>
           </div>
 
-          {/* Como funciona */}
-          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "12px 16px", marginBottom: 16 }}>
-            <strong style={{ fontSize: "0.85rem", color: "#14532d" }}>Como funciona</strong>
-            <p className="dashboard-helper" style={{ marginTop: 6, marginBottom: 0 }}>
-              Quando o lead clica no botao do WhatsApp (ou envia o Lead Express), o sistema dispara automaticamente o evento de conversao diretamente para o Google Ads, usando o <code>gtag</code>. Nenhuma importacao do GA4 e necessaria — o Google ja recebe o sinal de conversao na hora.
-            </p>
-          </div>
-
-          {/* Passo 1 */}
           <ol className="guide-steps">
             <li className="guide-step">
               <span className="guide-step__num">1</span>
               <div className="guide-step__text">
-                <div><strong>Crie a acao de conversao no Google Ads</strong></div>
-                <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
-                  <div className="guide-step__sub">Acesse: <strong>Google Ads → Metas → Conversoes → + Nova conversao → Site</strong></div>
+                <div><strong>Crie uma ação de conversão no Google Ads</strong></div>
+                <div className="guide-step__sub" style={{ marginTop: 6 }}>
+                  No Google Ads, acesse o menu: <strong>Metas → Conversões → + Nova conversão → Site</strong>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10, background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 14px" }}>
                   {[
                     ["Categoria", "Lead"],
-                    ["Nome da conversao", "Qualquer nome, ex: Lead WhatsApp"],
-                    ["Valor", "Opcional — pode deixar em branco"],
-                    ["Janela de conversao", "30 dias (padrao)"],
+                    ["Nome da conversão", "Lead WhatsApp (ou qualquer nome)"],
+                    ["Valor", "Deixe em branco ou coloque 0"],
+                    ["Janela de conversão", "30 dias"],
                   ].map(([label, val]) => (
                     <div key={String(label)} style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                      <span className="guide-step__sub" style={{ margin: 0, minWidth: 180 }}>{label}:</span>
-                      <strong style={{ fontSize: "0.85rem" }}>{val}</strong>
+                      <span style={{ fontSize: "0.78rem", color: "#6b7280", minWidth: 180 }}>{label}:</span>
+                      <strong style={{ fontSize: "0.84rem" }}>{val}</strong>
                     </div>
                   ))}
                 </div>
                 <div className="guide-tip" style={{ marginTop: 10 }}>
-                  Ao final, clique em <strong>&ldquo;Usar a Tag do Google&rdquo;</strong> (nao &ldquo;Importar do Google Analytics&rdquo;). Va em <em>Configuracoes da acao → Tag de acompanhamento</em> e copie os dois valores abaixo.
+                  Ao terminar de criar, clique em <strong>&ldquo;Usar a Tag do Google&rdquo;</strong> (não &ldquo;Importar do Google Analytics&rdquo;). Depois acesse <em>Configurações da ação → Tag de acompanhamento</em> para copiar os códigos.
                 </div>
               </div>
             </li>
@@ -455,16 +185,19 @@ export default async function GoogleAdsPage() {
               <span className="guide-step__num">2</span>
               <div className="guide-step__text">
                 <div><strong>Copie o Conversion ID e o Conversion Label</strong></div>
-                <div style={{ marginTop: 10, background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 8, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                <p className="guide-step__sub" style={{ marginTop: 6 }}>
+                  Você vai ver um bloco de código parecido com esse. Identifique os dois valores:
+                </p>
+                <div style={{ background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 8, padding: "14px 16px", marginTop: 8, display: "flex", flexDirection: "column", gap: 12 }}>
                   <div>
-                    <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Conversion ID</div>
-                    <code style={{ fontSize: "0.88rem", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 5, padding: "3px 10px", color: "#1d4ed8" }}>AW-XXXXXXXXX</code>
-                    <div className="guide-step__sub" style={{ marginTop: 4 }}>Aparece no topo do snippet de codigo como <code>gtag(&apos;config&apos;, &apos;AW-XXXXXXXXX&apos;)</code></div>
+                    <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Conversion ID (ID de conversão)</div>
+                    <code style={{ fontSize: "0.88rem", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 5, padding: "3px 10px", color: "#1d4ed8" }}>AW-1234567890</code>
+                    <div className="guide-step__sub" style={{ marginTop: 4 }}>Aparece como <code>gtag(&apos;config&apos;, &apos;AW-1234567890&apos;)</code> — os números após AW-</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Conversion Label</div>
+                    <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Conversion Label (Rótulo de conversão)</div>
                     <code style={{ fontSize: "0.88rem", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 5, padding: "3px 10px", color: "#15803d" }}>AbCdEfGhIjKlM</code>
-                    <div className="guide-step__sub" style={{ marginTop: 4 }}>Aparece na linha <code>gtag(&apos;event&apos;, &apos;conversion&apos;, &#123; send_to: &apos;AW-xxx/<strong>AbCdEfGhIjKlM</strong>&apos; &#125;)</code></div>
+                    <div className="guide-step__sub" style={{ marginTop: 4 }}>Aparece na linha <code>send_to: &apos;AW-xxx/<strong>AbCdEfGhIjKlM</strong>&apos;</code> — o que está depois da barra /</div>
                   </div>
                 </div>
               </div>
@@ -473,64 +206,327 @@ export default async function GoogleAdsPage() {
             <li className="guide-step">
               <span className="guide-step__num">3</span>
               <div className="guide-step__text">
-                <div><strong>Cadastre os dois codigos no painel do cliente</strong></div>
-                <div style={{ marginTop: 8 }}>
-                  <div className="guide-step__sub">Acesse: <strong>Clientes → selecione o cliente → Editar → secao Rastreamento</strong></div>
-                  <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-                    {[
-                      ["Google Ads ID", "AW-XXXXXXXXX", "#eff6ff", "#bfdbfe", "#1d4ed8", "O Conversion ID que voce copiou acima"],
-                      ["Google Ads Conversion Label", "AbCdEfGhIjKlM", "#f0fdf4", "#bbf7d0", "#15803d", "O Conversion Label que voce copiou acima"],
-                    ].map(([label, example, bg, border, color, desc]) => (
-                      <div key={String(label)} style={{ background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 14px" }}>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                          <span style={{ fontWeight: 600, fontSize: "0.85rem", minWidth: 230 }}>{label}:</span>
-                          <code style={{ fontSize: "0.82rem", background: String(bg), border: `1px solid ${String(border)}`, borderRadius: 5, padding: "2px 10px", color: String(color) }}>{example}</code>
-                        </div>
-                        <div className="guide-step__sub" style={{ marginTop: 4 }}>{desc}</div>
-                      </div>
-                    ))}
-                  </div>
+                <div><strong>Cole os dois códigos no painel do cliente</strong></div>
+                <div className="guide-step__sub" style={{ marginTop: 6 }}>
+                  No sistema: <strong>Clientes → clique no cliente → Editar → seção &ldquo;Rastreamento&rdquo;</strong>
                 </div>
-                <div style={{ marginTop: 10, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 14px" }}>
-                  <strong style={{ fontSize: "0.85rem", color: "#14532d" }}>Pronto.</strong>
-                  <span className="guide-step__sub" style={{ marginLeft: 6 }}>
-                    A partir daqui, cada vez que um lead for capturado, o sistema dispara automaticamente o evento de conversao para o Google Ads. Nenhuma importacao do GA4 e necessaria.
-                  </span>
+                <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                  {[
+                    ["Google Ads ID", "AW-1234567890", "#eff6ff", "#bfdbfe", "#1d4ed8", "O Conversion ID que você copiou (começa com AW-)"],
+                    ["Google Ads Conversion Label", "AbCdEfGhIjKlM", "#f0fdf4", "#bbf7d0", "#15803d", "O Conversion Label que você copiou (letras e números após a barra)"],
+                  ].map(([label, example, bg, border, color, desc]) => (
+                    <div key={String(label)} style={{ background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 14px" }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                        <span style={{ fontWeight: 600, fontSize: "0.85rem", minWidth: 240 }}>{label}:</span>
+                        <code style={{ fontSize: "0.82rem", background: String(bg), border: `1px solid ${String(border)}`, borderRadius: 5, padding: "2px 10px", color: String(color) }}>{example}</code>
+                      </div>
+                      <div className="guide-step__sub" style={{ marginTop: 4 }}>{desc}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "12px 14px", marginTop: 12 }}>
+                  <strong style={{ color: "#14532d", fontSize: "0.88rem" }}>✅ Pronto! Configuração concluída.</strong>
+                  <p style={{ fontSize: "0.82rem", color: "#166534", margin: "6px 0 0", lineHeight: 1.6 }}>
+                    A partir de agora, cada vez que um lead clicar no botão do WhatsApp, o sistema envia automaticamente o sinal de conversão para o Google Ads. Sem precisar de GA4, sem precisar de GTM.
+                  </p>
                 </div>
               </div>
             </li>
           </ol>
         </article>
 
-        {/* ── Via GTM (alternativa) ── */}
+        {/* MÉTODO 2 — Via GTM */}
+        <div className="dashboard-section-divider">
+          <span>Método 2 — Via GTM (para quem já usa ou quer mais controle)</span>
+        </div>
+
         <article className="dashboard-card" style={{ border: "1px solid #e0e7ff" }}>
           <div className="dashboard-card__header">
             <div>
-              <h3>Alternativa: conversao via GTM (sem GA4)</h3>
+              <h3>Conversão via GTM — passo a passo completo</h3>
               <p className="dashboard-helper" style={{ marginBottom: 0 }}>
-                Para quem ja usa GTM e prefere gerenciar as tags pelo container. Nao precisa de GA4 nem de importacao.
+                Ideal para quem já tem o Google Tag Manager instalado. Você cria um acionador e uma tag no GTM, e o sistema dispara o evento automaticamente.
               </p>
             </div>
           </div>
+
+          {/* O que é GTM */}
+          <div style={{ background: "#f5f3ff", border: "1px solid #c4b5fd", borderRadius: 8, padding: "12px 14px", marginBottom: 20 }}>
+            <strong style={{ color: "#5b21b6", display: "block", marginBottom: 6 }}>O que é o Google Tag Manager (GTM)?</strong>
+            <p style={{ fontSize: "0.83rem", color: "#374151", lineHeight: 1.6, margin: 0 }}>
+              O GTM é um painel onde você instala &ldquo;scripts&rdquo; no seu site sem precisar mexer no código. Pense nele como uma caixa de ferramentas: você adiciona ferramentas (tags) e define quando cada uma deve ser ativada (acionadores). O sistema já envia um sinal chamado <code>whatsapp_redirect</code> quando o lead clica — você só precisa criar a tag que captura esse sinal e manda para o Google Ads.
+            </p>
+          </div>
+
+          <ol className="guide-steps">
+            {/* PASSO 1 */}
+            <li className="guide-step">
+              <span className="guide-step__num">1</span>
+              <div className="guide-step__text">
+                <div><strong>Cadastre o GTM ID e o Google Ads ID no painel do cliente</strong></div>
+                <div className="guide-step__sub" style={{ marginTop: 6 }}>
+                  Em <strong>Clientes → cliente → Editar → Rastreamento</strong>, preencha:
+                </div>
+                <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+                  {[
+                    ["GTM ID", "GTM-XXXXXXX", "O ID do seu container do Google Tag Manager (começa com GTM-)"],
+                    ["Google Ads ID", "AW-XXXXXXXXX", "O Conversion ID do Google Ads (começa com AW-) — necessário para o Linker funcionar"],
+                  ].map(([label, example, desc]) => (
+                    <div key={String(label)} style={{ background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 14px" }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                        <span style={{ fontWeight: 600, fontSize: "0.85rem", minWidth: 180 }}>{label}:</span>
+                        <code style={{ fontSize: "0.82rem" }}>{example}</code>
+                      </div>
+                      <div className="guide-step__sub" style={{ marginTop: 4 }}>{desc}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="guide-step__sub" style={{ marginTop: 8 }}>
+                  Salve. O sistema vai injetar o GTM automaticamente em cada visita — você não precisa instalar código no site.
+                </div>
+              </div>
+            </li>
+
+            {/* PASSO 2 — CRÍTICO: criar acionador */}
+            <li className="guide-step">
+              <span className="guide-step__num">2</span>
+              <div className="guide-step__text">
+                <div><strong>Crie o Acionador no GTM — este passo é crítico</strong></div>
+                <p className="guide-step__sub" style={{ marginTop: 6 }}>
+                  Acesse <strong>tagmanager.google.com</strong>, abra seu container e siga exatamente os passos abaixo:
+                </p>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+                  {[
+                    { num: "a", text: "No menu esquerdo, clique em", bold: "Acionadores" },
+                    { num: "b", text: "Clique no botão azul", bold: "Novo" },
+                    { num: "c", text: "Clique no bloco cinza no meio da tela para escolher o tipo do acionador" },
+                    { num: "d", text: "Na lista que aparecer, procure e clique em", bold: "Evento Personalizado" },
+                  ].map((item) => (
+                    <div key={item.num} style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 7, padding: "8px 12px" }}>
+                      <span style={{ background: "#6366f1", color: "#fff", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{item.num}</span>
+                      <span style={{ fontSize: "0.83rem" }}>
+                        {item.text}{item.bold ? <> <strong>&ldquo;{item.bold}&rdquo;</strong></> : null}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CAMPO CRÍTICO */}
+                <div style={{ background: "#fffbeb", border: "2px solid #f59e0b", borderRadius: 8, padding: "14px 16px", marginTop: 14 }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ fontSize: "1.2rem" }}>⚠️</span>
+                    <strong style={{ color: "#92400e", fontSize: "0.88rem" }}>Campo crítico — copie exatamente como está</strong>
+                  </div>
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>No campo &ldquo;Nome do evento&rdquo;, digite:</div>
+                    <code style={{ fontSize: "1.1rem", fontWeight: 700, background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: 6, padding: "6px 14px", color: "#92400e", letterSpacing: "0.03em" }}>whatsapp_redirect</code>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.82rem", color: "#78350f" }}>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <span style={{ color: "#dc2626", fontWeight: 700 }}>✗</span>
+                      <span>NÃO use hífen: <code>whatsapp-redirect</code> ← errado</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <span style={{ color: "#dc2626", fontWeight: 700 }}>✗</span>
+                      <span>NÃO coloque espaço: <code>whatsapp redirect</code> ← errado</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <span style={{ color: "#dc2626", fontWeight: 700 }}>✗</span>
+                      <span>NÃO use maiúsculas: <code>Whatsapp_Redirect</code> ← errado</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, marginTop: 2 }}>
+                      <span style={{ color: "#15803d", fontWeight: 700 }}>✓</span>
+                      <span>Correto: <code style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 4, padding: "1px 6px", color: "#15803d" }}>whatsapp_redirect</code> — tudo minúsculo, underscore no meio</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+                  {[
+                    { num: "e", text: 'Deixe a opção "Usar expressão regular" desmarcada' },
+                    { num: "f", text: 'Em "Este acionador é ativado em", escolha', bold: "Todos os eventos personalizados" },
+                    { num: "g", text: "No campo de nome no topo da tela (onde está escrito \"Nome do acionador sem título\"), escreva:", bold: "Evento - whatsapp_redirect" },
+                    { num: "h", text: "Clique em", bold: "Salvar" },
+                  ].map((item) => (
+                    <div key={item.num} style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 7, padding: "8px 12px" }}>
+                      <span style={{ background: "#6366f1", color: "#fff", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{item.num}</span>
+                      <span style={{ fontSize: "0.83rem" }}>
+                        {item.text}{item.bold ? <> <strong>&ldquo;{item.bold}&rdquo;</strong></> : null}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 14px", marginTop: 12 }}>
+                  <strong style={{ fontSize: "0.83rem", color: "#14532d" }}>✅ Resultado esperado:</strong>
+                  <span style={{ fontSize: "0.82rem", color: "#166534", marginLeft: 6 }}>
+                    O acionador <strong>&ldquo;Evento - whatsapp_redirect&rdquo;</strong> aparece na lista de acionadores.
+                  </span>
+                </div>
+              </div>
+            </li>
+
+            {/* PASSO 3 — Criar a tag */}
+            <li className="guide-step">
+              <span className="guide-step__num">3</span>
+              <div className="guide-step__text">
+                <div><strong>Crie a Tag de Conversão do Google Ads no GTM</strong></div>
+                <p className="guide-step__sub" style={{ marginTop: 6 }}>
+                  Ainda dentro do GTM, agora crie a tag que dispara a conversão:
+                </p>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+                  {[
+                    { num: "a", text: "No menu esquerdo, clique em", bold: "Tags" },
+                    { num: "b", text: "Clique no botão azul", bold: "Nova" },
+                    { num: "c", text: "Clique no bloco cinza de configuração da tag" },
+                    { num: "d", text: "Na lista, procure e clique em", bold: "Conversão do Google Ads" },
+                  ].map((item) => (
+                    <div key={item.num} style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 7, padding: "8px 12px" }}>
+                      <span style={{ background: "#1d4ed8", color: "#fff", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{item.num}</span>
+                      <span style={{ fontSize: "0.83rem" }}>
+                        {item.text}{item.bold ? <> <strong>&ldquo;{item.bold}&rdquo;</strong></> : null}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 8, padding: "12px 14px", marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Preencha os campos assim:</div>
+                  {[
+                    ["ID de conversão", "AW-XXXXXXXXX", "O mesmo Conversion ID que você copiou do Google Ads"],
+                    ["Rótulo de conversão", "AbCdEfGhIjKlM", "O mesmo Conversion Label que você copiou"],
+                  ].map(([label, example, desc]) => (
+                    <div key={String(label)}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "0.82rem", fontWeight: 600, minWidth: 200 }}>{label}:</span>
+                        <code style={{ fontSize: "0.82rem", color: "#1d4ed8" }}>{example}</code>
+                      </div>
+                      <div className="guide-step__sub" style={{ marginTop: 2 }}>{desc}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+                  {[
+                    { num: "e", text: "Role a tela para baixo e clique no bloco de", bold: "Acionadores" },
+                    { num: "f", text: "Na lista que aparecer, selecione o acionador que você criou:", bold: "Evento - whatsapp_redirect" },
+                    { num: "g", text: "No campo de nome no topo, escreva:", bold: "Google Ads - Conversão Lead WhatsApp" },
+                    { num: "h", text: "Clique em", bold: "Salvar" },
+                  ].map((item) => (
+                    <div key={item.num} style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 7, padding: "8px 12px" }}>
+                      <span style={{ background: "#1d4ed8", color: "#fff", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{item.num}</span>
+                      <span style={{ fontSize: "0.83rem" }}>
+                        {item.text}{item.bold ? <> <strong>&ldquo;{item.bold}&rdquo;</strong></> : null}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </li>
+
+            {/* PASSO 4 — Adicionar Conversion Linker */}
+            <li className="guide-step">
+              <span className="guide-step__num">4</span>
+              <div className="guide-step__text">
+                <div><strong>Adicione também uma tag &ldquo;Conversion Linker&rdquo; (importante)</strong></div>
+                <p className="guide-step__sub" style={{ marginTop: 6 }}>
+                  Esta tag faz o Google associar o clique do anúncio ao lead corretamente. Sem ela, algumas conversões podem não ser atribuídas.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+                  {[
+                    { num: "a", text: "Tags → Nova → clique no bloco de configuração" },
+                    { num: "b", text: 'Na lista, procure e clique em', bold: "Linker de conversão do Google Ads" },
+                    { num: "c", text: 'Acionador:', bold: "All Pages (Todas as páginas)" },
+                    { num: "d", text: 'Nome da tag:', bold: "Conversion Linker" },
+                    { num: "e", text: "Clique em", bold: "Salvar" },
+                  ].map((item) => (
+                    <div key={item.num} style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 7, padding: "8px 12px" }}>
+                      <span style={{ background: "#6b7280", color: "#fff", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{item.num}</span>
+                      <span style={{ fontSize: "0.83rem" }}>
+                        {item.text}{item.bold ? <> <strong>&ldquo;{item.bold}&rdquo;</strong></> : null}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </li>
+
+            {/* PASSO 5 — Publicar */}
+            <li className="guide-step">
+              <span className="guide-step__num">5</span>
+              <div className="guide-step__text">
+                <div><strong>Publique o container — as tags só funcionam após publicar</strong></div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+                  {[
+                    { num: "a", text: 'No canto superior direito do GTM, clique no botão azul', bold: "Enviar" },
+                    { num: "b", text: 'No campo "Nome da versão", escreva:', bold: "Conversão WhatsApp" },
+                    { num: "c", text: 'Clique em', bold: "Publicar" },
+                  ].map((item) => (
+                    <div key={item.num} style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 7, padding: "8px 12px" }}>
+                      <span style={{ background: "#22c55e", color: "#fff", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{item.num}</span>
+                      <span style={{ fontSize: "0.83rem" }}>
+                        {item.text}{item.bold ? <> <strong>&ldquo;{item.bold}&rdquo;</strong></> : null}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 14px", marginTop: 12 }}>
+                  <strong style={{ fontSize: "0.83rem", color: "#14532d" }}>✅ Configuração via GTM concluída!</strong>
+                  <p style={{ fontSize: "0.82rem", color: "#166534", margin: "6px 0 0" }}>
+                    Cada vez que um lead clicar no botão do WhatsApp, o evento <code>whatsapp_redirect</code> será disparado e a tag de conversão enviará o sinal para o Google Ads.
+                  </p>
+                </div>
+              </div>
+            </li>
+          </ol>
+
+          {/* Como testar */}
+          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "14px 16px", marginTop: 4 }}>
+            <strong style={{ color: "#1d4ed8", display: "block", marginBottom: 8 }}>Como testar se funcionou</strong>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.83rem" }}>
+              {[
+                "No GTM, clique em \"Visualizar\" (Preview) no canto superior direito",
+                "Cole a URL do link de campanha do sistema no campo que aparecer e clique em \"Conectar\"",
+                "Você vai ver a página abrir com uma barra do GTM embaixo",
+                "Clique no botão do WhatsApp na página",
+                "Na barra do GTM, procure o evento \"whatsapp_redirect\" na lista de eventos",
+                "Clique nele e veja se a tag \"Google Ads - Conversão Lead WhatsApp\" aparece como disparada",
+                "Se aparecer com check verde → funcionou!",
+              ].map((step, i) => (
+                <div key={i} style={{ display: "flex", gap: 8 }}>
+                  <span style={{ color: "#1d4ed8", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+                  <span>{step}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </article>
+
+        {/* MÉTODO 3 — Via GA4 */}
+        <div className="dashboard-section-divider">
+          <span>Método 3 — Via GA4 (para quem já usa o Google Analytics 4)</span>
+        </div>
+
+        <article className="dashboard-card">
+          <div className="dashboard-card__header">
+            <h3>Rastreamento completo com GA4 + GTM — 6 passos</h3>
+          </div>
+          <p className="dashboard-helper" style={{ marginBottom: 16 }}>
+            Use este método se você já tem GA4 configurado ou quer os dados de audiência no Analytics. O sistema dispara o evento <code>generate_lead</code> que você depois importa para o Google Ads.
+          </p>
 
           <ol className="guide-steps">
             <li className="guide-step">
               <span className="guide-step__num">1</span>
               <div className="guide-step__text">
-                <div><strong>Cadastre o GTM ID e o Google Ads ID no painel do cliente</strong></div>
-                <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 5 }}>
-                  {[
-                    ["GTM ID", "GTM-XXXXXXX", "O sistema injeta o GTM automaticamente na pagina de redirecionamento"],
-                    ["Google Ads ID", "AW-XXXXXXXXX", "Necessario para o Conversion Linker funcionar corretamente"],
-                  ].map(([label, example, desc]) => (
-                    <div key={String(label)}>
-                      <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                        <span className="guide-step__sub" style={{ margin: 0, minWidth: 200 }}>{label}:</span>
-                        <code style={{ fontSize: "0.78rem" }}>{example}</code>
-                      </div>
-                      <div className="guide-step__sub" style={{ marginLeft: 0, marginTop: 2, paddingLeft: 208 }}>{desc}</div>
-                    </div>
-                  ))}
+                <div><strong>Crie uma propriedade no Google Analytics 4</strong></div>
+                <div className="guide-step__sub" style={{ marginTop: 6 }}>
+                  Acesse <strong>analytics.google.com</strong> → <strong>Administrador</strong> → <strong>+ Criar propriedade</strong>. Selecione o tipo <strong>Web</strong>.
+                </div>
+                <div className="guide-step__sub" style={{ marginTop: 6 }}>
+                  Ao terminar, vá em <strong>Fluxos de dados → seu fluxo web</strong> e copie o <strong>ID de medição</strong> — formato <code>G-XXXXXXXXXX</code>.
                 </div>
               </div>
             </li>
@@ -538,26 +534,12 @@ export default async function GoogleAdsPage() {
             <li className="guide-step">
               <span className="guide-step__num">2</span>
               <div className="guide-step__text">
-                <div><strong>No GTM, crie uma variavel de camada de dados para o evento</strong></div>
+                <div><strong>Crie um container no Google Tag Manager</strong></div>
                 <div className="guide-step__sub" style={{ marginTop: 6 }}>
-                  O sistema envia automaticamente o evento <code>whatsapp_redirect</code> ao dataLayer com todos os dados do lead. Voce pode criar variaveis para acessar cada campo:
+                  Acesse <strong>tagmanager.google.com</strong> → crie uma conta → adicione um container do tipo <strong>Web</strong>.
                 </div>
-                <div style={{ marginTop: 8, background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 14px", display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Dados disponiveis no dataLayer</div>
-                  {[
-                    ["gclid", "ID do clique do Google — obrigatorio para atribuicao"],
-                    ["google_conversion_id", "AW-XXXXXXXXX preenchido automaticamente"],
-                    ["google_conversion_label", "Label preenchido automaticamente"],
-                    ["utm_source", "Origem da campanha"],
-                    ["utm_campaign", "Nome da campanha"],
-                    ["utm_content", "Nome do criativo"],
-                    ["client_slug", "Identificador do cliente"],
-                  ].map(([key, desc]) => (
-                    <div key={String(key)} style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                      <code style={{ fontSize: "0.78rem", minWidth: 220, flexShrink: 0 }}>{key}</code>
-                      <span className="guide-step__sub" style={{ margin: 0 }}>{desc}</span>
-                    </div>
-                  ))}
+                <div className="guide-step__sub" style={{ marginTop: 6 }}>
+                  Copie o <strong>ID do container</strong> — formato <code>GTM-XXXXXXX</code>.
                 </div>
               </div>
             </li>
@@ -565,56 +547,100 @@ export default async function GoogleAdsPage() {
             <li className="guide-step">
               <span className="guide-step__num">3</span>
               <div className="guide-step__text">
-                <div><strong>Crie a Tag de Conversao do Google Ads no GTM</strong></div>
-                <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+                <div><strong>Conecte o GA4 dentro do GTM</strong></div>
+                <div className="guide-step__sub" style={{ marginTop: 6 }}>
+                  No GTM: <strong>Tags → Nova → Google Analytics: Configuração do GA4</strong>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 8, background: "var(--bg-soft, #f9fafb)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 14px" }}>
                   {[
-                    ["Tipo de tag", "Google Ads Conversion Tracking"],
-                    ["Conversion ID", "AW-XXXXXXXXX (ou use a variavel {{DL - google_conversion_id}})"],
-                    ["Conversion Label", "AbCdEfGhIjKlM (ou use a variavel {{DL - google_conversion_label}})"],
-                    ["Gatilho (Trigger)", "Evento personalizado: whatsapp_redirect"],
+                    ["ID de medição", "G-XXXXXXXXXX (copiado no passo 1)"],
+                    ["Acionador", "All Pages (Todas as Páginas)"],
                   ].map(([label, val]) => (
-                    <div key={String(label)} style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                      <span className="guide-step__sub" style={{ margin: 0, minWidth: 180 }}>{label}:</span>
-                      <strong style={{ fontSize: "0.83rem" }}>{val}</strong>
+                    <div key={String(label)} style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+                      <span className="guide-step__sub" style={{ margin: 0, minWidth: 140 }}>{label}:</span>
+                      <strong style={{ fontSize: "0.84rem" }}>{val}</strong>
                     </div>
                   ))}
                 </div>
-                <div className="guide-tip" style={{ marginTop: 10 }}>
-                  Adicione tambem uma tag <strong>Conversion Linker</strong> com gatilho <strong>All Pages</strong> para que o Google associe o <code>gclid</code> ao clique do anuncio corretamente.
-                </div>
+                <div className="guide-step__sub" style={{ marginTop: 8 }}>Publique o container após criar a tag.</div>
               </div>
             </li>
 
             <li className="guide-step">
               <span className="guide-step__num">4</span>
               <div className="guide-step__text">
-                <div><strong>Publique o container e teste</strong></div>
+                <div><strong>Cadastre os IDs no painel do cliente</strong></div>
                 <div className="guide-step__sub" style={{ marginTop: 6 }}>
-                  Use o modo de <strong>Preview</strong> do GTM para confirmar que o evento <code>whatsapp_redirect</code> aparece e que a tag de conversao dispara corretamente.
+                  Em <strong>Clientes → cliente → Editar → Rastreamento</strong>, preencha:
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 8 }}>
+                  {[
+                    ["GTM ID",                "GTM-XXXXXXX"],
+                    ["GA4 ID",                "G-XXXXXXXXXX"],
+                    ["Google Ads ID",         "AW-XXXXXXXXX"],
+                    ["Google Ads Conv. Label","AbCdEfGhIjKlM"],
+                  ].map(([label, example]) => (
+                    <div key={String(label)} style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                      <span className="guide-step__sub" style={{ margin: 0, minWidth: 220 }}>{label}:</span>
+                      <code style={{ fontSize: "0.78rem" }}>{example}</code>
+                    </div>
+                  ))}
+                </div>
+                <div className="guide-step__sub" style={{ marginTop: 8 }}>
+                  Salve. O sistema injeta o GTM automaticamente e dispara o evento <code>generate_lead</code> a cada conversão.
+                </div>
+              </div>
+            </li>
+
+            <li className="guide-step">
+              <span className="guide-step__num">5</span>
+              <div className="guide-step__text">
+                <div><strong>Marque &ldquo;generate_lead&rdquo; como evento-chave no GA4 — CRÍTICO</strong></div>
+                <div className="guide-step__sub" style={{ marginTop: 6 }}>
+                  No GA4: <strong>Configurar → Eventos</strong>. Aguarde o primeiro lead chegar e localize o evento <code>generate_lead</code>.
+                </div>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 6, padding: "4px 12px", margin: "8px 0", fontSize: "0.82rem", fontWeight: 600, color: "#15803d" }}>
+                  ✓ Ative &quot;Marcar como evento-chave&quot;
+                </div>
+                <div className="guide-step__sub">
+                  Sem isso, o Google Ads não sabe que esse evento é uma conversão.
+                </div>
+              </div>
+            </li>
+
+            <li className="guide-step">
+              <span className="guide-step__num">6</span>
+              <div className="guide-step__text">
+                <div><strong>Importe o generate_lead para o Google Ads</strong></div>
+                <div className="guide-step__sub" style={{ marginTop: 6 }}>
+                  No Google Ads: <strong>Metas → Conversões → + Nova conversão → Importar → Google Analytics 4 → generate_lead</strong>. Importe como conversão primária.
+                </div>
+                <div className="guide-step__sub" style={{ marginTop: 6 }}>
+                  O algoritmo do Google passa a otimizar para leads reais a partir deste momento.
                 </div>
               </div>
             </li>
           </ol>
         </article>
 
-        {/* Comparativo dos dois metodos */}
+        {/* Qual método usar */}
         <article className="dashboard-card">
-          <div className="dashboard-card__header"><h3>Qual metodo usar?</h3></div>
+          <div className="dashboard-card__header"><h3>Qual método escolher?</h3></div>
           <div className="dashboard-table-wrap">
             <table className="dashboard-table">
               <thead>
                 <tr>
-                  <th>Situacao</th>
-                  <th>Metodo recomendado</th>
+                  <th>Situação</th>
+                  <th>Use este método</th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  ["A conta do Google Ads nao mostra opcao de importar do GA4", "Disparo direto — preencha Google Ads ID + Conversion Label no painel"],
-                  ["Conta nova, sem historico no GA4", "Disparo direto — comeca a receber conversoes imediatamente"],
-                  ["Ja tem GTM configurado e prefere gerenciar la", "Via GTM — use o evento whatsapp_redirect como gatilho"],
-                  ["Conta que ja importa do GA4 normalmente", "Mantenha o fluxo existente com GA4 (Passos 1-6 abaixo)"],
-                  ["Quer os dois sinais (direto + GA4) ao mesmo tempo", "Configure ambos — nao ha conflito, o Google deduplica pelo gclid"],
+                  ["Está configurando pela primeira vez", "Método 1 — o mais simples (3 passos)"],
+                  ["A conta do Google Ads não mostra opção de importar do GA4", "Método 1 — disparo direto"],
+                  ["Já tem GTM instalado no site ou quer testar pelo Preview", "Método 2 — via GTM"],
+                  ["Já tem GA4 e quer dados de audiência e importação", "Método 3 — GA4 completo"],
+                  ["Quer os dois sinais ao mesmo tempo (mais seguro)", "Método 1 + Método 2 — o Google deduplica pelo gclid"],
                 ].map(([sit, rec]) => (
                   <tr key={String(sit)}>
                     <td style={{ fontSize: "0.85rem" }}>{sit}</td>
@@ -626,358 +652,125 @@ export default async function GoogleAdsPage() {
           </div>
         </article>
 
+        {/* Site próprio — UTM passthrough */}
         <div className="dashboard-section-divider">
-          <span>Fluxo com GA4 (para contas que conseguem importar)</span>
-        </div>
-
-        {/* ── 3 cenarios ── */}
-        <div className="dashboard-detail-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}>
-
-          <article className="dashboard-card" style={{ borderLeft: "3px solid #22c55e" }}>
-            <div className="dashboard-card__header">
-              <h3>Cenario A — Link Direto</h3>
-            </div>
-            <p className="dashboard-helper" style={{ marginBottom: 10 }}>
-              Anuncio aponta para o link do Zap Faturamento; o sistema redireciona para o WhatsApp.
-            </p>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 10, fontSize: "0.78rem" }}>
-              <span style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#1d4ed8" }}>Anuncio</span>
-              <span style={{ color: "var(--muted)" }}>→</span>
-              <span style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#15803d" }}>Zap Faturamento</span>
-              <span style={{ color: "var(--muted)" }}>→</span>
-              <span style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#15803d" }}>WhatsApp</span>
-            </div>
-            <div className="guide-tip" style={{ margin: 0, fontSize: "0.8rem" }}>
-              GTM + GA4 obrigatorios — o sistema injeta automaticamente.
-            </div>
-          </article>
-
-          <article className="dashboard-card" style={{ borderLeft: "3px solid #3b82f6" }}>
-            <div className="dashboard-card__header">
-              <h3>Cenario B — Lead Express</h3>
-            </div>
-            <p className="dashboard-helper" style={{ marginBottom: 10 }}>
-              Anuncio aponta para o formulario do sistema; o lead preenche e e cadastrado.
-            </p>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 10, fontSize: "0.78rem" }}>
-              <span style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#1d4ed8" }}>Anuncio</span>
-              <span style={{ color: "var(--muted)" }}>→</span>
-              <span style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#1d4ed8" }}>Formulario Lead Express</span>
-              <span style={{ color: "var(--muted)" }}>→</span>
-              <span style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#15803d" }}>Lead cadastrado</span>
-            </div>
-            <div className="guide-tip" style={{ margin: 0, fontSize: "0.8rem" }}>
-              GTM + GA4 obrigatorios — o sistema injeta automaticamente.
-            </div>
-          </article>
-
-          <article className="dashboard-card" style={{ borderLeft: "3px solid #f59e0b" }}>
-            <div className="dashboard-card__header">
-              <h3>Cenario C — Site proprio</h3>
-            </div>
-            <p className="dashboard-helper" style={{ marginBottom: 10 }}>
-              Anuncio vai para um site externo; o botao do site leva ao WhatsApp.
-            </p>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 10, fontSize: "0.78rem" }}>
-              <span style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#1d4ed8" }}>Anuncio</span>
-              <span style={{ color: "var(--muted)" }}>→</span>
-              <span style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#c2410c" }}>Site</span>
-              <span style={{ color: "var(--muted)" }}>→</span>
-              <span style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 5, padding: "2px 8px", fontWeight: 600, color: "#15803d" }}>WhatsApp</span>
-            </div>
-            <div className="guide-tip guide-tip--warn" style={{ margin: 0, fontSize: "0.8rem" }}>
-              Instalacao manual do GTM no site necessaria.
-            </div>
-          </article>
-
-        </div>
-
-        {/* ── Passos A e B ── */}
-        <div className="dashboard-section-divider">
-          <span>Cenarios A e B — Configuracao via sistema (6 passos)</span>
-        </div>
-
-        <article className="dashboard-card">
-          <div className="dashboard-card__header">
-            <h3>Instalacao e configuracao — Link Direto e Lead Express</h3>
-          </div>
-          <p className="dashboard-helper" style={{ marginBottom: 16 }}>
-            Voce cria as contas e pega os IDs. O sistema se encarrega de injetar o GTM
-            e disparar os eventos automaticamente em cada conversao.
-          </p>
-          <ol className="guide-steps">
-            {STEPS_SISTEMA.map((step, i) => (
-              <li key={i} className="guide-step">
-                <span className="guide-step__num">{i + 1}</span>
-                <div className="guide-step__text">
-                  <div><strong>{step.title}</strong></div>
-                  <div style={{ marginTop: 6 }}>{step.body}</div>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </article>
-
-        {/* ── Alerta evento critico ── */}
-        <article className="dashboard-card" style={{ border: "2px solid #f59e0b", padding: 0, overflow: "hidden" }}>
-          <div style={{ background: "#fffbeb", borderBottom: "1px solid #fde68a", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: "1.2rem" }}>⚠️</span>
-            <strong style={{ color: "#92400e", fontSize: "0.9rem" }}>
-              Por que o Google roda cego sem essa configuracao
-            </strong>
-          </div>
-          <div style={{ padding: 16 }}>
-            <p className="dashboard-helper" style={{ marginBottom: 10 }}>
-              O algoritmo do Google Ads aprende quem vira lead a partir dos dados de conversao.
-              Sem o evento <code>generate_lead</code> chegando ao GA4 e ao Google Ads, a campanha
-              <strong> nao tem dado nenhum para otimizar</strong> — o Google mostra o anuncio
-              para qualquer pessoa, sem inteligencia.
-            </p>
-            <p className="dashboard-helper" style={{ margin: 0 }}>
-              Com a configuracao correta, cada formulario preenchido ou clique no WhatsApp vira
-              um sinal para o algoritmo aprender qual perfil de usuario converte mais e
-              investir o orcamento nessas pessoas.
-            </p>
-          </div>
-        </article>
-
-        {/* ── Lead Express — Como usar ── */}
-        <div className="dashboard-section-divider">
-          <span>Cenario B — Como usar o Lead Express com Google Ads</span>
-        </div>
-
-        <article className="dashboard-card">
-          <div className="dashboard-card__header">
-            <h3>Lead Express — Formulario proprio sem landing page externa</h3>
-          </div>
-          <p className="dashboard-helper" style={{ marginBottom: 6 }}>
-            O Lead Express e um formulario hospedado no proprio sistema. Voce nao precisa de
-            site, WordPress ou ferramenta externa. Funciona como uma landing page minimalista
-            — o lead preenche, o sistema registra, GTM e GA4 ja estao ativos.
-          </p>
-          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: "0.83rem", color: "#1e40af" }}>
-            <strong>Vantagem sobre o link direto:</strong> o Google consegue coletar mais dados
-            (tempo na pagina, comportamento) antes de redirecionar, o que melhora a qualidade
-            do sinal de conversao.
-          </div>
-          <ol className="guide-steps">
-            {STEPS_LEAD_EXPRESS.map((step, i) => (
-              <li key={i} className="guide-step">
-                <span className="guide-step__num">{i + 1}</span>
-                <div className="guide-step__text">
-                  <div><strong>{step.title}</strong></div>
-                  <div style={{ marginTop: 6 }}>{step.body}</div>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </article>
-
-        {/* ── Passos C (com site) ── */}
-        <div className="dashboard-section-divider">
-          <span>Cenario C — Site proprio (configuracao manual no GTM)</span>
-        </div>
-
-        <article className="dashboard-card">
-          <div className="dashboard-card__header">
-            <h3>Configuracao para quem tem landing page propria</h3>
-          </div>
-          <p className="dashboard-helper" style={{ marginBottom: 16 }}>
-            Siga os Passos 1 a 4 do bloco anterior para criar GA4, GTM e a conversao no
-            Google Ads. Depois instale e configure manualmente:
-          </p>
-          <ol className="guide-steps">
-            {STEPS_COM_SITE.map((step, i) => (
-              <li key={i} className="guide-step">
-                <span className="guide-step__num">{i + 1}</span>
-                <div className="guide-step__text">
-                  <div><strong>{step.title}</strong></div>
-                  <div style={{ marginTop: 6 }}>{step.body}</div>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </article>
-
-        {/* ── UTM passthrough ── */}
-        <div className="dashboard-section-divider">
-          <span>Cenario C — Passar o rastreamento para o botao do WhatsApp</span>
+          <span>Você tem site próprio? Leia isso primeiro</span>
         </div>
 
         <article className="dashboard-card" style={{ border: "2px solid #f59e0b" }}>
           <div className="dashboard-card__header">
             <div>
-              <h3>Por que o Google e a Meta nao aparecem no sistema? Leia isso.</h3>
+              <h3>Por que os leads aparecem sem origem quando o site é próprio?</h3>
               <p className="dashboard-helper" style={{ marginBottom: 0 }}>
-                O problema mais comum de quem usa site proprio e nao ve origem dos leads no sistema.
+                O problema mais comum de quem usa WordPress, Elementor ou qualquer site externo.
               </p>
             </div>
           </div>
 
-          {/* Explicacao simples */}
-          <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "14px 16px", marginBottom: 20 }}>
-            <strong style={{ fontSize: "0.88rem", color: "#92400e", display: "block", marginBottom: 8 }}>
-              O que acontece sem o script
-            </strong>
-            <p className="dashboard-helper" style={{ marginBottom: 10 }}>
-              Quando alguem clica no seu anuncio do Google, o Google adiciona automaticamente um codigo chamado <code>gclid</code> na URL do seu site. O mesmo vale para a Meta, que adiciona o <code>fbclid</code>.
+          <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "14px 16px", marginBottom: 16 }}>
+            <strong style={{ color: "#92400e", display: "block", marginBottom: 8 }}>O que acontece sem o script</strong>
+            <p style={{ fontSize: "0.83rem", color: "#78350f", lineHeight: 1.6, marginBottom: 10 }}>
+              Quando alguém clica no seu anúncio do Google, o Google adiciona automaticamente um código chamado <code>gclid</code> na URL do site. Esse código indica que a pessoa veio do Google Ads. O mesmo vale para a Meta, que adiciona o <code>fbclid</code>.
             </p>
-            <p className="dashboard-helper" style={{ marginBottom: 10 }}>
-              Esse codigo chega na URL da pagina, mas <strong>nao vai automaticamente para o botao do WhatsApp.</strong> Resultado: o lead aparece no sistema sem origem — o sistema nao sabe se veio do Google ou da Meta.
+            <p style={{ fontSize: "0.83rem", color: "#78350f", lineHeight: 1.6, marginBottom: 8 }}>
+              O problema: esse código está na URL da página, mas <strong>não vai automaticamente para o botão do WhatsApp</strong>. Resultado: o lead aparece no sistema sem origem — o sistema não sabe se veio do Google ou da Meta.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.8rem" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                 <span style={{ color: "#dc2626", fontWeight: 700, flexShrink: 0 }}>✗</span>
-                <div>
-                  <strong>URL do site recebe:</strong>{" "}
-                  <code style={{ fontSize: "0.75rem" }}>clinica.com.br/botox?gclid=ABC123</code>
-                </div>
+                <span>URL do site recebe: <code style={{ fontSize: "0.75rem" }}>clinica.com.br/botox?gclid=ABC123</code></span>
               </div>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                 <span style={{ color: "#dc2626", fontWeight: 700, flexShrink: 0 }}>✗</span>
-                <div>
-                  <strong>Botao do WhatsApp aponta para:</strong>{" "}
-                  <code style={{ fontSize: "0.75rem" }}>zapfaturamento.com.br/w/clinica/campanha</code>{" "}
-                  <span style={{ color: "#dc2626" }}>(sem gclid — origem perdida)</span>
-                </div>
+                <span>Botão do WhatsApp aponta para: <code style={{ fontSize: "0.75rem" }}>zapfaturamento.com.br/w/clinica/campanha</code> — <span style={{ color: "#dc2626" }}>sem o gclid → origem perdida</span></span>
               </div>
             </div>
           </div>
 
-          {/* Solucao */}
           <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "14px 16px", marginBottom: 20 }}>
-            <strong style={{ fontSize: "0.88rem", color: "#14532d", display: "block", marginBottom: 8 }}>
-              Com o script — o rastreamento passa automaticamente
-            </strong>
-            <p className="dashboard-helper" style={{ marginBottom: 10 }}>
-              Um pequeno script no site detecta os parametros da URL atual e os adiciona automaticamente em todos os botoes que apontam para o sistema. Voce nao precisa mexer em cada botao — o script faz isso em tempo real.
+            <strong style={{ color: "#14532d", display: "block", marginBottom: 8 }}>A solução — um script de 5 linhas resolve tudo</strong>
+            <p style={{ fontSize: "0.83rem", color: "#166534", lineHeight: 1.6, marginBottom: 10 }}>
+              Um pequeno script detecta automaticamente os parâmetros da URL atual e os adiciona em todos os botões que apontam para o sistema. Você instala uma vez e funciona para Google e Meta ao mesmo tempo.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.8rem" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                 <span style={{ color: "#15803d", fontWeight: 700, flexShrink: 0 }}>✓</span>
-                <div>
-                  <strong>URL do site recebe:</strong>{" "}
-                  <code style={{ fontSize: "0.75rem" }}>clinica.com.br/botox?gclid=ABC123</code>
-                </div>
+                <span>Script detecta o gclid na URL</span>
               </div>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                 <span style={{ color: "#15803d", fontWeight: 700, flexShrink: 0 }}>✓</span>
-                <div>
-                  <strong>Script detecta o gclid e atualiza o botao para:</strong>{" "}
-                  <code style={{ fontSize: "0.75rem" }}>zapfaturamento.com.br/w/clinica/campanha?gclid=ABC123</code>
-                </div>
+                <span>Atualiza automaticamente o link do botão do WhatsApp</span>
               </div>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                 <span style={{ color: "#15803d", fontWeight: 700, flexShrink: 0 }}>✓</span>
-                <div>
-                  <strong>Sistema registra o lead com origem:</strong>{" "}
-                  <span style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 4, padding: "1px 6px", color: "#1d4ed8", fontWeight: 600 }}>Google Ads</span>
-                  {" "}ou{" "}
-                  <span style={{ background: "#fdf2f8", border: "1px solid #fbcfe8", borderRadius: 4, padding: "1px 6px", color: "#be185d", fontWeight: 600 }}>Meta Ads</span>
-                </div>
+                <span>Sistema registra o lead com origem Google Ads ou Meta Ads</span>
               </div>
             </div>
           </div>
 
-          {/* Opcao 1 — GTM */}
+          {/* Opção 1 — GTM */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", marginBottom: 10 }}>
-              Opcao 1 — Pelo GTM (recomendado, sem mexer no site)
+              Opção 1 — Instalar pelo GTM (mais fácil, sem mexer no site)
             </div>
             <ol className="guide-steps">
               <li className="guide-step">
                 <span className="guide-step__num">1</span>
-                <div className="guide-step__text">
-                  No GTM, clique em <strong>Tags → Nova tag → HTML personalizado</strong>.
-                </div>
+                <div className="guide-step__text">No GTM: <strong>Tags → Nova → HTML Personalizado</strong></div>
               </li>
               <li className="guide-step">
                 <span className="guide-step__num">2</span>
                 <div className="guide-step__text">
-                  <div>Cole o codigo abaixo no campo de HTML:</div>
+                  <div>Cole o código abaixo no campo de HTML:</div>
                   <div style={{ marginTop: 10 }}>
-                    <code className="dashboard-code-block" style={{ display: "block", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{UTM_PASSTHROUGH_GTM}</code>
-                    <CopyButton value={UTM_PASSTHROUGH_GTM} label="Copiar script para GTM" />
+                    <code className="dashboard-code-block" style={{ display: "block", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{UTM_PASSTHROUGH_SCRIPT}</code>
+                    <CopyButton value={UTM_PASSTHROUGH_SCRIPT} label="Copiar script para GTM" />
                   </div>
                 </div>
               </li>
               <li className="guide-step">
                 <span className="guide-step__num">3</span>
-                <div className="guide-step__text">
-                  Em <strong>Acionamento (Trigger)</strong>, escolha <strong>All Pages</strong>.
-                </div>
+                <div className="guide-step__text">Em <strong>Acionamento</strong>, escolha <strong>All Pages</strong>.</div>
               </li>
               <li className="guide-step">
                 <span className="guide-step__num">4</span>
-                <div className="guide-step__text">
-                  Salve, publique o container e pronto. O script roda em todas as paginas automaticamente.
-                </div>
+                <div className="guide-step__text">Clique em <strong>Salvar</strong> e depois <strong>Enviar → Publicar</strong>.</div>
               </li>
             </ol>
           </div>
 
-          {/* Opcao 2 — direto no site */}
+          {/* Opção 2 — direto no site */}
           <div>
             <div style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", marginBottom: 10 }}>
-              Opcao 2 — Direto no codigo do site (WordPress, Elementor, etc.)
+              Opção 2 — Colar direto no código do site (WordPress, Elementor, etc.)
             </div>
-            <p className="dashboard-helper" style={{ marginBottom: 10 }}>
-              Adicione o codigo abaixo antes do fechamento da tag <code>&lt;/body&gt;</code> em todas as paginas que tem botao do WhatsApp. No WordPress, voce pode usar um plugin de &ldquo;Header and Footer Scripts&rdquo; ou o proprio tema.
+            <p style={{ fontSize: "0.83rem", color: "var(--muted)", lineHeight: 1.5, marginBottom: 10 }}>
+              Adicione o código abaixo antes do fechamento da tag <code>&lt;/body&gt;</code> em todas as páginas com botão do WhatsApp. No WordPress, use um plugin de &ldquo;Header and Footer Scripts&rdquo;.
             </p>
             <code className="dashboard-code-block" style={{ display: "block", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{UTM_PASSTHROUGH_SCRIPT}</code>
             <CopyButton value={UTM_PASSTHROUGH_SCRIPT} label="Copiar script para o site" />
           </div>
 
           <div className="guide-tip guide-tip--info" style={{ marginTop: 20 }}>
-            <strong>Funciona para Google e Meta ao mesmo tempo.</strong> O script detecta qualquer parametro na URL — <code>gclid</code>, <code>fbclid</code>, <code>utm_source</code>, <code>utm_campaign</code> — e passa tudo para o botao do WhatsApp. Uma so instalacao resolve os dois canais.
+            <strong>Funciona para Google e Meta ao mesmo tempo.</strong> O script detecta qualquer parâmetro — <code>gclid</code>, <code>fbclid</code>, <code>utm_source</code>, <code>utm_campaign</code> — e passa tudo automaticamente.
           </div>
         </article>
 
-        {/* ── Tabela comparativa ── */}
-        <div className="dashboard-section-divider"><span>Resumo comparativo</span></div>
-
-        <article className="dashboard-card">
-          <div className="dashboard-card__header">
-            <h3>O que cada cenario exige</h3>
+        {/* Alerta final */}
+        <article className="dashboard-card" style={{ border: "2px solid #f59e0b", padding: 0, overflow: "hidden" }}>
+          <div style={{ background: "#fffbeb", borderBottom: "1px solid #fde68a", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: "1.2rem" }}>⚠️</span>
+            <strong style={{ color: "#92400e", fontSize: "0.9rem" }}>
+              Por que a campanha fica cara e ineficiente sem rastreamento
+            </strong>
           </div>
-          <div className="dashboard-table-wrap">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>Recurso</th>
-                  <th style={{ textAlign: "center" }}>A — Link Direto</th>
-                  <th style={{ textAlign: "center" }}>B — Lead Express</th>
-                  <th style={{ textAlign: "center" }}>C — Com site</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  ["Criar conta GA4",                    true,  true,  true,  ""],
-                  ["Criar container GTM",                true,  true,  true,  ""],
-                  ["Instalar GTM no site (codigo)",      false, false, true,  "Sistema injeta automaticamente nos cenarios A e B"],
-                  ["Google Ads ID + Conversion Label",   true,  true,  true,  ""],
-                  ["Cadastrar IDs no sistema",           true,  true,  false, "Nao se aplica — GTM e instalado manualmente no site"],
-                  ["Marcar generate_lead no GA4",        true,  true,  true,  ""],
-                  ["Leads registrados no Zap",           true,  true,  false, "Depende de integracao adicional"],
-                  ["UTMs capturadas automaticamente",    true,  true,  false, "Depende de configuracao no site"],
-                ].map(([label, a, b, c, obs]) => (
-                  <tr key={String(label)}>
-                    <td>
-                      <div>{label}</div>
-                      {obs ? <div style={{ fontSize: "0.74rem", color: "var(--muted)", marginTop: 2 }}>{obs}</div> : null}
-                    </td>
-                    {[a, b, c].map((val, i) => (
-                      <td key={i} style={{ textAlign: "center" }}>
-                        {val
-                          ? <span style={{ color: "#15803d", fontWeight: 700 }}>✓</span>
-                          : <span style={{ color: "#9ca3af" }}>—</span>
-                        }
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div style={{ padding: 16 }}>
+            <p style={{ fontSize: "0.84rem", color: "var(--dark)", lineHeight: 1.6, marginBottom: 10 }}>
+              O algoritmo do Google Ads aprende com os dados de conversão. Sem esse sinal, a campanha não tem como otimizar — o Google mostra o anúncio para qualquer pessoa sem inteligência, gastando o orçamento sem critério.
+            </p>
+            <p style={{ fontSize: "0.84rem", color: "var(--dark)", lineHeight: 1.6, margin: 0 }}>
+              Com o rastreamento configurado, cada lead que chega ao WhatsApp vira um sinal para o algoritmo aprender qual perfil converte mais — e investir o orçamento nessas pessoas. <strong>É a diferença entre uma campanha que escala e uma que só drena dinheiro.</strong>
+            </p>
           </div>
         </article>
 

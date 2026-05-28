@@ -7,55 +7,37 @@ import { hasDatabaseConfig } from "@/lib/db";
 const metaLink = `/w/[cliente]/[campanha]?utm_source=facebook&utm_medium=cpc&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}&campaign_id={{campaign.id}}&adset_id={{adset.id}}&ad_id={{ad.id}}&placement={{placement}}`;
 const googleLink = `/w/[cliente]/[campanha]?utm_source=google&utm_medium=cpc&utm_campaign={campaignid}&utm_content={creative}&utm_term={keyword}&gclid={gclid}&device={device}&network={network}&matchtype={matchtype}`;
 
-const FIRST_STEPS = [
-  "Crie o cliente em Clientes e copie o slug.",
-  "Cadastre as campanhas com o link do criativo (opcional).",
-  "Copie o link gerado e use como URL final nos anuncios.",
-  "Quando o lead chegar, mova o card no Kanban conforme o status.",
-  "Acompanhe resultados em Performance, Relatorio e Criativos."
-];
-
-const CREATE_CAMPAIGN_STEPS = [
-  "Acesse Clientes e escolha o cliente.",
-  "Role ate o card \"Links de campanha\".",
-  "Clique em Nova campanha.",
-  "Preencha nome, slug e mensagem padrao do WhatsApp.",
-  "Adicione o link do criativo no campo URL do criativo (opcional).",
-  "Copie o link gerado e use no gerenciador de anuncios."
-];
-
-
 const KANBAN_STAGES = [
   { name: "Novo lead",        color: "#6b7280", desc: "Lead acabou de chegar pelo WhatsApp." },
   { name: "Em atendimento",   color: "#3b82f6", desc: "Sendo contactado pela equipe." },
-  { name: "Agendado",         color: "#8b5cf6", desc: "Consulta ou reuniao marcada. Melhora a taxa de agendamento." },
+  { name: "Agendado",         color: "#8b5cf6", desc: "Consulta ou reunião marcada. Melhora a taxa de agendamento nos relatórios." },
   { name: "Compareceu",       color: "#f59e0b", desc: "Lead apareceu no atendimento. Melhora a taxa de comparecimento." },
-  { name: "Negociacao",       color: "#ec4899", desc: "Em negociacao ativa, proximo de fechar." },
-  { name: "Pago",             color: "#22c55e", desc: "Venda realizada. Registre o valor para calcular o ROAS." },
-  { name: "Finalizado",       color: "#15803d", desc: "Atendimento concluido com sucesso." },
-  { name: "Perdido",          color: "#ef4444", desc: "Lead desistiu ou nao respondeu." }
+  { name: "Negociação",       color: "#ec4899", desc: "Em negociação ativa, próximo de fechar." },
+  { name: "Pago",             color: "#22c55e", desc: "Venda realizada. Registre o valor — é usado para calcular o ROAS nos relatórios." },
+  { name: "Finalizado",       color: "#15803d", desc: "Atendimento concluído com sucesso." },
+  { name: "Perdido",          color: "#ef4444", desc: "Lead desistiu ou não respondeu." }
 ];
 
 const RESULTS = [
   {
     icon: "📊",
     title: "Performance",
-    desc: "Visao geral de leads, agendamentos e vendas por campanha, sem filtro de data."
+    desc: "Visão geral de leads, agendamentos e vendas por campanha, sem filtro de data."
   },
   {
     icon: "📋",
-    title: "Relatorio",
-    desc: "Investimento, CPL, ROAS e faturamento por periodo e campanha. Ideal para comparar meses."
+    title: "Relatório",
+    desc: "Investimento, CPL, ROAS e faturamento por período e campanha. Ideal para comparar meses e mostrar resultado para o cliente."
   },
   {
     icon: "📤",
     title: "Exportar",
-    desc: "Gera lista de leads para criar Publicos Personalizados e Lookalike no Meta Ads."
+    desc: "Gera lista de leads para criar Públicos Personalizados e Lookalike no Meta Ads — aumenta a qualidade dos anúncios."
   },
   {
     icon: "💡",
     title: "Criativos",
-    desc: "Ranking de criativos por vendas, agendamentos e leads. Mostra o que escalar."
+    desc: "Ranking de criativos por vendas, agendamentos e leads. Mostra exatamente o que escalar."
   }
 ];
 
@@ -105,7 +87,7 @@ export default async function AcademyPage() {
                   Informe seu <strong>CPF ou CNPJ</strong> no campo que aparece acima dos cards de plano.
                 </div>
                 <div className="guide-step__sub">
-                  O Asaas (nossa plataforma de pagamentos) exige CPF ou CNPJ para emitir cobranças no Brasil. Sem preencher esse campo, o botão &ldquo;Assinar&rdquo; não avança.
+                  A plataforma de pagamentos exige CPF ou CNPJ para emitir cobranças no Brasil. Sem preencher esse campo, o botão &ldquo;Assinar&rdquo; não avança.
                 </div>
               </div>
             </li>
@@ -123,13 +105,13 @@ export default async function AcademyPage() {
               <div className="guide-step__text">
                 <div>Após o pagamento confirmado, o plano é ativado automaticamente.</div>
                 <div className="guide-step__sub">
-                  O sistema recebe a confirmação em tempo real via webhook. Se escolheu PIX, a ativação é imediata após o pagamento.
+                  Se escolheu PIX, a ativação é imediata após o pagamento.
                 </div>
               </div>
             </li>
           </ol>
           <div className="guide-tip guide-tip--info" style={{ marginTop: 12 }}>
-            <strong>Dica:</strong> O CPF/CNPJ só precisa ser informado uma vez por sessão, antes de clicar em &ldquo;Assinar&rdquo;. Não é salvo no sistema — é usado apenas para criar a cobrança no processador de pagamento.
+            <strong>Dica:</strong> O CPF/CNPJ é usado apenas para criar a cobrança — não é salvo no perfil. Se o plano não ativar em até 5 minutos após o pagamento, entre em contato com o suporte.
           </div>
         </article>
 
@@ -137,15 +119,54 @@ export default async function AcademyPage() {
         <div className="dashboard-section-divider"><span>Primeiros passos</span></div>
         <article className="dashboard-card">
           <div className="dashboard-card__header">
-            <h3>Por onde comecar</h3>
+            <h3>Por onde começar — sequência certa para não perder leads</h3>
           </div>
           <ol className="guide-steps">
-            {FIRST_STEPS.map((step, i) => (
-              <li key={i} className="guide-step">
-                <span className="guide-step__num">{i + 1}</span>
-                <span className="guide-step__text">{step}</span>
-              </li>
-            ))}
+            <li className="guide-step">
+              <span className="guide-step__num">1</span>
+              <div className="guide-step__text">
+                <div><strong>Crie o cliente em Clientes</strong></div>
+                <div className="guide-step__sub">
+                  Acesse <strong>Clientes → + Novo cliente</strong>. Preencha o nome e o slug (identificador único, ex: <code>clinica-centro</code>). O slug faz parte dos links de campanha — use apenas letras minúsculas e hífens.
+                </div>
+              </div>
+            </li>
+            <li className="guide-step">
+              <span className="guide-step__num">2</span>
+              <div className="guide-step__text">
+                <div><strong>Crie pelo menos uma campanha para o cliente</strong></div>
+                <div className="guide-step__sub">
+                  Dentro do cliente, role até <strong>&ldquo;Links de campanha&rdquo;</strong> e clique em <strong>Nova campanha</strong>. Dê um nome, um slug e escreva a mensagem padrão do WhatsApp que o lead vai receber quando clicar.
+                </div>
+              </div>
+            </li>
+            <li className="guide-step">
+              <span className="guide-step__num">3</span>
+              <div className="guide-step__text">
+                <div><strong>Copie o link gerado e use no anúncio</strong></div>
+                <div className="guide-step__sub">
+                  O sistema gera o link completo já com as UTMs corretas. Esse é o link que você vai colar no campo <strong>&ldquo;URL final&rdquo;</strong> do anúncio no Meta Ads ou Google Ads — não adicione UTMs manualmente.
+                </div>
+              </div>
+            </li>
+            <li className="guide-step">
+              <span className="guide-step__num">4</span>
+              <div className="guide-step__text">
+                <div><strong>Quando o lead chegar, mova o card no Kanban</strong></div>
+                <div className="guide-step__sub">
+                  Cada lead que clicar no link vai aparecer automaticamente no Kanban. Mover o card pelas colunas (Agendado, Pago, etc.) alimenta os relatórios de resultado.
+                </div>
+              </div>
+            </li>
+            <li className="guide-step">
+              <span className="guide-step__num">5</span>
+              <div className="guide-step__text">
+                <div><strong>Acompanhe os resultados em Performance e Relatório</strong></div>
+                <div className="guide-step__sub">
+                  Acesse <strong>Performance</strong> para ver o resumo por campanha ou <strong>Relatório</strong> para análise por período com CPL e ROAS.
+                </div>
+              </div>
+            </li>
           </ol>
         </article>
 
@@ -155,10 +176,18 @@ export default async function AcademyPage() {
 
           <article className="dashboard-card">
             <div className="dashboard-card__header">
-              <h3>Como criar uma campanha</h3>
+              <h3>Como criar uma campanha — passo a passo</h3>
             </div>
             <ol className="guide-steps">
-              {CREATE_CAMPAIGN_STEPS.map((step, i) => (
+              {[
+                "Acesse Clientes no menu lateral.",
+                "Clique no nome do cliente desejado.",
+                "Role a página até o card \"Links de campanha\".",
+                "Clique em \"Nova campanha\".",
+                "Preencha: nome da campanha (ex: Botox — Junho), slug (ex: botox-jun) e a mensagem padrão que abre no WhatsApp.",
+                "Adicione o link do criativo no campo \"URL do criativo\" (opcional — serve para o ranking de criativos).",
+                "Clique em Salvar. O link gerado aparece logo abaixo — copie e use no anúncio.",
+              ].map((step, i) => (
                 <li key={i} className="guide-step">
                   <span className="guide-step__num">{i + 1}</span>
                   <span className="guide-step__text">{step}</span>
@@ -169,13 +198,15 @@ export default async function AcademyPage() {
 
           <article className="dashboard-card">
             <div className="dashboard-card__header">
-              <h3>Padrao de nomenclatura</h3>
+              <h3>Como nomear campanhas, conjuntos e criativos</h3>
             </div>
+            <p className="dashboard-helper">
+              Nomes claros permitem identificar o que está escalando sem precisar abrir cada anúncio.
+            </p>
             <div className="guide-naming-list">
 
               <div className="guide-naming-group">
-                <div className="guide-naming-label">Campanha</div>
-                <div className="guide-naming-desc">Nome + data</div>
+                <div className="guide-naming-label">Campanha — nome + data</div>
                 <div className="guide-naming-examples">
                   <span className="guide-naming-ok">Vasinhos — 03/10</span>
                   <span className="guide-naming-ok">Preenchimento — 03/10</span>
@@ -183,18 +214,16 @@ export default async function AcademyPage() {
               </div>
 
               <div className="guide-naming-group">
-                <div className="guide-naming-label">Conjunto de anuncios</div>
-                <div className="guide-naming-desc">Indica publico ou estrategia</div>
+                <div className="guide-naming-label">Conjunto de anúncios — público ou estratégia</div>
                 <div className="guide-naming-examples">
-                  <span className="guide-naming-ok">Mulheres 30+ - Interesse estetica</span>
+                  <span className="guide-naming-ok">Mulheres 30+ - Interesse estética</span>
                   <span className="guide-naming-ok">Lookalike 1%</span>
                   <span className="guide-naming-ok">Aberto</span>
                 </div>
               </div>
 
               <div className="guide-naming-group">
-                <div className="guide-naming-label">Criativo</div>
-                <div className="guide-naming-desc">Descreve o que aparece no anuncio</div>
+                <div className="guide-naming-label">Criativo — descreva o que aparece no anúncio</div>
                 <div className="guide-naming-examples guide-naming-examples--row">
                   <span className="guide-naming-bad">Criativo 1</span>
                   <span className="guide-naming-bad">Criativo 2</span>
@@ -206,7 +235,7 @@ export default async function AcademyPage() {
                   <span className="guide-naming-ok">Oferta direta</span>
                 </div>
                 <div className="guide-tip">
-                  Use o botao &ldquo;Ver criativo&rdquo; na tela de Criativos para visualizar o anuncio rapidamente.
+                  Use o botão &ldquo;Ver criativo&rdquo; na tela de Criativos para visualizar o anúncio rapidamente.
                 </div>
               </div>
 
@@ -216,28 +245,29 @@ export default async function AcademyPage() {
         </div>
 
         {/* Plataformas */}
-        <div className="dashboard-section-divider"><span>Plataformas</span></div>
+        <div className="dashboard-section-divider"><span>Plataformas de anúncio</span></div>
 
+        {/* Meta Ads */}
         <article className="dashboard-card">
           <div className="dashboard-card__header">
-            <h3>Como configurar campanha no Meta Ads</h3>
+            <h3>Como configurar campanha no Meta Ads (Facebook e Instagram)</h3>
           </div>
           <ol className="guide-steps">
             <li className="guide-step">
               <span className="guide-step__num">1</span>
               <div className="guide-step__text">
-                <div>Antes de criar a campanha, configure o <strong>Pixel da Meta</strong> e a <strong>API de Conversoes (CAPI)</strong>.</div>
+                <div>Antes de criar a campanha, configure o <strong>Pixel da Meta</strong> e a <strong>API de Conversões (CAPI)</strong>.</div>
                 <div className="guide-step__sub">
-                  O Pixel e a CAPI garantem que as conversoes sejam rastreadas corretamente, mesmo quando o iOS ou um adblocker bloqueia o rastreamento pelo navegador.
+                  O Pixel rastreia visitas. A CAPI garante que as conversões sejam registradas mesmo quando o iOS bloqueia o rastreamento pelo navegador. Configure os dois para ter dados mais completos.
                 </div>
               </div>
             </li>
             <li className="guide-step">
               <span className="guide-step__num">2</span>
               <div className="guide-step__text">
-                <div>Crie a campanha no Gerenciador de Anuncios.</div>
+                <div>No Gerenciador de Anúncios, crie uma nova campanha.</div>
                 <div className="guide-step__sub">
-                  Tipo de compra: <strong>Leilao</strong> &nbsp;·&nbsp; Objetivo:{" "}
+                  Tipo de compra: <strong>Leilão</strong> &nbsp;·&nbsp; Objetivo:{" "}
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 6, padding: "1px 8px", fontSize: "0.82rem", fontWeight: 600, color: "#1d4ed8" }}>
                     Leads
                   </span>
@@ -247,26 +277,19 @@ export default async function AcademyPage() {
             <li className="guide-step">
               <span className="guide-step__num">3</span>
               <div className="guide-step__text">
-                <div>Configure a conversao no nivel da campanha:</div>
+                <div>No nível da campanha, configure a conversão:</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
-                  <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                    <span className="guide-step__sub" style={{ margin: 0, minWidth: 160 }}>Local da conversao:</span>
-                    <strong>Site</strong>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                    <span className="guide-step__sub" style={{ margin: 0, minWidth: 160 }}>Meta de desempenho:</span>
-                    <strong>Maximizar o numero de conversoes</strong>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                    <span className="guide-step__sub" style={{ margin: 0, minWidth: 160 }}>Evento de conversao:</span>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 6, padding: "1px 8px", fontSize: "0.82rem", fontWeight: 600, color: "#15803d" }}>
-                      Lead
-                    </span>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                    <span className="guide-step__sub" style={{ margin: 0, minWidth: 160 }}>Conjunto de dados (Pixel):</span>
-                    <strong>Selecione o Pixel correto da conta</strong>
-                  </div>
+                  {[
+                    ["Local da conversão", "Site"],
+                    ["Meta de desempenho", "Maximizar o número de conversões"],
+                    ["Evento de conversão", "Lead"],
+                    ["Conjunto de dados (Pixel)", "Selecione o Pixel correto da conta"],
+                  ].map(([label, val]) => (
+                    <div key={String(label)} style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                      <span className="guide-step__sub" style={{ margin: 0, minWidth: 220 }}>{label}:</span>
+                      <strong style={{ fontSize: "0.84rem" }}>{val}</strong>
+                    </div>
+                  ))}
                 </div>
               </div>
             </li>
@@ -274,70 +297,60 @@ export default async function AcademyPage() {
               <span className="guide-step__num">4</span>
               <div className="guide-step__text">
                 <div>
-                  No campo <strong>&ldquo;URL do site&rdquo;</strong>, cole o link gerado pelo Zap Faturamento.
+                  No campo <strong>&ldquo;URL do site&rdquo;</strong> do anúncio, cole o link gerado pelo sistema.
                 </div>
                 <div className="guide-step__sub">
-                  Use o link gerado pelo sistema — ele ja inclui todas as UTMs para rastreamento correto. Nao e necessario adicionar parametros manualmente.
+                  O link já inclui todas as UTMs. Não adicione UTMs manualmente — isso duplicaria os dados.
                 </div>
               </div>
             </li>
           </ol>
           <div className="guide-tip guide-tip--info" style={{ marginTop: 12 }}>
-            <strong>Sobre as UTMs:</strong> O link gerado pelo Zap Faturamento ja inclui todos os parametros de rastreamento (utm_campaign, utm_content, utm_term, campaign_id, etc.). Nao duplique adicionando UTMs manualmente nos campos da Meta.
+            <strong>Sobre as UTMs:</strong> O link gerado pelo sistema já inclui todos os parâmetros de rastreamento automaticamente. Basta copiar e colar — não precisa tocar nos campos de UTM do Gerenciador de Anúncios.
           </div>
           <div style={{ marginTop: 16 }}>
-            <div className="dashboard-table__sub" style={{ marginBottom: 4 }}>Exemplo do link ja configurado automaticamente</div>
-            <div className="guide-step__sub" style={{ marginBottom: 8 }}>
-              Este link ja inclui UTMs para rastreamento. Basta copiar e colar no campo URL do site.
-            </div>
+            <div className="dashboard-table__sub" style={{ marginBottom: 4 }}>Link gerado pelo sistema (inclui UTMs automáticas)</div>
             <code className="dashboard-code-block">{metaLink}</code>
             <CopyButton value={metaLink} label="Copiar link Meta" />
           </div>
         </article>
 
+        {/* Google Ads */}
         <div className="dashboard-detail-grid" style={{ marginTop: 0 }}>
 
           <article className="dashboard-card">
             <div className="dashboard-card__header">
               <div>
-                <h3>Google Ads — Smart Page (link direto aprovado)</h3>
+                <h3>Google Ads — Página intermediária (Smart Page)</h3>
                 <span style={{ display: "inline-block", marginTop: 4, fontSize: "0.75rem", background: "#dcfce7", border: "1px solid #bbf7d0", color: "#15803d", borderRadius: 6, padding: "1px 8px", fontWeight: 600 }}>
-                  Recomendado para evitar reprovacao e zero impressoes
+                  Evita reprovação e zero impressões
                 </span>
               </div>
             </div>
             <p className="dashboard-helper">
-              O Zap Faturamento detecta automaticamente o trafego do Google (via <code>gclid</code> ou <code>utm_source=google</code>) e exibe uma pagina intermediaria legitima com logo, headline e botao manual para o WhatsApp. Para Meta Ads e outros canais, o redirect automatico continua funcionando normalmente.
+              O Google Ads proíbe páginas que redirecionam automaticamente para o WhatsApp (&ldquo;bridge pages&rdquo;). O sistema detecta tráfego do Google e exibe uma página real com conteúdo antes do WhatsApp — evitando a reprovação.
             </p>
-            <div className="guide-tip guide-tip--info" style={{ marginBottom: 14 }}>
-              <strong>Por que isso e necessario:</strong> o Google Ads proibe &ldquo;bridge pages&rdquo; — paginas que redirecionam automaticamente sem conteudo. Campanhas com redirect puro ficam com Quality Score baixo, zero impressoes ou sao reprovadas silenciosamente. A Smart Page resolve isso sem precisar de uma landing page completa.
-            </div>
             <ol className="guide-steps">
               <li className="guide-step">
                 <span className="guide-step__num">1</span>
-                <span className="guide-step__text">Crie a campanha no Google Ads normalmente (rede de pesquisa ou display).</span>
+                <div className="guide-step__text">
+                  <div>Crie a campanha no Google Ads normalmente.</div>
+                </div>
               </li>
               <li className="guide-step">
                 <span className="guide-step__num">2</span>
                 <div className="guide-step__text">
                   <div>No campo <strong>URL final</strong>, cole o link da campanha gerado pelo sistema.</div>
-                  <div className="guide-step__sub">O link ja inclui <code>utm_source=google</code> — isso ativa automaticamente a Smart Page para visitantes do Google.</div>
+                  <div className="guide-step__sub">O link já inclui <code>utm_source=google</code> — isso ativa automaticamente a Smart Page para visitantes do Google.</div>
                 </div>
               </li>
               <li className="guide-step">
                 <span className="guide-step__num">3</span>
-                <span className="guide-step__text">Cadastre o GTM ID e/ou Google Ads ID + Conversion Label no painel do cliente para rastrear conversoes corretamente.</span>
-              </li>
-              <li className="guide-step">
-                <span className="guide-step__num">4</span>
-                <div className="guide-step__text">
-                  <div>O lead ve a pagina do cliente, clica no botao verde e abre o WhatsApp.</div>
-                  <div className="guide-step__sub">O sistema dispara o evento de conversao no clique, nao no carregamento da pagina — o que e o comportamento correto para o Google Ads.</div>
-                </div>
+                <span className="guide-step__text">Para rastrear conversões, siga o guia completo de rastreamento abaixo.</span>
               </li>
             </ol>
             <div style={{ marginTop: 12 }}>
-              <div className="dashboard-table__sub" style={{ marginBottom: 4 }}>URL final para o Google Ads (inclui UTMs automaticas)</div>
+              <div className="dashboard-table__sub" style={{ marginBottom: 4 }}>URL final para o Google Ads</div>
               <code className="dashboard-code-block">{googleLink}</code>
               <CopyButton value={googleLink} label="Copiar link Google" />
             </div>
@@ -345,15 +358,15 @@ export default async function AcademyPage() {
 
           <article className="dashboard-card">
             <div className="dashboard-card__header">
-              <h3>Google Ads — Lead Express (formulario proprio)</h3>
+              <h3>Google Ads — Formulário próprio (Lead Express)</h3>
             </div>
             <p className="dashboard-helper">
-              Anuncio aponta para o formulario do sistema. O lead preenche, e cadastrado e o Google recebe o evento de conversao.
+              O Lead Express é um formulário hospedado no próprio sistema. O anúncio aponta para o formulário — o lead preenche, é cadastrado no Kanban e a conversão é disparada automaticamente.
             </p>
             <ol className="guide-steps">
               <li className="guide-step">
                 <span className="guide-step__num">1</span>
-                <span className="guide-step__text">Crie o formulario em <strong>Lead Express</strong> no menu lateral e copie o link publico.</span>
+                <span className="guide-step__text">Crie o formulário em <strong>Lead Express</strong> no menu lateral e copie o link público.</span>
               </li>
               <li className="guide-step">
                 <span className="guide-step__num">2</span>
@@ -361,81 +374,23 @@ export default async function AcademyPage() {
               </li>
               <li className="guide-step">
                 <span className="guide-step__num">3</span>
-                <span className="guide-step__text">Ao enviar o form, o sistema dispara <code>generate_lead</code> para o GA4 e a conversao para o Google Ads automaticamente.</span>
+                <span className="guide-step__text">Ao enviar o formulário, o sistema dispara a conversão automaticamente para o GA4 e o Google Ads.</span>
               </li>
             </ol>
             <div className="guide-tip" style={{ marginTop: 12 }}>
-              Vantagem sobre o link direto: o Google coleta mais dados de comportamento antes de converter, melhorando a otimizacao da campanha.
+              Vantagem: o Google coleta mais dados de comportamento antes de converter, melhorando a otimização da campanha.
             </div>
           </article>
 
         </div>
 
-        {/* Sitelinks Google Ads */}
-        <article className="dashboard-card" style={{ marginTop: 0 }}>
-          <div className="dashboard-card__header">
-            <div>
-              <h3>Sitelinks Google Ads</h3>
-              <p className="dashboard-helper" style={{ marginBottom: 0 }}>
-                Sitelinks sao links adicionais que aparecem abaixo do seu anuncio principal no Google Ads. Cada sitelink tem uma URL propria — o sistema gera automaticamente com as UTMs do Google para rastreamento correto.
-              </p>
-            </div>
-          </div>
-          <ol className="guide-steps">
-            <li className="guide-step">
-              <span className="guide-step__num">1</span>
-              <div className="guide-step__text">
-                <div>Acesse <strong>Clientes &rarr; [cliente] &rarr; Links de campanha</strong>.</div>
-                <div className="guide-step__sub">Dentro de cada campanha existe a secao &ldquo;Sitelinks Google Ads&rdquo; logo abaixo dos criativos normais.</div>
-              </div>
-            </li>
-            <li className="guide-step">
-              <span className="guide-step__num">2</span>
-              <div className="guide-step__text">
-                <div>Clique em <strong>+ Adicionar sitelink</strong> e preencha:</div>
-                <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
-                  <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                    <span className="guide-step__sub" style={{ margin: 0, minWidth: 140 }}>Titulo:</span>
-                    <span><strong>max. 25 caracteres</strong> &mdash; aparece como link clicavel no anuncio</span>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                    <span className="guide-step__sub" style={{ margin: 0, minWidth: 140 }}>Descricao 1 e 2:</span>
-                    <span><strong>max. 35 caracteres cada</strong> &mdash; aparecem abaixo do titulo (opcional)</span>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                    <span className="guide-step__sub" style={{ margin: 0, minWidth: 140 }}>Slug:</span>
-                    <span>gerado automaticamente a partir do titulo &mdash; define a URL unica do sitelink</span>
-                  </div>
-                </div>
-              </div>
-            </li>
-            <li className="guide-step">
-              <span className="guide-step__num">3</span>
-              <div className="guide-step__text">
-                <div>Copie a <strong>URL Final</strong> gerada para cada sitelink.</div>
-                <div className="guide-step__sub">A URL ja inclui todas as UTMs do Google (<code>utm_source=google</code>, <code>gclid</code>, <code>device</code>, etc.). Use essa URL no campo &ldquo;URL Final&rdquo; do sitelink dentro do Google Ads.</div>
-              </div>
-            </li>
-            <li className="guide-step">
-              <span className="guide-step__num">4</span>
-              <div className="guide-step__text">
-                <div>No Google Ads, va em <strong>Recursos &rarr; Sitelinks &rarr; + Sitelink</strong>.</div>
-                <div className="guide-step__sub">Cole o Titulo, as descricoes e a URL Final gerada pelo sistema. Repita para cada sitelink criado (limite de 6 por campanha).</div>
-              </div>
-            </li>
-          </ol>
-          <div className="guide-tip guide-tip--info" style={{ marginTop: 12 }}>
-            <strong>Exemplo de sitelinks uteis:</strong> &ldquo;Entre em contato&rdquo; &middot; &ldquo;Ver servicos&rdquo; &middot; &ldquo;Agendar consulta&rdquo; &middot; &ldquo;Como funciona&rdquo; &mdash; cada um gera uma URL diferente com tracking individual, entao voce ve qual sitelink gerou mais cliques e leads.
-          </div>
-        </article>
-
         {/* Google Ads — Rastreamento */}
         <article className="dashboard-card" style={{ marginTop: 0, border: "1px solid #bfdbfe" }}>
           <div className="dashboard-card__header">
             <div>
-              <h3>Google Ads — Rastreamento de conversoes</h3>
+              <h3>Google Ads — Rastreamento de conversões</h3>
               <p className="dashboard-helper" style={{ marginBottom: 0 }}>
-                Duas abordagens: com GA4 (importacao) ou sem GA4 (disparo direto com Conversion ID + Label). A segunda funciona mesmo quando a conta nao exibe a opcao de importar do GA4.
+                Duas formas: sem GA4 (mais simples, recomendado para começar) ou via GTM (para quem já usa). O guia completo explica cada clique.
               </p>
             </div>
             <a
@@ -448,10 +403,10 @@ export default async function AcademyPage() {
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
             {[
-              "Sem GA4: preencha Google Ads ID + Conversion Label no cliente",
-              "Via GTM: evento whatsapp_redirect ja esta no dataLayer",
-              "Com GA4: marque generate_lead como evento-chave e importe",
-              "O sistema injeta GTM e dispara a conversao automaticamente",
+              "Método 1 (fácil): preencha Google Ads ID + Conversion Label no cliente",
+              "Método 2 (GTM): crie acionador com nome exato whatsapp_redirect",
+              "Método 3 (GA4): marque generate_lead como evento-chave e importe",
+              "O sistema injeta o GTM e dispara a conversão automaticamente",
             ].map((tip) => (
               <span key={tip} style={{ fontSize: "0.78rem", background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1d4ed8", borderRadius: 6, padding: "2px 10px" }}>
                 {tip}
@@ -466,7 +421,7 @@ export default async function AcademyPage() {
             <div>
               <h3>Disparos em Massa via WhatsApp Oficial</h3>
               <p className="dashboard-helper" style={{ marginBottom: 0 }}>
-                Envie mensagens em massa usando a Meta Cloud API com delay automatico, rastreamento de entrega e historico completo.
+                Envie mensagens em massa usando a API oficial do WhatsApp (Meta Cloud API) com delay automático e rastreamento de entrega.
               </p>
             </div>
             <a
@@ -478,7 +433,7 @@ export default async function AcademyPage() {
             </a>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
-            {["Por que usar a API oficial", "Como obter Phone Number ID e Access Token", "Importar contatos via CSV", "Delay automatico 2-3s entre mensagens", "Acompanhar entrega em tempo real"].map((tip) => (
+            {["Por que usar a API oficial (evita banimento)", "Como obter Phone Number ID e Access Token na Meta", "Importar contatos via CSV", "Delay automático 2-3s entre mensagens", "Acompanhar entrega em tempo real"].map((tip) => (
               <span key={tip} style={{ fontSize: "0.78rem", background: "#f5f3ff", border: "1px solid #c4b5fd", color: "#6d28d9", borderRadius: 6, padding: "2px 10px" }}>
                 {tip}
               </span>
@@ -487,13 +442,13 @@ export default async function AcademyPage() {
         </article>
 
         {/* Kanban */}
-        <div className="dashboard-section-divider"><span>Kanban</span></div>
+        <div className="dashboard-section-divider"><span>Kanban — como mover os cards corretamente</span></div>
         <article className="dashboard-card">
           <div className="dashboard-card__header">
-            <h3>Como usar o Kanban</h3>
+            <h3>O que cada coluna significa</h3>
           </div>
           <p className="dashboard-helper">
-            Mover os cards corretamente alimenta os relatorios, exportacoes e a inteligencia de criativos.
+            Mover os cards corretamente é o que alimenta os relatórios de resultado, exportações e a inteligência de criativos. Não pule colunas — cada etapa registra uma métrica diferente.
           </p>
           <div className="guide-kanban-grid">
             {KANBAN_STAGES.map((s) => (
@@ -505,10 +460,13 @@ export default async function AcademyPage() {
               </div>
             ))}
           </div>
+          <div className="guide-tip guide-tip--info" style={{ marginTop: 12 }}>
+            <strong>Dica:</strong> Quando um lead fechar, registre o valor da venda no campo do card antes de mover para <strong>Pago</strong>. Esse valor é usado para calcular o ROAS no relatório.
+          </div>
         </article>
 
         {/* Resultados */}
-        <div className="dashboard-section-divider"><span>Analise de resultados</span></div>
+        <div className="dashboard-section-divider"><span>Análise de resultados</span></div>
         <div className="guide-results-grid">
           {RESULTS.map((r) => (
             <article key={r.title} className="guide-result-card">
