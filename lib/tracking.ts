@@ -374,16 +374,13 @@ export function trackRedirectEvent(
     });
 
     if (client.metaPixelId && window.fbq) {
-      window.fbq(
-        "track",
-        "Lead",
-        buildMetaLeadPayload(payload),
-        {
-          eventID: payload.eventId
-        }
-      );
-      window.fbq("trackCustom", "whatsapp_lead_click", {
-        ...buildMetaLeadPayload(payload)
+      // Dispara evento customizado para análise de funil — NÃO dispara Lead aqui.
+      // O evento Lead server-side (CAPI) é disparado pelo webhook da Evolution API
+      // quando a pessoa efetivamente envia a mensagem no WhatsApp, garantindo que
+      // Lead no Gerenciador = mensagem recebida (sem inflar com cliques sem contato).
+      window.fbq("trackCustom", "WhatsAppRedirectClick", {
+        ...buildMetaLeadPayload(payload),
+        eventID: payload.eventId
       });
     }
 

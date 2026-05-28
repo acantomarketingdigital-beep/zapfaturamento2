@@ -17,8 +17,6 @@ import { setLeadRepliedByPhone } from "@/lib/kanban";
 import { getClinicBackendConfigBySlug } from "@/lib/clinics";
 import { sendMetaCapiEvent, buildMetaExternalId, buildMetaFbc } from "@/lib/meta-capi";
 
-const VIM_DO_PHRASE = "Vim do";
-
 async function isClientOnCrmPlan(clientSlug: string): Promise<boolean> {
   try {
     const r = await queryDb<{ subscription_plan: string | null }>(
@@ -31,7 +29,7 @@ async function isClientOnCrmPlan(clientSlug: string): Promise<boolean> {
   }
 }
 
-async function tryFireCapiForVimDo(clientSlug: string) {
+async function tryFireCapiForInbound(clientSlug: string) {
   const lead = await findRecentLeadForCapi(clientSlug);
   if (!lead) return;
 
@@ -156,10 +154,7 @@ export async function POST(request: Request) {
             }
             await setLeadRepliedByPhone(fallbackSlug, contactPhone);
 
-            const fallbackText = (msg as { message?: { conversation?: string } }).message?.conversation ?? "";
-            if (fallbackText.includes(VIM_DO_PHRASE)) {
-              tryFireCapiForVimDo(fallbackSlug).catch(() => {});
-            }
+            tryFireCapiForInbound(fallbackSlug).catch(() => {});
           }
         }
         return NextResponse.json({ ok: true });
@@ -324,9 +319,7 @@ export async function POST(request: Request) {
           }
           await setLeadRepliedByPhone(connection.client_slug, contactPhone);
 
-          if (text && text.includes(VIM_DO_PHRASE)) {
-            tryFireCapiForVimDo(connection.client_slug).catch(() => {});
-          }
+          tryFireCapiForInbound(connection.client_slug).catch(() => {});
         } catch (err) {
           console.error("[WA WEBHOOK] linkLead failed (non-fatal)", { err: String(err) });
         }
