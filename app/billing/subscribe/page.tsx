@@ -55,7 +55,7 @@ export default async function BillingSubscribePage() {
 
         {/* Footer */}
         <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0, textAlign: "center" }}>
-          Pagamento seguro via Stripe · Sem fidelidade · Cancele a qualquer momento
+          Pagamento seguro via Asaas · PIX, Boleto ou Cartão · Cancele a qualquer momento
         </p>
       </main>
     </div>

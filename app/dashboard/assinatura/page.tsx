@@ -2,13 +2,14 @@ import { DashboardLogin } from "@/components/dashboard/DashboardLogin";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { getCurrentUser, isDashboardConfigured } from "@/lib/dashboard-auth";
 import { getCachedBillingStatus } from "@/lib/billing";
-import { isStripeConfigured } from "@/lib/stripe";
+import { isAsaasConfigured } from "@/lib/asaas";
 import { hasDatabaseConfig, queryDb } from "@/lib/db";
 import SubscribePlansClient from "@/app/billing/subscribe/SubscribePlansClient";
 import { getWorkspaceBillingUsage, type WorkspaceBillingUsage } from "@/lib/billing-usage";
 import { CRM_PLAN_LIST, fmtPrice, getPlanById, getPlanByKey, isCrmPlan } from "@/lib/plans";
 import AddonsManagerClient from "@/components/dashboard/AddonsManagerClient";
 import { CrmAddonsClient } from "@/components/dashboard/CrmAddonsClient";
+import { CancelSubscriptionButton } from "@/components/dashboard/CancelSubscriptionButton";
 
 const FEATURES = [
   "CAPI 100% de cobertura (Meta)",
@@ -96,7 +97,7 @@ export default async function DashboardAssinaturaPage() {
     }
   }
 
-  const stripeReady       = isStripeConfigured();
+  const asaasReady        = isAsaasConfigured();
   const isEnvAdmin        = user.kind === "env_admin";
   const isPro             = isEnvAdmin || billing?.planType === "pro";
   const isTrial           = !isEnvAdmin && billing?.planType === "trial" && !billing.isBlocked;
@@ -202,7 +203,7 @@ export default async function DashboardAssinaturaPage() {
             fontWeight: 600,
           }}>
             <span style={{ width: 7, height: 7, borderRadius: "50%", background: subStatusInfo.color, display: "inline-block" }} />
-            Stripe: {subStatusInfo.label}
+            Asaas: {subStatusInfo.label}
           </div>
         )}
 
@@ -251,12 +252,12 @@ export default async function DashboardAssinaturaPage() {
               <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
             <span>
-              <strong>Pagamento com problema.</strong> Acesse o portal da Stripe abaixo para regularizar.
+              <strong>Pagamento com problema.</strong> Acesse o portal do Asaas ou entre em contato para regularizar.
             </span>
           </div>
         )}
 
-        {isCrm && !isEnvAdmin && stripeReady && !isPro && (
+        {isCrm && !isEnvAdmin && asaasReady && !isPro && (
           <article className="dashboard-card">
             <div className="dashboard-card__header">
               <h3>Assinar CRM</h3>
@@ -348,10 +349,10 @@ export default async function DashboardAssinaturaPage() {
         )}
 
         {/* Add-ons manager — only for active pro subscribers with a plan that supports extras */}
-        {usage && isPro && hasStripeCustomer && !isEnvAdmin && stripeReady && !isCrm && (() => {
+        {usage && isPro && hasStripeCustomer && !isEnvAdmin && asaasReady && !isCrm && (() => {
           const planData = getPlanByKey(activePlan);
           if (!planData) return null;
-          const hasAddons = planData.stripeExtraFormPriceId !== null || planData.stripeExtraWhatsappPriceId !== null;
+          const hasAddons = planData.extraFormPriceMonthly !== null || planData.extraWhatsappPriceMonthly !== null;
           if (!hasAddons) return null;
           return (
             <AddonsManagerClient
@@ -370,7 +371,7 @@ export default async function DashboardAssinaturaPage() {
         {isCrm && !isEnvAdmin && (
           <CrmAddonsClient
             whatsappActive={crmWhatsappAddonActive}
-            stripeReady={stripeReady}
+            asaasReady={asaasReady}
           />
         )}
 
@@ -393,20 +394,25 @@ export default async function DashboardAssinaturaPage() {
             ))}
           </ul>
 
-          {/* Stripe portal for active subscribers */}
-          {hasStripeCustomer && stripeReady && !isEnvAdmin && (
-            <div style={{ marginTop: 24 }}>
-              <form action="/api/stripe/portal" method="post" style={{ maxWidth: 280 }}>
-                <button type="submit" className="dashboard-button" style={{ width: "100%" }}>
-                  Gerenciar assinatura (Stripe)
-                </button>
-              </form>
+          {/* Asaas subscription management */}
+          {hasStripeCustomer && !isEnvAdmin && isPro && (
+            <div style={{ marginTop: 24, display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <a
+                href="https://www.asaas.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="dashboard-button"
+                style={{ textDecoration: "none" }}
+              >
+                Ver faturas no Asaas
+              </a>
+              <CancelSubscriptionButton />
             </div>
           )}
         </article>
 
         {/* Plan upgrade section: only for non-pro users */}
-        {!isPro && !isEnvAdmin && !isCrm && stripeReady && (
+        {!isPro && !isEnvAdmin && !isCrm && asaasReady && (
           <article className="dashboard-card">
             <div className="dashboard-card__header">
               <h3>Escolha seu plano</h3>
@@ -417,7 +423,7 @@ export default async function DashboardAssinaturaPage() {
         )}
 
         {/* CRM upgrade to full system */}
-        {isCrm && !isEnvAdmin && stripeReady && (
+        {isCrm && !isEnvAdmin && asaasReady && (
           <article className="dashboard-card">
             <div className="dashboard-card__header">
               <h3>Quer o sistema completo?</h3>

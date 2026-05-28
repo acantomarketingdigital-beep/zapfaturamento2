@@ -59,7 +59,7 @@ export default function AddonsManagerClient({
     setLoading(type);
     setMessage(null);
     try {
-      const res = await fetch("/api/stripe/addon", {
+      const res = await fetch("/api/asaas/addon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, quantity: qty }),

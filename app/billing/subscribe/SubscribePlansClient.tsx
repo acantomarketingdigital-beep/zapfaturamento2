@@ -219,7 +219,7 @@ function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingCha
             Fazer login para assinar
           </a>
         ) : (
-          <form ref={formRef} action="/api/stripe/checkout" method="post">
+          <form ref={formRef} action="/api/asaas/checkout" method="post">
             <input type="hidden" name="plan" value={plan.key} />
             <input type="hidden" name="billing" value={billing} />
             <button

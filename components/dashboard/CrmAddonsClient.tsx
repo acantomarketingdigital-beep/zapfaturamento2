@@ -4,10 +4,10 @@ import { useState } from "react";
 
 type Props = {
   whatsappActive: boolean;
-  stripeReady: boolean;
+  asaasReady: boolean;
 };
 
-export function CrmAddonsClient({ whatsappActive, stripeReady }: Props) {
+export function CrmAddonsClient({ whatsappActive, asaasReady }: Props) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +25,7 @@ export function CrmAddonsClient({ whatsappActive, stripeReady }: Props) {
     setLoading(addonType);
     setError(null);
     try {
-      const res = await fetch("/api/stripe/crm-addon-checkout", {
+      const res = await fetch("/api/asaas/crm-addon-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ addonType }),
@@ -88,7 +88,7 @@ export function CrmAddonsClient({ whatsappActive, stripeReady }: Props) {
               </div>
             </div>
 
-            {!addon.isActive && stripeReady && (
+            {!addon.isActive && asaasReady && (
               <button
                 type="button"
                 className="dashboard-button dashboard-button--brand"
@@ -100,7 +100,7 @@ export function CrmAddonsClient({ whatsappActive, stripeReady }: Props) {
               </button>
             )}
 
-            {!addon.isActive && !stripeReady && (
+            {!addon.isActive && !asaasReady && (
               <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
                 Pagamento não configurado
               </span>
