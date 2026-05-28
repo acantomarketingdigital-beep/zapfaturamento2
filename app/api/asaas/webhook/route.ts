@@ -65,6 +65,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "DB not configured" }, { status: 500 });
   }
 
+  // Verify Asaas webhook token
+  const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN ?? "";
+  if (expectedToken) {
+    const receivedToken = request.headers.get("asaas-access-token") ?? "";
+    if (receivedToken !== expectedToken) {
+      console.warn(`${TAG} Invalid webhook token`);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
   let body: AsaasPaymentEvent;
   try {
     body = await request.json() as AsaasPaymentEvent;
