@@ -53,9 +53,10 @@ interface PlanCardProps {
   loadingId: string | null;
   onLoadingChange: (id: string | null) => void;
   showAddons?: boolean;
+  cpfCnpj: string;
 }
 
-function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingChange, showAddons = true }: PlanCardProps) {
+function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingChange, showAddons = true, cpfCnpj }: PlanCardProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const loadingOther = loadingId !== null && loadingId !== plan.key;
@@ -81,6 +82,11 @@ function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingCha
 
   function handleClick() {
     if (disabled) return;
+    const digits = cpfCnpj.replace(/\D/g, "");
+    if (digits.length !== 11 && digits.length !== 14) {
+      alert("Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido para continuar.");
+      return;
+    }
     setLoading(true);
     onLoadingChange(plan.key);
     formRef.current?.submit();
@@ -222,6 +228,7 @@ function PlanCard({ plan, billing, isActive, isLoggedIn, loadingId, onLoadingCha
           <form ref={formRef} action="/api/asaas/checkout" method="post">
             <input type="hidden" name="plan" value={plan.key} />
             <input type="hidden" name="billing" value={billing} />
+            <input type="hidden" name="cpf_cnpj" value={cpfCnpj} />
             <button
               type="button"
               onClick={handleClick}
@@ -255,6 +262,20 @@ interface Props {
 export default function SubscribePlansClient({ isLoggedIn, activePlan, plans = PLAN_LIST, showAddons = true }: Props) {
   const [billing, setBilling] = useState<Billing>("monthly");
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [cpfCnpj, setCpfCnpj] = useState("");
+
+  function formatCpfCnpj(value: string) {
+    const digits = value.replace(/\D/g, "").slice(0, 14);
+    if (digits.length <= 11) {
+      return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, "$1.$2.$3-$4")
+        .replace(/(\d{3})(\d{3})(\d{1,3})/, "$1.$2.$3")
+        .replace(/(\d{3})(\d{1,3})/, "$1.$2");
+    }
+    return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, "$1.$2.$3/$4-$5")
+      .replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/, "$1.$2.$3/$4")
+      .replace(/(\d{2})(\d{3})(\d{1,3})/, "$1.$2.$3")
+      .replace(/(\d{2})(\d{1,3})/, "$1.$2");
+  }
 
   return (
     <>
@@ -270,7 +291,7 @@ export default function SubscribePlansClient({ isLoggedIn, activePlan, plans = P
       `}</style>
 
       {/* Billing toggle */}
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
         <div className="billing-toggle" role="group" aria-label="Período de cobrança">
           <button
             type="button"
@@ -290,6 +311,37 @@ export default function SubscribePlansClient({ isLoggedIn, activePlan, plans = P
         </div>
       </div>
 
+      {/* CPF/CNPJ field */}
+      {isLoggedIn && (
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+          <div style={{ width: "100%", maxWidth: 340 }}>
+            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--muted)", marginBottom: 6 }}>
+              CPF ou CNPJ <span style={{ color: "#dc2626" }}>*</span>
+              <span style={{ fontWeight: 400, marginLeft: 6 }}>necessário para processar o pagamento</span>
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="000.000.000-00 ou 00.000.000/0001-00"
+              value={cpfCnpj}
+              onChange={(e) => setCpfCnpj(formatCpfCnpj(e.target.value))}
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                border: "1.5px solid var(--border, #e5e7eb)",
+                borderRadius: 9,
+                fontSize: "0.88rem",
+                fontFamily: "inherit",
+                outline: "none",
+                boxSizing: "border-box",
+                background: "var(--surface, #fff)",
+                color: "var(--dark, #111)",
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Plan cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 18, width: "100%" }}>
         {plans.map((plan) => (
@@ -302,6 +354,7 @@ export default function SubscribePlansClient({ isLoggedIn, activePlan, plans = P
             loadingId={loadingId}
             onLoadingChange={setLoadingId}
             showAddons={showAddons}
+            cpfCnpj={cpfCnpj.replace(/\D/g, "")}
           />
         ))}
       </div>

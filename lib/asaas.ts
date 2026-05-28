@@ -50,9 +50,20 @@ export function createAsaasCustomer(data: {
   name: string;
   email: string;
   externalReference: string;
+  cpfCnpj?: string;
 }): Promise<AsaasCustomer> {
   return asaasFetch<AsaasCustomer>("/customers", {
     method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateAsaasCustomer(
+  customerId: string,
+  data: { cpfCnpj?: string; name?: string; email?: string }
+): Promise<AsaasCustomer> {
+  return asaasFetch<AsaasCustomer>(`/customers/${customerId}`, {
+    method: "PUT",
     body: JSON.stringify(data),
   });
 }

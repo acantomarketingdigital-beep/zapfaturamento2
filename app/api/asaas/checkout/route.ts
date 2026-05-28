@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/dashboard-auth";
 import {
   isAsaasConfigured,
   createAsaasCustomer,
+  updateAsaasCustomer,
   createAsaasSubscription,
   getAsaasSubscriptionPayments,
   getBaseUrl,
@@ -36,14 +37,19 @@ export async function POST(request: Request) {
 
   let planKey: PlanKey = "starter";
   let billing: "monthly" | "yearly" = "monthly";
+  let cpfCnpj = "";
   try {
     const fd = await request.formData();
     const rawPlan = fd.get("plan");
     const rawBilling = fd.get("billing");
+    const rawCpf = fd.get("cpf_cnpj");
     if (rawPlan && typeof rawPlan === "string" && PLANS[rawPlan as PlanKey]) {
       planKey = rawPlan as PlanKey;
     }
     if (rawBilling === "yearly") billing = "yearly";
+    if (rawCpf && typeof rawCpf === "string") {
+      cpfCnpj = rawCpf.replace(/\D/g, ""); // strip formatting
+    }
   } catch {
     // use defaults
   }
@@ -68,13 +74,14 @@ export async function POST(request: Request) {
     return NextResponse.redirect(cancelUrl, 303);
   }
 
-  // Create Asaas customer if not exists
+  // Create or update Asaas customer
   if (!asaasCustomerId) {
     try {
       const customer = await createAsaasCustomer({
         name: user.email,
         email: user.email,
         externalReference: user.id,
+        ...(cpfCnpj ? { cpfCnpj } : {}),
       });
       asaasCustomerId = customer.id;
       await queryDb(`UPDATE users SET stripe_customer_id = $2 WHERE id = $1`, [user.id, asaasCustomerId]);
@@ -82,6 +89,13 @@ export async function POST(request: Request) {
     } catch (err) {
       console.error(`${TAG} Failed to create customer:`, err);
       return NextResponse.redirect(cancelUrl, 303);
+    }
+  } else if (cpfCnpj) {
+    // Update existing customer with CPF/CNPJ if provided
+    try {
+      await updateAsaasCustomer(asaasCustomerId, { cpfCnpj });
+    } catch (err) {
+      console.warn(`${TAG} Failed to update customer CPF/CNPJ:`, err);
     }
   }
 
