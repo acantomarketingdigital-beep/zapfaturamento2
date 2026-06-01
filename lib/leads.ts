@@ -381,7 +381,7 @@ export async function linkLeadContact(
          SELECT id FROM whatsapp_leads
          WHERE client_slug = $1
            AND lead_phone IS NULL
-           AND created_at > NOW() - INTERVAL '15 minutes'
+           AND created_at > NOW() - INTERVAL '24 hours'
          ORDER BY created_at DESC
          LIMIT 1
        )
