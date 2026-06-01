@@ -17,6 +17,8 @@ import { setLeadRepliedByPhone } from "@/lib/kanban";
 import { getClinicBackendConfigBySlug } from "@/lib/clinics";
 import { sendMetaCapiEvent, buildMetaExternalId, buildMetaFbc } from "@/lib/meta-capi";
 
+const VIM_DO_PHRASE = "vim do";
+
 async function isClientOnCrmPlan(clientSlug: string): Promise<boolean> {
   try {
     const r = await queryDb<{ subscription_plan: string | null }>(
@@ -154,7 +156,10 @@ export async function POST(request: Request) {
             }
             await setLeadRepliedByPhone(fallbackSlug, contactPhone);
 
-            tryFireCapiForInbound(fallbackSlug).catch(() => {});
+            const fallbackText = (msg as { message?: { conversation?: string } }).message?.conversation ?? "";
+            if (fallbackText.toLowerCase().includes(VIM_DO_PHRASE)) {
+              tryFireCapiForInbound(fallbackSlug).catch(() => {});
+            }
           }
         }
         return NextResponse.json({ ok: true });
@@ -319,7 +324,9 @@ export async function POST(request: Request) {
           }
           await setLeadRepliedByPhone(connection.client_slug, contactPhone);
 
-          tryFireCapiForInbound(connection.client_slug).catch(() => {});
+          if (text && text.toLowerCase().includes(VIM_DO_PHRASE)) {
+            tryFireCapiForInbound(connection.client_slug).catch(() => {});
+          }
         } catch (err) {
           console.error("[WA WEBHOOK] linkLead failed (non-fatal)", { err: String(err) });
         }
