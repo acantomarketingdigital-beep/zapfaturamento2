@@ -147,17 +147,17 @@ export async function POST(request: Request) {
           const contactPhone = remoteJid.replace(/@.*/, "");
           const direction = msg.key?.fromMe ? "outbound" : "inbound";
           if (direction === "inbound") {
+            const fallbackText = (msg as { message?: { conversation?: string } }).message?.conversation ?? "";
+            const isAdMsg = fallbackText.toLowerCase().includes(VIM_DO_PHRASE);
             const adminStarted = await wasConversationAdminInitiated(fallbackSlug, contactPhone);
-            if (!adminStarted) {
-              console.log("[WA WEBHOOK] fallback inbound — linking lead", { fallbackSlug, contactPhone, pushName: msg.pushName });
+            if (!adminStarted || isAdMsg) {
+              console.log("[WA WEBHOOK] fallback inbound — linking lead", { fallbackSlug, contactPhone, isAdMsg });
               await linkLeadContact(fallbackSlug, contactPhone, msg.pushName ?? null);
             } else {
-              console.log("[WA WEBHOOK] fallback inbound — skipping link (admin-initiated conversation)", { fallbackSlug, contactPhone });
+              console.log("[WA WEBHOOK] fallback inbound — skipping link (admin-initiated)", { fallbackSlug, contactPhone });
             }
             await setLeadRepliedByPhone(fallbackSlug, contactPhone);
-
-            const fallbackText = (msg as { message?: { conversation?: string } }).message?.conversation ?? "";
-            if (fallbackText.toLowerCase().includes(VIM_DO_PHRASE)) {
+            if (isAdMsg) {
               tryFireCapiForInbound(fallbackSlug).catch(() => {});
             }
           }
@@ -311,20 +311,23 @@ export async function POST(request: Request) {
 
       if (direction === "inbound") {
         try {
+          const isAdMessage = Boolean(text && text.toLowerCase().includes(VIM_DO_PHRASE));
           const adminStarted = await wasConversationAdminInitiated(connection.client_slug, contactPhone);
-          if (!adminStarted) {
-            console.log("[WA WEBHOOK] inbound — linking lead", { clientSlug: connection.client_slug, contactPhone });
+
+          // Always link leads from ad messages ("Vim do"). For other messages, skip
+          // if conversation was admin-initiated (i.e. the admin messaged first — not a new lead).
+          if (!adminStarted || isAdMessage) {
+            console.log("[WA WEBHOOK] inbound — linking lead", { clientSlug: connection.client_slug, contactPhone, isAdMessage, adminStarted });
             await linkLeadContact(connection.client_slug, contactPhone, msg.pushName ?? null);
-            // For CRM-plan clients, auto-create a Kanban lead if none exists
             if (await isClientOnCrmPlan(connection.client_slug)) {
               await ensureWhatsappInboundLead(connection.client_slug, contactPhone, msg.pushName ?? null);
             }
           } else {
-            console.log("[WA WEBHOOK] inbound — skipping link (admin-initiated conversation)", { clientSlug: connection.client_slug, contactPhone });
+            console.log("[WA WEBHOOK] inbound — skipping link (admin-initiated, not ad message)", { clientSlug: connection.client_slug, contactPhone });
           }
           await setLeadRepliedByPhone(connection.client_slug, contactPhone);
 
-          if (text && text.toLowerCase().includes(VIM_DO_PHRASE)) {
+          if (isAdMessage) {
             tryFireCapiForInbound(connection.client_slug).catch(() => {});
           }
         } catch (err) {
