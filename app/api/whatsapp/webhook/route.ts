@@ -17,7 +17,8 @@ import { setLeadRepliedByPhone } from "@/lib/kanban";
 import { getClinicBackendConfigBySlug } from "@/lib/clinics";
 import { sendMetaCapiEvent, buildMetaExternalId, buildMetaFbc } from "@/lib/meta-capi";
 
-const VIM_DO_PHRASE = "vim do";
+// Matches common Portuguese ad phrases: "vim do", "vim pelo", "vim da", "vim de", "vim via"
+const VIM_DO_PHRASE = /\bvim\b/i;
 
 async function isClientOnCrmPlan(clientSlug: string): Promise<boolean> {
   try {
@@ -148,7 +149,7 @@ export async function POST(request: Request) {
           const direction = msg.key?.fromMe ? "outbound" : "inbound";
           if (direction === "inbound") {
             const fallbackText = (msg as { message?: { conversation?: string } }).message?.conversation ?? "";
-            const isAdMsg = fallbackText.toLowerCase().includes(VIM_DO_PHRASE);
+            const isAdMsg = VIM_DO_PHRASE.test(fallbackText);
             const adminStarted = await wasConversationAdminInitiated(fallbackSlug, contactPhone);
             if (!adminStarted || isAdMsg) {
               console.log("[WA WEBHOOK] fallback inbound — linking lead", { fallbackSlug, contactPhone, isAdMsg });
@@ -311,7 +312,7 @@ export async function POST(request: Request) {
 
       if (direction === "inbound") {
         try {
-          const isAdMessage = Boolean(text && text.toLowerCase().includes(VIM_DO_PHRASE));
+          const isAdMessage = Boolean(text && VIM_DO_PHRASE.test(text));
           const adminStarted = await wasConversationAdminInitiated(connection.client_slug, contactPhone);
 
           // Always link leads from ad messages ("Vim do"). For other messages, skip
