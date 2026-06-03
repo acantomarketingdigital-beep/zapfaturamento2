@@ -6,8 +6,7 @@ import {
   listConnectionUsers,
   listConnections,
   updateConnectionStatus,
-  upsertConversation,
-  wasConversationAdminInitiated
+  upsertConversation
 } from "@/lib/whatsapp-connections";
 import { isEvolutionConfigured, sendEvolutionTextMessage } from "@/lib/evolution-api";
 import { linkLeadContact, findRecentLeadForCapi, confirmLeadCapi, ensureWhatsappInboundLead } from "@/lib/leads";
@@ -150,13 +149,8 @@ export async function POST(request: Request) {
           if (direction === "inbound") {
             const fallbackText = (msg as { message?: { conversation?: string } }).message?.conversation ?? "";
             const isAdMsg = VIM_DO_PHRASE.test(fallbackText);
-            const adminStarted = await wasConversationAdminInitiated(fallbackSlug, contactPhone);
-            if (!adminStarted || isAdMsg) {
-              console.log("[WA WEBHOOK] fallback inbound — linking lead", { fallbackSlug, contactPhone, isAdMsg });
-              await linkLeadContact(fallbackSlug, contactPhone, msg.pushName ?? null);
-            } else {
-              console.log("[WA WEBHOOK] fallback inbound — skipping link (admin-initiated)", { fallbackSlug, contactPhone });
-            }
+            console.log("[WA WEBHOOK] fallback inbound — linking lead", { fallbackSlug, contactPhone, isAdMsg });
+            await linkLeadContact(fallbackSlug, contactPhone, msg.pushName ?? null);
             await setLeadRepliedByPhone(fallbackSlug, contactPhone);
             if (isAdMsg) {
               tryFireCapiForInbound(fallbackSlug).catch(() => {});
@@ -313,18 +307,10 @@ export async function POST(request: Request) {
       if (direction === "inbound") {
         try {
           const isAdMessage = Boolean(text && VIM_DO_PHRASE.test(text));
-          const adminStarted = await wasConversationAdminInitiated(connection.client_slug, contactPhone);
-
-          // Always link leads from ad messages ("Vim do"). For other messages, skip
-          // if conversation was admin-initiated (i.e. the admin messaged first — not a new lead).
-          if (!adminStarted || isAdMessage) {
-            console.log("[WA WEBHOOK] inbound — linking lead", { clientSlug: connection.client_slug, contactPhone, isAdMessage, adminStarted });
-            await linkLeadContact(connection.client_slug, contactPhone, msg.pushName ?? null);
-            if (await isClientOnCrmPlan(connection.client_slug)) {
-              await ensureWhatsappInboundLead(connection.client_slug, contactPhone, msg.pushName ?? null);
-            }
-          } else {
-            console.log("[WA WEBHOOK] inbound — skipping link (admin-initiated, not ad message)", { clientSlug: connection.client_slug, contactPhone });
+          console.log("[WA WEBHOOK] inbound — linking lead", { clientSlug: connection.client_slug, contactPhone, isAdMessage });
+          await linkLeadContact(connection.client_slug, contactPhone, msg.pushName ?? null);
+          if (await isClientOnCrmPlan(connection.client_slug)) {
+            await ensureWhatsappInboundLead(connection.client_slug, contactPhone, msg.pushName ?? null);
           }
           await setLeadRepliedByPhone(connection.client_slug, contactPhone);
 
