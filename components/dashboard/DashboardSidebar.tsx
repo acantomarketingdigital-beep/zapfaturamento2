@@ -3,6 +3,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import type { AppSession } from "@/lib/dashboard-auth";
 import { TrialBanner } from "@/components/dashboard/TrialBanner";
 import { AISupportChat } from "@/components/dashboard/AISupportChat";
+import { MobileMenuButton } from "@/components/dashboard/MobileMenuButton";
 import { getUserPermissions, type UserPermissions } from "@/lib/permissions";
 import { getCachedBillingStatus } from "@/lib/billing";
 import { isCrmPlan } from "@/lib/plans";
@@ -317,6 +318,7 @@ export async function DashboardSidebar({
 
   return (
     <aside className="dashboard-sidebar">
+      <MobileMenuButton />
       <div className="dashboard-sidebar__stack">
         <div className="sidebar-brand">
           <div className="sidebar-brand__text">
