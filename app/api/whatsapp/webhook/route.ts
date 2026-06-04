@@ -9,7 +9,7 @@ import {
   upsertConversation
 } from "@/lib/whatsapp-connections";
 import { isEvolutionConfigured, sendEvolutionTextMessage } from "@/lib/evolution-api";
-import { linkLeadContact, findRecentLeadForCapi, confirmLeadCapi, ensureWhatsappInboundLead } from "@/lib/leads";
+import { linkLeadContact, findRecentLeadForCapi, confirmLeadCapi, ensureWhatsappInboundLead, getLeadByIdForCapi } from "@/lib/leads";
 import { isCrmPlan } from "@/lib/plans";
 import { queryDb } from "@/lib/db";
 import { setLeadRepliedByPhone } from "@/lib/kanban";
@@ -18,6 +18,61 @@ import { sendMetaCapiEvent, buildMetaExternalId, buildMetaFbc } from "@/lib/meta
 
 // Matches common Portuguese ad phrases: "vim do", "vim pelo", "vim da", "vim de", "vim via"
 const VIM_DO_PHRASE = /\bvim\b/i;
+
+async function tryFireCapiForLeadId(leadId: number, clientSlug: string) {
+  const lead = await getLeadByIdForCapi(leadId);
+  if (!lead) return;
+
+  const client = await getClinicBackendConfigBySlug(clientSlug) as {
+    metaPixelId?: string;
+    metaCapiAccessToken?: string;
+    metaTestEventCode?: string;
+  } | null;
+
+  if (!client?.metaPixelId || !client?.metaCapiAccessToken) return;
+
+  const eventId = lead.meta_capi_event_id ?? `webhook-${lead.id}-${Date.now()}`;
+  const fbc = lead.fbclid ? buildMetaFbc(lead.fbclid) : undefined;
+
+  try {
+    await sendMetaCapiEvent({
+      pixelId: client.metaPixelId,
+      accessToken: client.metaCapiAccessToken,
+      testEventCode: client.metaTestEventCode || undefined,
+      eventName: "Lead",
+      eventId,
+      eventTime: Math.floor(Date.now() / 1000),
+      actionSource: "website",
+      eventSourceUrl: lead.page_url || "",
+      userData: {
+        client_user_agent: lead.user_agent || undefined,
+        fbc: fbc || undefined,
+        external_id: buildMetaExternalId(`${clientSlug}:${lead.whatsapp_number}:${eventId}`)
+      },
+      customData: {
+        client_slug: clientSlug,
+        utm_source: lead.utm_source,
+        utm_medium: lead.utm_medium,
+        utm_campaign: lead.utm_campaign,
+        utm_content: lead.utm_content,
+        utm_term: lead.utm_term,
+        campaign_id: lead.campaign_id,
+        adset_id: lead.adset_id,
+        ad_id: lead.ad_id,
+        placement: lead.placement,
+        fbclid: lead.fbclid,
+        gclid: lead.gclid,
+        whatsapp_number: lead.whatsapp_number
+      }
+    });
+    await confirmLeadCapi(lead.id, true, eventId, null);
+    console.log("[WA WEBHOOK] CAPI Lead disparado via 'pending_message' conversion", { clientSlug, leadId: lead.id, eventId });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await confirmLeadCapi(lead.id, false, eventId, msg).catch(() => {});
+    console.error("[WA WEBHOOK] CAPI via 'pending_message' falhou", { clientSlug, leadId: lead.id, err: msg });
+  }
+}
 
 async function isClientOnCrmPlan(clientSlug: string): Promise<boolean> {
   try {
@@ -308,7 +363,17 @@ export async function POST(request: Request) {
         try {
           const isAdMessage = Boolean(text && VIM_DO_PHRASE.test(text));
           console.log("[WA WEBHOOK] inbound — linking lead", { clientSlug: connection.client_slug, contactPhone, isAdMessage });
-          await linkLeadContact(connection.client_slug, contactPhone, msg.pushName ?? null);
+          
+          const { leadId, wasPending } = await linkLeadContact(connection.client_slug, contactPhone, msg.pushName ?? null);
+          
+          if (leadId && conversationId) {
+            await queryDb(`UPDATE whatsapp_conversations SET lead_id = $1 WHERE id = $2`, [leadId, conversationId]).catch(e => console.error("Error linking lead to conversation", e));
+          }
+
+          if (wasPending && leadId) {
+            tryFireCapiForLeadId(leadId, connection.client_slug).catch(() => {});
+          }
+
           if (await isClientOnCrmPlan(connection.client_slug)) {
             await ensureWhatsappInboundLead(connection.client_slug, contactPhone, msg.pushName ?? null);
           }

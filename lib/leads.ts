@@ -280,13 +280,14 @@ export async function insertLeadEvent(
         internal_campaign_id,
         internal_campaign_slug,
         creative_id,
-        creative_slug
+        creative_slug,
+        lead_status
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
         $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
         $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
-        $31, $32, $33, $34, $35, $36, $37, $38
+        $31, $32, $33, $34, $35, $36, $37, $38, $39
       )
       RETURNING id
     `,
@@ -328,7 +329,8 @@ export async function insertLeadEvent(
       internalCampaignId,
       nullable(payload.internalCampaignSlug),
       payload.internalCreativeId ? parseInt(payload.internalCreativeId, 10) || null : null,
-      nullable(payload.internalCreativeSlug)
+      nullable(payload.internalCreativeSlug),
+      "pending_message"
     ]
   );
 
@@ -343,16 +345,16 @@ export async function linkLeadContact(
   clientSlug: string,
   contactPhone: string,
   name: string | null
-): Promise<void> {
-  if (!hasDatabaseConfig()) return;
+): Promise<{ leadId: number | null; wasPending: boolean }> {
+  if (!hasDatabaseConfig()) return { leadId: null, wasPending: false };
   const digits = contactPhone.replace(/\D/g, "");
-  if (!digits) return;
+  if (!digits) return { leadId: null, wasPending: false };
   const safeName = name?.trim() || null;
 
   console.log("[linkLeadContact]", { clientSlug, digits, name: safeName });
 
   // 1. Lead already linked to this phone (repeat message) — update name + replied
-  const linked = await queryDb<{ id: number }>(
+  const linked = await queryDb<{ id: number; lead_status: string }>(
     `UPDATE whatsapp_leads
      SET lead_name   = COALESCE(lead_name, $3),
          has_replied = true,
@@ -360,18 +362,24 @@ export async function linkLeadContact(
      WHERE client_slug = $1
        AND lead_phone   = $2
        AND created_at > NOW() - INTERVAL '7 days'
-     RETURNING id`,
+     RETURNING id, lead_status`,
     [clientSlug, digits, safeName]
   );
 
   if (linked.rows.length > 0) {
     console.log("[linkLeadContact] existing lead updated, ids:", linked.rows.map((r) => r.id));
-    return;
+    const row = linked.rows[0];
+    let wasPending = false;
+    if (row.lead_status === 'pending_message') {
+      await queryDb(`UPDATE whatsapp_leads SET lead_status = 'novo_lead' WHERE id = $1`, [row.id]);
+      wasPending = true;
+    }
+    return { leadId: row.id, wasPending };
   }
 
   // 2. No lead linked yet — link the most recent unlinked lead from the last 60 min
   try {
-    const updated = await queryDb<{ id: number; lead_phone: string; lead_name: string | null }>(
+    const updated = await queryDb<{ id: number; lead_phone: string; lead_name: string | null; lead_status: string }>(
       `UPDATE whatsapp_leads
        SET lead_phone  = $2,
            lead_name   = COALESCE(lead_name, $3),
@@ -385,12 +393,19 @@ export async function linkLeadContact(
          ORDER BY created_at DESC
          LIMIT 1
        )
-       RETURNING id, lead_phone, lead_name`,
+       RETURNING id, lead_phone, lead_name, lead_status`,
       [clientSlug, digits, safeName]
     );
 
     if (updated.rows.length > 0) {
       console.log("[linkLeadContact] new link:", updated.rows[0]);
+      const row = updated.rows[0];
+      let wasPending = false;
+      if (row.lead_status === 'pending_message') {
+        await queryDb(`UPDATE whatsapp_leads SET lead_status = 'novo_lead' WHERE id = $1`, [row.id]);
+        wasPending = true;
+      }
+      return { leadId: row.id, wasPending };
     } else {
       console.log("[linkLeadContact] no unlinked lead found in last 60 min for", clientSlug);
     }
@@ -399,7 +414,7 @@ export async function linkLeadContact(
     if (pg.code === "23505") {
       // Unique constraint: this phone is already on another lead created outside the 7-day window
       console.log("[linkLeadContact] unique conflict — phone already linked on older lead; updating replied");
-      await queryDb(
+      const conflictUpdate = await queryDb<{ id: number; lead_status: string }>(
         `UPDATE whatsapp_leads
          SET has_replied = true,
              replied_at  = COALESCE(replied_at, NOW()),
@@ -410,13 +425,33 @@ export async function linkLeadContact(
              AND lead_phone   = $2
            ORDER BY created_at DESC
            LIMIT 1
-         )`,
+         ) RETURNING id, lead_status`,
         [clientSlug, digits, safeName]
       );
+      if (conflictUpdate.rows.length > 0) {
+        const row = conflictUpdate.rows[0];
+        let wasPending = false;
+        if (row.lead_status === 'pending_message') {
+          await queryDb(`UPDATE whatsapp_leads SET lead_status = 'novo_lead' WHERE id = $1`, [row.id]);
+          wasPending = true;
+        }
+        return { leadId: row.id, wasPending };
+      }
     } else {
       console.error("[linkLeadContact] unexpected error", err);
     }
   }
+  
+  return { leadId: null, wasPending: false };
+}
+
+export async function getLeadByIdForCapi(leadId: number): Promise<LeadEventRecord | null> {
+  if (!hasDatabaseConfig()) return null;
+  const result = await queryDb<LeadEventRecord>(
+    `SELECT * FROM whatsapp_leads WHERE id = $1 LIMIT 1`,
+    [leadId]
+  );
+  return result.rows[0] ?? null;
 }
 
 export async function ensureWhatsappInboundLead(

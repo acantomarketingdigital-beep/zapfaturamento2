@@ -275,29 +275,8 @@ export async function POST(request: Request) {
     let metaCapiError: string | null = null;
     const metaCapiEnabled = isMetaCapiConfigured(client);
 
-    if (metaCapiEnabled && !skipCapi) {
-      try {
-        await sendMetaLeadEvent(
-          normalizedPayload,
-          client,
-          requestHeaders,
-          cookieStore
-        );
-        metaCapiSuccess = true;
-      } catch (error) {
-        metaCapiSuccess = false;
-        metaCapiError =
-          error instanceof Error ? error.message : "Falha desconhecida na Meta CAPI.";
-
-        if (isDevelopment) {
-          console.error("[capture-api] erro na Meta CAPI", {
-            slug: client.clientSlug,
-            eventId,
-            message: metaCapiError
-          });
-        }
-      }
-    }
+    // O disparo do Meta CAPI foi movido para o webhook (após a primeira mensagem).
+    // if (metaCapiEnabled && !skipCapi) { ... }
 
     if (!client.kommoEnabled) {
       if (eventId) {
