@@ -9,69 +9,53 @@ import {
   upsertConversation
 } from "@/lib/whatsapp-connections";
 import { isEvolutionConfigured, sendEvolutionTextMessage } from "@/lib/evolution-api";
-import { linkLeadContact, findRecentLeadForCapi, confirmLeadCapi, ensureWhatsappInboundLead, getLeadByIdForCapi } from "@/lib/leads";
+import {
+  linkLeadContact,
+  linkLeadByRefCode,
+  linkLeadByConnectionWhatsapp,
+  getLeadByIdForCapi,
+  confirmLeadCapi,
+  ensureWhatsappInboundLead
+} from "@/lib/leads";
 import { isCrmPlan } from "@/lib/plans";
 import { queryDb } from "@/lib/db";
 import { setLeadRepliedByPhone } from "@/lib/kanban";
 import { getClinicBackendConfigBySlug } from "@/lib/clinics";
-import { sendMetaCapiEvent, buildMetaExternalId, buildMetaFbc } from "@/lib/meta-capi";
+import {
+  sendMetaCapiEvent,
+  buildMetaExternalId,
+  buildMetaFbc,
+  buildMetaHashedPhone
+} from "@/lib/meta-capi";
 
-// Matches common Portuguese ad phrases: "vim do", "vim pelo", "vim da", "vim de", "vim via"
-const VIM_DO_PHRASE = /\bvim\b/i;
+// Level-2 trigger: message contains the word "vim" (Portuguese ad phrase)
+const VIM_PHRASE = /\bvim\b/i;
 
-async function tryFireCapiForLeadId(leadId: number, clientSlug: string) {
-  const lead = await getLeadByIdForCapi(leadId);
-  if (!lead) return;
+// Level-1 trigger: tracking code injected at click time → (Cod: XXXX)
+const REF_CODE_REGEX = /\(Cod:\s*([A-Za-z0-9]+)\)/i;
 
-  const client = await getClinicBackendConfigBySlug(clientSlug) as {
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type CapiClientConfig = {
+  metaPixelId: string;
+  metaCapiAccessToken: string;
+  metaTestEventCode?: string;
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+async function getCapiConfig(clientSlug: string): Promise<CapiClientConfig | null> {
+  const client = (await getClinicBackendConfigBySlug(clientSlug)) as {
     metaPixelId?: string;
     metaCapiAccessToken?: string;
     metaTestEventCode?: string;
   } | null;
-
-  if (!client?.metaPixelId || !client?.metaCapiAccessToken) return;
-
-  const eventId = lead.meta_capi_event_id ?? `webhook-${lead.id}-${Date.now()}`;
-  const fbc = lead.fbclid ? buildMetaFbc(lead.fbclid) : undefined;
-
-  try {
-    await sendMetaCapiEvent({
-      pixelId: client.metaPixelId,
-      accessToken: client.metaCapiAccessToken,
-      testEventCode: client.metaTestEventCode || undefined,
-      eventName: "Lead",
-      eventId,
-      eventTime: Math.floor(Date.now() / 1000),
-      actionSource: "website",
-      eventSourceUrl: lead.page_url || "",
-      userData: {
-        client_user_agent: lead.user_agent || undefined,
-        fbc: fbc || undefined,
-        external_id: buildMetaExternalId(`${clientSlug}:${lead.whatsapp_number}:${eventId}`)
-      },
-      customData: {
-        client_slug: clientSlug,
-        utm_source: lead.utm_source,
-        utm_medium: lead.utm_medium,
-        utm_campaign: lead.utm_campaign,
-        utm_content: lead.utm_content,
-        utm_term: lead.utm_term,
-        campaign_id: lead.campaign_id,
-        adset_id: lead.adset_id,
-        ad_id: lead.ad_id,
-        placement: lead.placement,
-        fbclid: lead.fbclid,
-        gclid: lead.gclid,
-        whatsapp_number: lead.whatsapp_number
-      }
-    });
-    await confirmLeadCapi(lead.id, true, eventId, null);
-    console.log("[WA WEBHOOK] CAPI Lead disparado via 'pending_message' conversion", { clientSlug, leadId: lead.id, eventId });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    await confirmLeadCapi(lead.id, false, eventId, msg).catch(() => {});
-    console.error("[WA WEBHOOK] CAPI via 'pending_message' falhou", { clientSlug, leadId: lead.id, err: msg });
-  }
+  if (!client?.metaPixelId || !client?.metaCapiAccessToken) return null;
+  return {
+    metaPixelId: client.metaPixelId,
+    metaCapiAccessToken: client.metaCapiAccessToken,
+    metaTestEventCode: client.metaTestEventCode || undefined
+  };
 }
 
 async function isClientOnCrmPlan(clientSlug: string): Promise<boolean> {
@@ -86,26 +70,26 @@ async function isClientOnCrmPlan(clientSlug: string): Promise<boolean> {
   }
 }
 
-async function tryFireCapiForInbound(clientSlug: string) {
-  const lead = await findRecentLeadForCapi(clientSlug);
-  if (!lead) return;
+// ─── CAPI fire helpers ────────────────────────────────────────────────────────
 
-  const client = await getClinicBackendConfigBySlug(clientSlug) as {
-    metaPixelId?: string;
-    metaCapiAccessToken?: string;
-    metaTestEventCode?: string;
-  } | null;
+async function fireCapiForLead(
+  leadId: number,
+  contactPhone: string,
+  config: CapiClientConfig,
+  cascadeLevel: 1 | 2 | 3
+): Promise<void> {
+  const lead = await getLeadByIdForCapi(leadId);
+  if (!lead || lead.meta_capi_success === true) return;
 
-  if (!client?.metaPixelId || !client?.metaCapiAccessToken) return;
-
-  const eventId = lead.meta_capi_event_id ?? `vim-do-${lead.id}-${Date.now()}`;
+  const digits = contactPhone.replace(/\D/g, "");
+  const eventId = lead.meta_capi_event_id ?? `wh-l${cascadeLevel}-${lead.id}-${Date.now()}`;
   const fbc = lead.fbclid ? buildMetaFbc(lead.fbclid) : undefined;
 
   try {
     await sendMetaCapiEvent({
-      pixelId: client.metaPixelId,
-      accessToken: client.metaCapiAccessToken,
-      testEventCode: client.metaTestEventCode || undefined,
+      pixelId: config.metaPixelId,
+      accessToken: config.metaCapiAccessToken,
+      testEventCode: config.metaTestEventCode,
       eventName: "Lead",
       eventId,
       eventTime: Math.floor(Date.now() / 1000),
@@ -114,10 +98,11 @@ async function tryFireCapiForInbound(clientSlug: string) {
       userData: {
         client_user_agent: lead.user_agent || undefined,
         fbc: fbc || undefined,
-        external_id: buildMetaExternalId(`${clientSlug}:${lead.whatsapp_number}:${eventId}`)
+        external_id: buildMetaExternalId(`${lead.client_slug}:${lead.whatsapp_number}:${eventId}`),
+        ph: digits ? buildMetaHashedPhone(digits) : undefined
       },
       customData: {
-        client_slug: clientSlug,
+        client_slug: lead.client_slug,
         utm_source: lead.utm_source,
         utm_medium: lead.utm_medium,
         utm_campaign: lead.utm_campaign,
@@ -129,17 +114,113 @@ async function tryFireCapiForInbound(clientSlug: string) {
         placement: lead.placement,
         fbclid: lead.fbclid,
         gclid: lead.gclid,
-        whatsapp_number: lead.whatsapp_number
+        whatsapp_number: lead.whatsapp_number,
+        cascade_level: cascadeLevel
       }
     });
     await confirmLeadCapi(lead.id, true, eventId, null);
-    console.log("[WA WEBHOOK] CAPI Lead disparado via 'Vim do'", { clientSlug, leadId: lead.id, eventId });
+    console.log(`[WA WEBHOOK] CAPI Level-${cascadeLevel} disparado`, { clientSlug: lead.client_slug, leadId: lead.id });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     await confirmLeadCapi(lead.id, false, eventId, msg).catch(() => {});
-    console.error("[WA WEBHOOK] CAPI via 'Vim do' falhou", { clientSlug, leadId: lead.id, err: msg });
+    console.error(`[WA WEBHOOK] CAPI Level-${cascadeLevel} falhou`, { leadId, err: msg });
   }
 }
+
+async function fireCapiPhoneOnly(
+  clientSlug: string,
+  connectionWhatsappNumber: string,
+  contactPhone: string,
+  config: CapiClientConfig,
+  cascadeLevel: 2 | 3
+): Promise<void> {
+  const digits = contactPhone.replace(/\D/g, "");
+  if (!digits) return;
+  const eventId = `wh-ph${cascadeLevel}-${Date.now()}-${digits.slice(-4)}`;
+
+  try {
+    await sendMetaCapiEvent({
+      pixelId: config.metaPixelId,
+      accessToken: config.metaCapiAccessToken,
+      testEventCode: config.metaTestEventCode,
+      eventName: "Lead",
+      eventId,
+      eventTime: Math.floor(Date.now() / 1000),
+      actionSource: "website",
+      eventSourceUrl: "",
+      userData: {
+        external_id: buildMetaExternalId(`${clientSlug}:${connectionWhatsappNumber}:${digits}`),
+        ph: buildMetaHashedPhone(digits)
+      },
+      customData: {
+        client_slug: clientSlug,
+        whatsapp_number: connectionWhatsappNumber,
+        cascade_level: cascadeLevel
+      }
+    });
+    console.log(`[WA WEBHOOK] CAPI phone-only Level-${cascadeLevel}`, { clientSlug, digits });
+  } catch (err) {
+    console.error(`[WA WEBHOOK] CAPI phone-only Level-${cascadeLevel} falhou`, String(err));
+  }
+}
+
+// ─── 3-Level cascade ─────────────────────────────────────────────────────────
+
+async function processInboundCascade(params: {
+  clientSlug: string;
+  connectionWhatsappNumber: string;
+  contactPhone: string;
+  pushName: string | null;
+  text: string | null;
+}): Promise<void> {
+  const { clientSlug, connectionWhatsappNumber, contactPhone, pushName, text } = params;
+  const config = await getCapiConfig(clientSlug);
+
+  // ── Level 1: exact (Cod: XXXX) match ───────────────────────────────────────
+  const codeMatch = text?.match(REF_CODE_REGEX);
+  if (codeMatch) {
+    const refCode = codeMatch[1];
+    const linked = await linkLeadByRefCode(clientSlug, refCode, contactPhone, pushName);
+    if (linked) {
+      if (config) await fireCapiForLead(linked.leadId, contactPhone, config, 1);
+      console.log("[WA WEBHOOK] cascade Level-1 match", { refCode, leadId: linked.leadId });
+      return;
+    }
+    // Code present but not in DB (deleted/expired) → fall through to Level 2
+    console.log("[WA WEBHOOK] cascade Level-1 code not found, falling to Level-2", { refCode });
+  }
+
+  // ── Level 2: keyword "vim" ──────────────────────────────────────────────────
+  if (text && VIM_PHRASE.test(text)) {
+    const { leadId } = await linkLeadContact(clientSlug, contactPhone, pushName);
+    if (leadId) {
+      if (config) await fireCapiForLead(leadId, contactPhone, config, 2);
+    } else if (config) {
+      await fireCapiPhoneOnly(clientSlug, connectionWhatsappNumber, contactPhone, config, 2);
+    }
+    console.log("[WA WEBHOOK] cascade Level-2 (vim keyword)", { leadId });
+    return;
+  }
+
+  // ── Level 3: route / connection match ──────────────────────────────────────
+  const linked3 = await linkLeadByConnectionWhatsapp(
+    clientSlug,
+    connectionWhatsappNumber,
+    contactPhone,
+    pushName
+  );
+  if (linked3) {
+    if (config && linked3.wasPending) {
+      await fireCapiForLead(linked3.leadId, contactPhone, config, 3);
+    }
+    console.log("[WA WEBHOOK] cascade Level-3 (connection route)", { leadId: linked3.leadId });
+  } else if (config) {
+    await fireCapiPhoneOnly(clientSlug, connectionWhatsappNumber, contactPhone, config, 3);
+    console.log("[WA WEBHOOK] cascade Level-3 phone-only (no unlinked lead in 24h)");
+  }
+}
+
+// ─── Route handlers ───────────────────────────────────────────────────────────
 
 export async function GET() {
   return NextResponse.json({ ok: true, endpoint: "whatsapp-webhook", ts: new Date().toISOString() });
@@ -163,7 +244,6 @@ export async function POST(request: Request) {
   }
 
   const rawEvent = body.event as string;
-  // Normalize: "messages.upsert" -> "MESSAGES_UPSERT", "connection.update" -> "CONNECTION_UPDATE"
   const event = rawEvent?.replace(/\./g, "_").toUpperCase() ?? "";
   const instanceName = (body.instance as string) ?? "";
 
@@ -176,10 +256,11 @@ export async function POST(request: Request) {
 
   const connection = await getConnectionBySessionId(instanceName);
 
+  // ── Fallback: no registered connection — try to match by phone number ───────
   if (!connection) {
     const senderRaw = body.sender as string | undefined;
     const instancePhone = senderRaw ? senderRaw.replace(/@.*/, "").replace(/\D/g, "") : null;
-    console.log("[WA WEBHOOK] no connection for instance — trying phone fallback", { instanceName, instancePhone });
+    console.log("[WA WEBHOOK] no connection — trying phone fallback", { instanceName, instancePhone });
 
     if (event === "MESSAGES_UPSERT" && instancePhone) {
       const fallbackSlug = await getClientSlugByWhatsappNumber(instancePhone);
@@ -192,36 +273,41 @@ export async function POST(request: Request) {
           : data?.key != null
             ? [data]
             : [];
+
         for (const rawMsg of messages) {
           const msg = rawMsg as {
             key?: { remoteJid?: string; fromMe?: boolean };
+            message?: { conversation?: string };
             pushName?: string;
           };
           const remoteJid = msg.key?.remoteJid ?? "";
           if (!remoteJid || remoteJid.endsWith("@g.us")) continue;
           const contactPhone = remoteJid.replace(/@.*/, "");
           const direction = msg.key?.fromMe ? "outbound" : "inbound";
+
           if (direction === "inbound") {
-            const fallbackText = (msg as { message?: { conversation?: string } }).message?.conversation ?? "";
-            const isAdMsg = VIM_DO_PHRASE.test(fallbackText);
-            console.log("[WA WEBHOOK] fallback inbound — linking lead", { fallbackSlug, contactPhone, isAdMsg });
-            await linkLeadContact(fallbackSlug, contactPhone, msg.pushName ?? null);
+            const fallbackText = msg.message?.conversation ?? "";
+            await processInboundCascade({
+              clientSlug: fallbackSlug,
+              connectionWhatsappNumber: instancePhone,
+              contactPhone,
+              pushName: msg.pushName ?? null,
+              text: fallbackText || null
+            });
             await setLeadRepliedByPhone(fallbackSlug, contactPhone);
-            if (isAdMsg) {
-              tryFireCapiForInbound(fallbackSlug).catch(() => {});
-            }
           }
         }
         return NextResponse.json({ ok: true });
       }
     }
 
-    console.log("[WA WEBHOOK] no connection found and fallback failed for instance", instanceName);
+    console.log("[WA WEBHOOK] fallback failed for instance", instanceName);
     return NextResponse.json({ ok: true });
   }
 
   console.log("[WA WEBHOOK] connection", { clientSlug: connection.client_slug, connectionId: connection.id });
 
+  // ── CONNECTION_UPDATE ────────────────────────────────────────────────────────
   if (event === "CONNECTION_UPDATE") {
     const data = body.data as { state?: string; statusReason?: number };
     const state = data?.state;
@@ -246,19 +332,12 @@ export async function POST(request: Request) {
           `${reconnectUrl}\n\n` +
           `_O link expira em 4 horas._`;
 
-        // Find a connected sender (any other active connection)
         const allConns = await listConnections();
         const sender = allConns.find((c) => c.status === "connected" && c.id !== connection.id);
 
         if (sender) {
           const targets: string[] = [];
-
-          // Send to the phone number that was connected
-          if (connection.phone_number) {
-            targets.push(connection.phone_number);
-          }
-
-          // Send to all responsible users who can reconnect and have a phone
+          if (connection.phone_number) targets.push(connection.phone_number);
           const users = await listConnectionUsers(connection.id);
           for (const u of users) {
             if (u.can_reconnect && u.user_phone) {
@@ -266,17 +345,16 @@ export async function POST(request: Request) {
               if (phone && !targets.includes(phone)) targets.push(phone);
             }
           }
-
           for (const phone of targets) {
             try {
               await sendEvolutionTextMessage(sender.session_id, phone, msg);
-              console.log(`[WA WEBHOOK] disconnect alert sent to ${phone} via ${sender.session_id}`);
+              console.log(`[WA WEBHOOK] disconnect alert sent to ${phone}`);
             } catch (err) {
               console.error(`[WA WEBHOOK] failed to send disconnect alert to ${phone}`, String(err));
             }
           }
         } else {
-          console.log("[WA WEBHOOK] no active sender found to deliver disconnect alert");
+          console.log("[WA WEBHOOK] no active sender for disconnect alert");
         }
       }
     } else if (state === "connecting") {
@@ -284,12 +362,9 @@ export async function POST(request: Request) {
     }
   }
 
+  // ── MESSAGES_UPSERT ──────────────────────────────────────────────────────────
   if (event === "MESSAGES_UPSERT") {
     const dataRaw = body.data;
-    // Handle all Evolution API formats:
-    // 1. data is an array of messages (some v2 configs)
-    // 2. data.messages is an array (v1 format)
-    // 3. data is a single message object with a "key" field (v2 byEvents)
     let messages: unknown[];
     if (Array.isArray(dataRaw)) {
       messages = dataRaw;
@@ -302,7 +377,7 @@ export async function POST(request: Request) {
           : [];
     }
 
-    console.log("[WA WEBHOOK] MESSAGES_UPSERT count:", messages.length, "dataType:", Array.isArray(dataRaw) ? "array" : typeof dataRaw, "keys:", dataRaw && typeof dataRaw === "object" ? Object.keys(dataRaw as object).join(",") : "n/a");
+    console.log("[WA WEBHOOK] MESSAGES_UPSERT count:", messages.length);
 
     for (const rawMsg of messages) {
       const msg = rawMsg as {
@@ -326,7 +401,7 @@ export async function POST(request: Request) {
       const contactPhone = remoteJid.replace(/@.*/, "");
       const direction = msg.key?.fromMe ? "outbound" : "inbound";
 
-      console.log("[WA WEBHOOK] msg", { direction, contactPhone, pushName: msg.pushName, msgType: msg.messageType, remoteJid });
+      console.log("[WA WEBHOOK] msg", { direction, contactPhone, pushName: msg.pushName, msgType: msg.messageType });
 
       const msgType = msg.messageType ?? "text";
       const text =
@@ -361,30 +436,38 @@ export async function POST(request: Request) {
 
       if (direction === "inbound") {
         try {
-          const isAdMessage = Boolean(text && VIM_DO_PHRASE.test(text));
-          console.log("[WA WEBHOOK] inbound — linking lead", { clientSlug: connection.client_slug, contactPhone, isAdMessage });
-          
-          const { leadId, wasPending } = await linkLeadContact(connection.client_slug, contactPhone, msg.pushName ?? null);
-          
-          if (leadId && conversationId) {
-            await queryDb(`UPDATE whatsapp_conversations SET lead_id = $1 WHERE id = $2`, [leadId, conversationId]).catch(e => console.error("Error linking lead to conversation", e));
-          }
+          await processInboundCascade({
+            clientSlug: connection.client_slug,
+            connectionWhatsappNumber: connection.phone_number ?? "",
+            contactPhone,
+            pushName: msg.pushName ?? null,
+            text
+          });
 
-          if (wasPending && leadId) {
-            tryFireCapiForLeadId(leadId, connection.client_slug).catch(() => {});
-          }
+          await setLeadRepliedByPhone(connection.client_slug, contactPhone);
 
           if (await isClientOnCrmPlan(connection.client_slug)) {
             await ensureWhatsappInboundLead(connection.client_slug, contactPhone, msg.pushName ?? null);
           }
-          await setLeadRepliedByPhone(connection.client_slug, contactPhone);
-
-          if (isAdMessage) {
-            tryFireCapiForInbound(connection.client_slug).catch(() => {});
-          }
         } catch (err) {
-          console.error("[WA WEBHOOK] linkLead failed (non-fatal)", { err: String(err) });
+          console.error("[WA WEBHOOK] inbound processing failed (non-fatal)", { err: String(err) });
         }
+
+        // Link conversation to lead if resolved
+        try {
+          const leadRow = await queryDb<{ id: number }>(
+            `SELECT id FROM whatsapp_leads
+             WHERE client_slug = $1 AND lead_phone = $2
+             ORDER BY created_at DESC LIMIT 1`,
+            [connection.client_slug, contactPhone.replace(/\D/g, "")]
+          );
+          if (leadRow.rows[0]?.id) {
+            await queryDb(
+              `UPDATE whatsapp_conversations SET lead_id = $1 WHERE id = $2`,
+              [leadRow.rows[0].id, conversationId]
+            );
+          }
+        } catch { /* non-fatal */ }
       }
 
       try {

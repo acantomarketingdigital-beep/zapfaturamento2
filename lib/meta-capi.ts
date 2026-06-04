@@ -60,6 +60,12 @@ export function buildMetaExternalId(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
+export function buildMetaHashedPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (!digits) return "";
+  return createHash("sha256").update(digits).digest("hex");
+}
+
 export function buildMetaFbc(fbclid?: string | null) {
   const normalized = cleanText(fbclid);
 

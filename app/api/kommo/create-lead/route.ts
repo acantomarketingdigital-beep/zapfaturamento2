@@ -40,6 +40,7 @@ type LeadCaptureApiResponse = {
   metaCapiSuccess: boolean | null;
   metaCapiEventId: string | null;
   metaCapiError: string | null;
+  refCode: string | null;
 };
 
 function toSafePayload(body: unknown): LeadCapturePayload | null {
@@ -255,9 +256,12 @@ export async function POST(request: Request) {
     });
 
     let eventId: number | string | null = null;
+    let refCode: string | null = null;
 
     try {
-      eventId = await insertLeadEvent(normalizedPayload, initialStatus);
+      const insertResult = await insertLeadEvent(normalizedPayload, initialStatus);
+      eventId = insertResult?.leadId ?? null;
+      refCode = insertResult?.refCode ?? null;
     } catch (databaseError) {
       if (isDevelopment) {
         console.error("[capture-api] erro ao salvar lead no banco", {
@@ -307,7 +311,8 @@ export async function POST(request: Request) {
         metaCapiEnabled,
         metaCapiSuccess,
         metaCapiEventId: normalizedPayload.eventId,
-        metaCapiError
+        metaCapiError,
+        refCode
       });
     }
 
@@ -356,7 +361,8 @@ export async function POST(request: Request) {
         metaCapiEnabled,
         metaCapiSuccess,
         metaCapiEventId: normalizedPayload.eventId,
-        metaCapiError
+        metaCapiError,
+        refCode
       });
     } catch (error) {
       kommoError =
@@ -398,7 +404,8 @@ export async function POST(request: Request) {
         metaCapiEnabled,
         metaCapiSuccess,
         metaCapiEventId: normalizedPayload.eventId,
-        metaCapiError
+        metaCapiError,
+        refCode
       });
     }
   } catch (error) {

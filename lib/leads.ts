@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { clientSlugScope, hasDatabaseConfig, queryDb } from "@/lib/db";
 import type { LeadCapturePayload } from "@/lib/utm";
 import { recordBillableLead } from "@/lib/billing-usage";
@@ -59,6 +60,7 @@ export type LeadEventRecord = {
   redirect_url: string;
   is_test: boolean;
   duplicate: boolean;
+  ref_code: string | null;
 };
 
 export type DashboardFilters = {
@@ -124,6 +126,25 @@ const EMPTY_SUMMARY: SummaryMetrics = {
 
 function nullable(value?: string | null) {
   return value?.trim() ? value.trim() : null;
+}
+
+// Avoids visually ambiguous chars (0/O, 1/I/l)
+const REF_CODE_CHARS = "abcdefghjkmnpqrstuvwxyz23456789";
+
+export function generateRefCode(): string {
+  const bytes = randomBytes(6);
+  return Array.from(bytes, (b) => REF_CODE_CHARS[b % REF_CODE_CHARS.length]).join("");
+}
+
+function injectRefCodeIntoRedirectUrl(redirectUrl: string, refCode: string): string {
+  try {
+    const url = new URL(redirectUrl);
+    const existing = url.searchParams.get("text") ?? "";
+    url.searchParams.set("text", `${existing} (Cod: ${refCode})`);
+    return url.toString();
+  } catch {
+    return redirectUrl;
+  }
 }
 
 function isTestLead(payload: LeadEventPayload): boolean {
@@ -233,12 +254,15 @@ export async function insertLeadEvent(
 
   if (existing) {
     console.log(`[leads] Lead duplicado evitado — id=${existing.id} client=${payload.clientSlug}`);
-    return existing.id;
+    return { leadId: existing.id, refCode: null };
   }
 
   const internalCampaignId = payload.internalCampaignId
     ? parseInt(payload.internalCampaignId, 10) || null
     : null;
+
+  const refCode = generateRefCode();
+  const redirectUrlWithCode = injectRefCodeIntoRedirectUrl(payload.redirectUrl, refCode);
 
   const result = await queryDb<{ id: number }>(
     `
@@ -281,13 +305,14 @@ export async function insertLeadEvent(
         internal_campaign_slug,
         creative_id,
         creative_slug,
-        lead_status
+        lead_status,
+        ref_code
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
         $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
         $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
-        $31, $32, $33, $34, $35, $36, $37, $38, $39
+        $31, $32, $33, $34, $35, $36, $37, $38, $39, $40
       )
       RETURNING id
     `,
@@ -323,14 +348,15 @@ export async function insertLeadEvent(
       status.metaCapiSuccess,
       nullable(status.metaCapiEventId),
       nullable(status.metaCapiError),
-      payload.redirectUrl,
+      redirectUrlWithCode,
       isTest,
       false,
       internalCampaignId,
       nullable(payload.internalCampaignSlug),
       payload.internalCreativeId ? parseInt(payload.internalCreativeId, 10) || null : null,
       nullable(payload.internalCreativeSlug),
-      "pending_message"
+      "pending_message",
+      refCode
     ]
   );
 
@@ -338,7 +364,7 @@ export async function insertLeadEvent(
   if (leadId) {
     recordBillableLead({ clientSlug: payload.clientSlug, leadId, source: "whatsapp" }).catch(() => {});
   }
-  return leadId;
+  return leadId ? { leadId, refCode } : null;
 }
 
 export async function linkLeadContact(
@@ -443,6 +469,96 @@ export async function linkLeadContact(
   }
   
   return { leadId: null, wasPending: false };
+}
+
+// ─── Level-1 cascade: exact ref_code match ───────────────────────────────────
+
+export async function linkLeadByRefCode(
+  clientSlug: string,
+  refCode: string,
+  contactPhone: string,
+  name: string | null
+): Promise<{ leadId: number; meta_capi_success: boolean | null } | null> {
+  if (!hasDatabaseConfig()) return null;
+  const digits = contactPhone.replace(/\D/g, "");
+  const code = refCode.trim();
+  if (!digits || !code) return null;
+  const safeName = name?.trim() || null;
+
+  const updated = await queryDb<{ id: number; lead_status: string; meta_capi_success: boolean | null }>(
+    `UPDATE whatsapp_leads
+     SET lead_phone  = $3,
+         lead_name   = COALESCE(lead_name, $4),
+         has_replied = true,
+         replied_at  = COALESCE(replied_at, NOW()),
+         lead_status = CASE WHEN lead_status = 'pending_message' THEN 'novo_lead' ELSE lead_status END
+     WHERE client_slug = $1
+       AND ref_code    = $2
+       AND created_at  > NOW() - INTERVAL '7 days'
+     RETURNING id, lead_status, meta_capi_success`,
+    [clientSlug, code, digits, safeName]
+  );
+
+  if (updated.rows.length === 0) {
+    console.log("[linkLeadByRefCode] code not found", { clientSlug, code });
+    return null;
+  }
+
+  const row = updated.rows[0];
+  console.log("[linkLeadByRefCode] exact match", { leadId: row.id, code });
+  return { leadId: row.id, meta_capi_success: row.meta_capi_success };
+}
+
+// ─── Level-3 cascade: match by connection's WhatsApp number (campaign route) ─
+
+export async function linkLeadByConnectionWhatsapp(
+  clientSlug: string,
+  connectionWhatsappNumber: string,
+  contactPhone: string,
+  name: string | null
+): Promise<{ leadId: number; wasPending: boolean } | null> {
+  if (!hasDatabaseConfig()) return null;
+  const digits = contactPhone.replace(/\D/g, "");
+  const waDigits = connectionWhatsappNumber.replace(/\D/g, "");
+  if (!digits || !waDigits) return null;
+  const safeName = name?.trim() || null;
+
+  try {
+    const updated = await queryDb<{ id: number; lead_status: string }>(
+      `UPDATE whatsapp_leads
+       SET lead_phone  = $3,
+           lead_name   = COALESCE(lead_name, $4),
+           has_replied = true,
+           replied_at  = COALESCE(replied_at, NOW())
+       WHERE id = (
+         SELECT id FROM whatsapp_leads
+         WHERE client_slug = $1
+           AND REGEXP_REPLACE(whatsapp_number, '[^0-9]', '', 'g') LIKE '%' || $2
+           AND lead_phone IS NULL
+           AND created_at > NOW() - INTERVAL '24 hours'
+         ORDER BY created_at DESC
+         LIMIT 1
+       )
+       RETURNING id, lead_status`,
+      [clientSlug, waDigits, digits, safeName]
+    );
+
+    if (updated.rows.length === 0) {
+      console.log("[linkLeadByConnectionWhatsapp] no unlinked lead for wa_number", { clientSlug, waDigits });
+      return null;
+    }
+
+    const row = updated.rows[0];
+    const wasPending = row.lead_status === "pending_message";
+    if (wasPending) {
+      await queryDb(`UPDATE whatsapp_leads SET lead_status = 'novo_lead' WHERE id = $1`, [row.id]);
+    }
+    console.log("[linkLeadByConnectionWhatsapp] linked", { leadId: row.id, waDigits });
+    return { leadId: row.id, wasPending };
+  } catch (err) {
+    console.error("[linkLeadByConnectionWhatsapp] error", err);
+    return null;
+  }
 }
 
 export async function getLeadByIdForCapi(leadId: number): Promise<LeadEventRecord | null> {
