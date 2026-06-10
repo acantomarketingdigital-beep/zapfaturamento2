@@ -329,6 +329,11 @@ export async function DashboardSidebar({
           </div>
         </div>
 
+        <div className="kreo-product-badge" style={{ marginTop: 10, marginBottom: 4 }}>
+          <span className="kreo-product-badge__dot" />
+          <span className="kreo-product-badge__label">ZapFaturamento</span>
+        </div>
+
         <nav className="dashboard-nav">
           {filteredGroups.map((group) => (
             <Fragment key={group.section}>
