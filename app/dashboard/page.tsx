@@ -85,38 +85,25 @@ export default async function DashboardPage({
       />
 
       <section className="dashboard-main">
-        <header className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 mb-2">
-              ZapFaturamento
-            </p>
-            <h1 className="text-2xl font-bold text-slate-100 tracking-tight">
-              Leads, campanhas e resultados
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Acompanhe a origem dos leads e a eficiência das campanhas que terminam em conversa no WhatsApp.
-            </p>
-          </div>
-          <div className="flex gap-2 items-start flex-wrap mt-1">
-            <AutoRefresh intervalSeconds={30} />
-            {user && user.role === "agency_admin" && data.databaseReady && (
-              <CleanTestLeadsButton clients={data.filterOptions.clients} />
-            )}
-            {!data.databaseReady && (
-              <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/8 px-3 py-1.5 text-xs font-medium text-amber-400">
-                Configure <code className="font-mono text-amber-300">DATABASE_URL</code>
-              </span>
-            )}
-            <span
-              title="O ZapFaturamento registra acessos reais ao link de redirecionamento. A Meta pode apresentar números diferentes por conta de atribuição, bloqueadores de rastreamento e janelas de conversão."
-              className="flex h-8 w-8 cursor-help items-center justify-center rounded-lg border border-slate-800 text-slate-600 transition-colors hover:border-slate-700 hover:text-slate-400"
-            >
-              <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
+        <div className="flex items-center gap-2 justify-end flex-wrap">
+          <AutoRefresh intervalSeconds={30} />
+          {user && user.role === "agency_admin" && data.databaseReady && (
+            <CleanTestLeadsButton clients={data.filterOptions.clients} />
+          )}
+          {!data.databaseReady && (
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/8 px-3 py-1.5 text-xs font-medium text-amber-400">
+              Configure <code className="font-mono text-amber-300">DATABASE_URL</code>
             </span>
-          </div>
-        </header>
+          )}
+          <span
+            title="O ZapFaturamento registra acessos reais ao link de redirecionamento. A Meta pode apresentar números diferentes por conta de atribuição, bloqueadores de rastreamento e janelas de conversão."
+            className="flex h-8 w-8 cursor-help items-center justify-center rounded-lg border border-slate-800 text-slate-600 transition-colors hover:border-slate-700 hover:text-slate-400"
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </span>
+        </div>
 
         {!allDone && onboarding && (
           <div className="rounded-xl border border-cyan-400/15 bg-cyan-400/3 p-5">

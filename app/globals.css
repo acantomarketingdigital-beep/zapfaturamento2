@@ -552,9 +552,11 @@ code {
 
 .dashboard-card h2 {
   margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--dark);
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #64748b;
 }
 
 .dashboard-card h3,
@@ -3944,35 +3946,37 @@ code {
 }
 
 .dashboard-topbar {
-  padding: 18px 20px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(229, 231, 235, 0.95);
-  box-shadow: var(--shadow);
+  padding: 0 0 8px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .dashboard-topbar h2 {
-  margin-top: 5px;
-  font-size: clamp(1.2rem, 2vw, 1.55rem);
-  letter-spacing: -0.025em;
-  font-weight: 700;
+  margin-top: 0;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+  color: #f1f5f9;
 }
 
 .dashboard-topbar p {
   max-width: 680px;
   font-size: 0.84rem;
+  color: #64748b;
 }
 
 .dashboard-card,
 .dashboard-stat-card {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(229, 231, 235, 0.9);
-  box-shadow: var(--shadow);
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(30, 41, 59, 0.8);
+  box-shadow: none;
 }
 
 .dashboard-card {
-  padding: 18px 20px;
-  border-radius: 18px;
+  padding: 20px 22px;
+  border-radius: 0.75rem;
   gap: 14px;
 }
 
