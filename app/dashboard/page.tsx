@@ -109,7 +109,7 @@ export default async function DashboardPage({
         </header>
 
         {!allDone && onboarding && (
-          <article className="dashboard-card" style={{ marginBottom: 20, padding: "1.5rem", border: "1px solid rgba(var(--brand-rgb, 22,163,74),0.25)", background: "rgba(var(--brand-rgb, 22,163,74),0.03)" }}>
+          <article className="dashboard-card" style={{ marginBottom: 20, padding: "1.5rem", border: "1px solid rgba(34,211,238,0.15)", background: "rgba(34,211,238,0.03)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <div>
                 <span style={{ display: "inline-block", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--brand)", marginBottom: 4 }}>

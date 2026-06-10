@@ -133,15 +133,38 @@ body.app-body {
 /* Alerts */
 .dashboard-alert--info { background: rgba(34,211,238,0.05); border-color: rgba(34,211,238,0.15); color: #22d3ee; }
 
-/* Input focus */
-.dashboard-field input:not([type="radio"]):not([type="checkbox"]):focus,
+/* ── FORM INPUTS: forçar dark com !important para sobrescrever rendering nativo do browser ── */
+.dashboard-field input,
+.dashboard-field select,
+.dashboard-field textarea,
+.dashboard-searchbar input {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(34, 211, 238, 0.15) !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+.dashboard-field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M6 8L0 0h12z'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  padding-right: 32px !important;
+}
+.dashboard-field select option,
+.dashboard-field select optgroup {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+.dashboard-field input::placeholder,
+.dashboard-searchbar input::placeholder { color: #475569 !important; }
+.dashboard-field input:focus,
 .dashboard-field select:focus,
 .dashboard-field textarea:focus,
 .dashboard-searchbar input:focus {
-  border-color: #22d3ee;
-  box-shadow: 0 0 0 3px rgba(34,211,238,0.12);
+  border-color: #22d3ee !important;
+  box-shadow: 0 0 0 3px rgba(34,211,238,0.12) !important;
+  outline: none !important;
 }
-.dashboard-searchbar input { background: var(--surface); color: var(--text); }
 
 /* Connections */
 .conexao-card { background: #0f172a; border-color: rgba(34,211,238,0.08); }
@@ -221,7 +244,8 @@ a { color: inherit; text-decoration: none; }
 
 code {
   font-family: var(--font-mono), var(--font-mono-fallback);
-  background: rgba(15, 23, 42, 0.06);
+  background: rgba(34, 211, 238, 0.08);
+  color: #22d3ee;
   padding: 0.1rem 0.3rem;
   border-radius: 4px;
   font-size: 0.82em;
