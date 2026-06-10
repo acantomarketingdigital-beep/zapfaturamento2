@@ -43,7 +43,7 @@
   --radius-sm: 12px;
   --radius: 16px;
   --radius-lg: 20px;
-  --sidebar-width: 250px;
+  --sidebar-width: 256px;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -498,7 +498,7 @@ code {
 
 /* MAIN CONTENT */
 .dashboard-main {
-  padding: 28px 32px;
+  padding: 24px 32px;
   display: grid;
   gap: 20px;
   align-content: start;
@@ -1744,9 +1744,9 @@ code {
     color: var(--dark);
   }
 
-  /* Conteúdo principal: espaço para o hamburger no topo */
+  /* Conteúdo principal: pt-14 do MainContent já cobre o topbar */
   .dashboard-main {
-    padding: 72px 16px 24px;
+    padding: 20px 16px 24px;
   }
 
   /* Grids */
@@ -1790,7 +1790,7 @@ code {
   }
 
   .dashboard-main {
-    padding: 68px 12px 20px;
+    padding: 16px 12px 20px;
   }
 
   .dashboard-topbar h2 {

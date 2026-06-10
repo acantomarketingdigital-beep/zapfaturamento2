@@ -5,53 +5,57 @@ type DashboardFiltersProps = {
   options: FilterOptions;
 };
 
-export function DashboardFiltersPanel({
-  filters,
-  options
-}: DashboardFiltersProps) {
+const input =
+  "w-full rounded-lg border border-slate-800 bg-[#050505] px-3 py-2 text-sm text-gray-200 placeholder:text-slate-600 focus:outline-none focus:border-cyan-400/50 focus:ring-1 focus:ring-cyan-400/20 appearance-none transition-colors";
+
+const label = "text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-1 block";
+
+export function DashboardFiltersPanel({ filters, options }: DashboardFiltersProps) {
   return (
-    <article className="dashboard-card">
-      <div className="dashboard-card__header">
-        <h2>Filtros</h2>
-      </div>
-      <form className="dashboard-filters-grid" method="get">
-        <label className="dashboard-field">
-          <span>Busca</span>
+    <div className="rounded-xl border border-slate-800/80 bg-[#0a0a0a] p-5">
+      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 mb-4">
+        Filtros
+      </p>
+      <form
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
+        method="get"
+      >
+        <label className="flex flex-col">
+          <span className={label}>Busca</span>
           <input
             type="text"
             name="q"
-            placeholder="Clinica, slug, WhatsApp, campanha, criativo ou publico"
+            placeholder="Clínica, campanha, criativo..."
             defaultValue={filters.query}
+            className={input}
           />
         </label>
 
-        <label className="dashboard-field">
-          <span>Periodo</span>
-          <select name="period" defaultValue={filters.period}>
-            <option value="all">Todo o periodo</option>
+        <label className="flex flex-col">
+          <span className={label}>Período</span>
+          <select name="period" defaultValue={filters.period} className={input}>
+            <option value="all">Todo o período</option>
             <option value="today">Hoje</option>
             <option value="yesterday">Ontem</option>
-            <option value="7d">Ultimos 7 dias</option>
-            <option value="30d">Ultimos 30 dias</option>
-            <option value="90d">Ultimos 90 dias</option>
+            <option value="7d">Últimos 7 dias</option>
+            <option value="30d">Últimos 30 dias</option>
+            <option value="90d">Últimos 90 dias</option>
           </select>
         </label>
 
-        <label className="dashboard-field">
-          <span>Cliente</span>
-          <select name="client" defaultValue={filters.clientSlug}>
-            <option value="">Todas</option>
-            {options.clients.map((client) => (
-              <option key={client.value} value={client.value}>
-                {client.label}
-              </option>
+        <label className="flex flex-col">
+          <span className={label}>Cliente</span>
+          <select name="client" defaultValue={filters.clientSlug} className={input}>
+            <option value="">Todos</option>
+            {options.clients.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </select>
         </label>
 
-        <label className="dashboard-field">
-          <span>Origem</span>
-          <select name="origin" defaultValue={filters.origin}>
+        <label className="flex flex-col">
+          <span className={label}>Origem</span>
+          <select name="origin" defaultValue={filters.origin} className={input}>
             <option value="">Todas</option>
             <option value="Meta Ads">Meta Ads</option>
             <option value="Google Ads">Google Ads</option>
@@ -59,45 +63,39 @@ export function DashboardFiltersPanel({
           </select>
         </label>
 
-        <label className="dashboard-field">
-          <span>Campanha</span>
-          <select name="campaign" defaultValue={filters.campaign}>
+        <label className="flex flex-col">
+          <span className={label}>Campanha</span>
+          <select name="campaign" defaultValue={filters.campaign} className={input}>
             <option value="">Todas</option>
-            {options.campaigns.map((campaign) => (
-              <option key={campaign} value={campaign}>
-                {campaign}
-              </option>
+            {options.campaigns.map((c) => (
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </label>
 
-        <label className="dashboard-field">
-          <span>Criativo</span>
-          <select name="creative" defaultValue={filters.creative}>
+        <label className="flex flex-col">
+          <span className={label}>Criativo</span>
+          <select name="creative" defaultValue={filters.creative} className={input}>
             <option value="">Todos</option>
-            {options.creatives.map((creative) => (
-              <option key={creative} value={creative}>
-                {creative}
-              </option>
+            {options.creatives.map((c) => (
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </label>
 
-        <label className="dashboard-field">
-          <span>Publico / conjunto</span>
-          <select name="audience" defaultValue={filters.audience}>
+        <label className="flex flex-col">
+          <span className={label}>Público / conjunto</span>
+          <select name="audience" defaultValue={filters.audience} className={input}>
             <option value="">Todos</option>
-            {options.audiences.map((audience) => (
-              <option key={audience} value={audience}>
-                {audience}
-              </option>
+            {options.audiences.map((a) => (
+              <option key={a} value={a}>{a}</option>
             ))}
           </select>
         </label>
 
-        <label className="dashboard-field">
-          <span>Status Kommo</span>
-          <select name="kommo" defaultValue={filters.kommoStatus}>
+        <label className="flex flex-col">
+          <span className={label}>Status Kommo</span>
+          <select name="kommo" defaultValue={filters.kommoStatus} className={input}>
             <option value="all">Todos</option>
             <option value="success">Sucesso</option>
             <option value="error">Erro</option>
@@ -106,25 +104,31 @@ export function DashboardFiltersPanel({
           </select>
         </label>
 
-        <label className="dashboard-field">
-          <span>Tipo de lead</span>
-          <select name="lead_type" defaultValue={filters.leadType}>
+        <label className="flex flex-col">
+          <span className={label}>Tipo de lead</span>
+          <select name="lead_type" defaultValue={filters.leadType} className={input}>
             <option value="all">Todos os cliques</option>
-            <option value="whatsapp">Iniciaram conversa no WhatsApp</option>
-            <option value="real">Apenas reais (sem teste)</option>
+            <option value="whatsapp">Iniciaram WhatsApp</option>
+            <option value="real">Apenas reais</option>
             <option value="test">Apenas teste</option>
           </select>
         </label>
 
-        <div className="dashboard-actions">
-          <button type="submit" className="dashboard-button">
-            Aplicar filtros
+        <div className="flex flex-col justify-end gap-2">
+          <button
+            type="submit"
+            className="w-full rounded-lg bg-cyan-400/10 border border-cyan-400/20 text-cyan-400 text-sm font-semibold px-4 py-2 hover:bg-cyan-400/15 transition-colors"
+          >
+            Aplicar
           </button>
-          <a href="/dashboard" className="dashboard-button dashboard-button--ghost">
+          <a
+            href="/dashboard"
+            className="w-full text-center rounded-lg border border-slate-800 text-slate-500 text-sm font-medium px-4 py-2 hover:text-slate-300 hover:border-slate-700 transition-colors"
+          >
             Limpar
           </a>
         </div>
       </form>
-    </article>
+    </div>
   );
 }
