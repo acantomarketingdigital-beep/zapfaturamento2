@@ -23,6 +23,25 @@
   body { @apply bg-[#020817] text-slate-200 antialiased; }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   FONT UNIVERSAL — Inter (mesma família visual do Geist/Pulse)
+   ═══════════════════════════════════════════════════════════ */
+*, *::before, *::after {
+  font-family: var(--font-sans), "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+}
+code, kbd, samp, pre {
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CARD UNIVERSAL — dark Pulse (use class card-custom)
+   ═══════════════════════════════════════════════════════════ */
+.card-custom {
+  border: 1px solid #1e293b !important;
+  border-radius: 12px !important;
+  background-color: #0a0a0a !important;
+}
+
 /* DESIGN TOKENS — KREO DARK */
 :root {
   color-scheme: dark;
@@ -498,10 +517,11 @@ code {
 
 /* MAIN CONTENT */
 .dashboard-main {
-  padding: 24px 32px;
+  padding: 24px;
   display: grid;
   gap: 20px;
   align-content: start;
+  max-width: 100%;
 }
 
 .dashboard-topbar {
@@ -3941,8 +3961,8 @@ code {
 }
 
 .dashboard-main {
-  padding: 20px 22px 28px;
-  gap: 16px;
+  padding: 24px;
+  gap: 20px;
 }
 
 .dashboard-topbar {

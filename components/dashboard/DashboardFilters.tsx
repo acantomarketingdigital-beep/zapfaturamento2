@@ -6,18 +6,18 @@ type DashboardFiltersProps = {
 };
 
 const input =
-  "w-full rounded-lg border border-slate-800 bg-[#050505] px-3 py-2 text-sm text-gray-200 placeholder:text-slate-600 focus:outline-none focus:border-cyan-400/50 focus:ring-1 focus:ring-cyan-400/20 appearance-none transition-colors";
+  "w-full h-9 rounded-lg border border-slate-800 bg-[#050505] px-3 text-sm text-gray-200 placeholder:text-slate-600 focus:outline-none focus:border-cyan-400/50 focus:ring-1 focus:ring-cyan-400/20 appearance-none transition-colors";
 
 const label = "text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-1 block";
 
 export function DashboardFiltersPanel({ filters, options }: DashboardFiltersProps) {
   return (
-    <div className="rounded-xl border border-slate-800/80 bg-[#0a0a0a] p-5">
-      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 mb-4">
+    <div className="rounded-xl border border-slate-800/80 bg-[#0a0a0a] p-4">
+      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 mb-3">
         Filtros
       </p>
       <form
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2"
         method="get"
       >
         <label className="flex flex-col">
