@@ -1,3 +1,28 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #020817;
+  --color-foreground: #e2e8f0;
+  --color-card: #0f172a;
+  --color-primary: #22d3ee;
+  --color-primary-foreground: #020817;
+  --color-secondary: #1e293b;
+  --color-muted: #1e293b;
+  --color-muted-foreground: #64748b;
+  --color-accent: #1e293b;
+  --color-accent-foreground: #22d3ee;
+  --color-border: #1e293b;
+  --color-input: #1e293b;
+  --color-ring: #22d3ee;
+  --color-sidebar: #080f1e;
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+  body { @apply bg-[#020817] text-slate-200 antialiased; }
+}
+
 /* DESIGN TOKENS — KREO DARK */
 :root {
   color-scheme: dark;
@@ -251,11 +276,10 @@ code {
   font-size: 0.82em;
 }
 
-/* LAYOUT SHELL */
+/* LAYOUT SHELL — sidebar agora é fixed no root layout */
 .dashboard-shell {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  display: block;
   background: var(--bg);
 }
 
@@ -1618,10 +1642,7 @@ code {
 /* ─── TABLET / MOBILE BREAKPOINT ─── */
 @media (max-width: 960px) {
 
-  /* Shell: sidebar sai do flow, conteúdo ocupa tudo */
-  .dashboard-shell {
-    grid-template-columns: 1fr;
-  }
+  /* Shell: sidebar é fixed no root layout */
 
   /* Sidebar: fixa, fora da tela por padrão */
   .dashboard-sidebar {
@@ -3855,7 +3876,7 @@ code {
 
 .dashboard-shell {
   min-height: 100vh;
-  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  display: block;
   background: transparent;
 }
 
@@ -4229,10 +4250,6 @@ code {
     width: auto;
     height: auto;
     margin: 14px 14px 0;
-  }
-
-  .dashboard-shell {
-    grid-template-columns: 1fr;
   }
 
   .dashboard-main {

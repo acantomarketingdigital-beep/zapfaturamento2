@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Manrope } from "next/font/google";
 import "./globals.css";
+import AppSidebar from "@/components/layout/AppSidebar";
+import MainContent from "@/components/layout/MainContent";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -47,8 +49,9 @@ export default function RootLayout({
     <html lang="pt-BR" className={`${manrope.variable} ${jetbrainsMono.variable}`}>
       <head>
       </head>
-      <body className="app-body">
-        {children}
+      <body className="app-body bg-[#020817] antialiased">
+        <AppSidebar />
+        <MainContent>{children}</MainContent>
       </body>
     </html>
   );
