@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/dashboard-auth";
 import { getCachedBillingStatus } from "@/lib/billing";
 import { hasDatabaseConfig } from "@/lib/db";
+import DashboardHeader from "@/components/layout/DashboardHeader";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const user = await getCurrentUser();
@@ -24,5 +25,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     // billing query failed (e.g. migration not yet applied) — allow through
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <DashboardHeader />
+      {children}
+    </>
+  );
 }
