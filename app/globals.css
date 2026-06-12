@@ -4135,9 +4135,9 @@ code {
 .dashboard-auth-card {
   display: grid;
   gap: 16px;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(229, 231, 235, 0.95);
-  box-shadow: 0 4px 32px rgba(15, 23, 42, 0.08);
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(30, 41, 59, 0.8);
+  box-shadow: none;
 }
 
 .dashboard-auth-card__logo {
@@ -4157,8 +4157,10 @@ code {
 .dashboard-field textarea,
 .dashboard-searchbar input {
   height: 40px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  background: #050505;
+  color: #e2e8f0;
+  border-color: rgba(30, 41, 59, 0.8);
 }
 
 .dashboard-searchbar {

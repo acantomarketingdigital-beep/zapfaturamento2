@@ -149,7 +149,7 @@ export function DashboardLogin({ error, configured }: DashboardLoginProps) {
   const btnPrimary = "w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-slate-900 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 shadow-lg shadow-cyan-500/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-2";
 
   return (
-    <div className="min-h-screen bg-[#020817] flex items-center justify-center relative overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-[#020817] flex items-center justify-center overflow-hidden">
       {/* Background glows */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-cyan-500/5 blur-[100px]" />
       <div className="absolute bottom-1/4 left-1/3 h-64 w-64 rounded-full bg-blue-600/[0.08] blur-[80px]" />
