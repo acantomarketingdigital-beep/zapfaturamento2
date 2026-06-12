@@ -3199,14 +3199,14 @@ code {
 
 .zf-button--secondary,
 .zf-button--ghost {
-  background: white;
-  border-color: rgba(209, 213, 219, 0.9);
-  color: var(--dark);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
 }
 
 .zf-button--secondary:hover,
 .zf-button--ghost:hover {
-  background: #f3f4f6;
+  background: rgba(255,255,255,0.10);
 }
 
 .zf-badge {
@@ -3314,9 +3314,9 @@ code {
 .zf-feature-card,
 .zf-resource-card,
 .zf-pricing-card {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(229, 231, 235, 0.95);
-  box-shadow: var(--shadow);
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
 }
 
 .zf-dashboard-mockup {
@@ -3353,6 +3353,7 @@ code {
 }
 
 .zf-dashboard-mockup__pulse {
+  color: #94a3b8 !important;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -3474,12 +3475,12 @@ code {
 .zf-trust-strip__inner {
   padding: 18px 22px;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(229, 231, 235, 0.8);
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(30, 41, 59, 0.8);
 }
 
 .zf-trust-strip__inner > span {
-  color: #374151;
+  color: #94a3b8;
   font-weight: 600;
 }
 
@@ -3504,7 +3505,7 @@ code {
 }
 
 .zf-section--muted {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(243, 244, 246, 0.8) 100%);
+  background: linear-gradient(180deg, rgba(15,23,42,0) 0%, rgba(8,15,30,0.6) 100%);
 }
 
 .zf-section-heading {

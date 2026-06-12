@@ -48,6 +48,7 @@ export default function SidebarClient({
   const [open, setOpen] = useState(false);
 
   const isAuth =
+    pathname === "/" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/redefinir") ||
