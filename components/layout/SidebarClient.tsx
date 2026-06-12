@@ -75,9 +75,9 @@ export default function SidebarClient({
         <Image
           src="/images/kreo-logo.png"
           alt="WHATS KREO"
-          width={160}
-          height={32}
-          className="object-contain h-8 w-auto"
+          width={220}
+          height={52}
+          className="object-contain h-12 w-full"
           priority
         />
         <button
@@ -216,9 +216,9 @@ export default function SidebarClient({
         <Image
           src="/images/kreo-logo.png"
           alt="WHATS KREO"
-          width={120}
-          height={24}
-          className="object-contain h-6 w-auto"
+          width={160}
+          height={36}
+          className="object-contain h-9 w-auto"
           priority
         />
       </div>
