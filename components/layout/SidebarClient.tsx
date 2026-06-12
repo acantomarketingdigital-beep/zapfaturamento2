@@ -73,8 +73,8 @@ export default function SidebarClient({
       {/* Logo */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/60">
         <Image
-          src="/images/logo-horizontal.png"
-          alt="ZapFaturamento"
+          src="/images/kreo-logo.png"
+          alt="WHATS KREO"
           width={160}
           height={32}
           className="object-contain h-8 w-auto"
@@ -94,7 +94,7 @@ export default function SidebarClient({
         <div className="flex items-center gap-2 rounded-lg bg-cyan-400/5 border border-cyan-400/10 px-3 py-1.5">
           <span className="flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
           <span className="text-[10px] font-semibold text-cyan-400 tracking-widest uppercase">
-            ZapFaturamento
+            WHATS KREO
           </span>
         </div>
       </div>
@@ -214,8 +214,8 @@ export default function SidebarClient({
           <Menu className="h-5 w-5" />
         </button>
         <Image
-          src="/images/logo-horizontal.png"
-          alt="ZapFaturamento"
+          src="/images/kreo-logo.png"
+          alt="WHATS KREO"
           width={120}
           height={24}
           className="object-contain h-6 w-auto"
