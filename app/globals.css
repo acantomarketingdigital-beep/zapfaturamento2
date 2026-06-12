@@ -16,21 +16,38 @@
   --color-ring: #22d3ee;
   --color-sidebar: #080f1e;
   --radius: 0.75rem;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
 }
 
 @layer base {
   * { box-sizing: border-box; }
   body { @apply bg-[#020817] text-slate-200 antialiased; }
+  html { @apply font-sans; }
 }
 
 /* ═══════════════════════════════════════════════════════════
-   FONT UNIVERSAL — Inter (mesma família visual do Geist/Pulse)
+   FONT UNIVERSAL — Geist (fonte exata do KREO Pulse)
    ═══════════════════════════════════════════════════════════ */
 *, *::before, *::after {
-  font-family: var(--font-sans), "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+  font-family: var(--font-geist-sans), var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif !important;
 }
 code, kbd, samp, pre {
-  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace !important;
+  font-family: var(--font-geist-mono), var(--font-mono), ui-monospace, monospace !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   KREO PULSE UTILITIES
+   ═══════════════════════════════════════════════════════════ */
+.kreo-glow {
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.15), 0 0 40px rgba(34, 211, 238, 0.05);
+}
+.kreo-glow-text {
+  text-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
+}
+.kreo-gradient {
+  background: linear-gradient(135deg, #22d3ee 0%, #3b82f6 100%);
 }
 
 /* ═══════════════════════════════════════════════════════════
