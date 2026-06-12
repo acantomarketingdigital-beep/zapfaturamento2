@@ -3224,8 +3224,9 @@ code {
 }
 
 .zf-badge--soft {
-  background: white;
-  border: 1px solid rgba(34, 197, 94, 0.12);
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  color: #94a3b8;
 }
 
 .zf-hero {
@@ -3307,7 +3308,7 @@ code {
   display: block;
   padding: 10px 12px;
   border-radius: 12px;
-  background: #f3f4f6;
+  background: rgba(8, 15, 30, 0.8);
 }
 
 .zf-dashboard-mockup,
@@ -3595,8 +3596,8 @@ code {
 }
 
 .zf-plan-card {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1.5px solid rgba(229, 231, 235, 0.95);
+  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(30, 41, 59, 0.9);
   border-radius: 20px;
   padding: 36px 40px;
   max-width: 420px;
@@ -3858,9 +3859,9 @@ code {
   letter-spacing: 0.04em;
   padding: 3px 9px;
   border-radius: 99px;
-  background: #f3f4f6;
-  border: 1px solid rgba(229, 231, 235, 0.9);
-  color: #374151;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  color: #94a3b8;
 }
 
 /* ── INTEGRATIONS STRIP ──────────────────────────────────── */
@@ -3925,10 +3926,10 @@ code {
   margin: 12px 0 12px 12px;
   height: calc(100vh - 24px);
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(8, 15, 30, 0.95);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(229, 231, 235, 0.9);
-  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(30, 41, 59, 0.8);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .sidebar-brand {
