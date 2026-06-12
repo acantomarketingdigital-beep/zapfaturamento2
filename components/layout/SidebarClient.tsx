@@ -71,13 +71,13 @@ export default function SidebarClient({
   const sidebarContent = (
     <aside className="flex h-full w-64 flex-col border-r border-slate-800/60 bg-[#080f1e]">
       {/* Logo */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/60">
+      <div className="flex items-center justify-between px-3 py-3 border-b border-slate-800/60">
         <Image
           src="/images/kreo-logo.png"
           alt="WHATS KREO"
-          width={220}
-          height={52}
-          className="object-contain h-12 w-full"
+          width={200}
+          height={60}
+          className="object-contain"
           priority
         />
         <button
@@ -216,9 +216,9 @@ export default function SidebarClient({
         <Image
           src="/images/kreo-logo.png"
           alt="WHATS KREO"
-          width={160}
-          height={36}
-          className="object-contain h-9 w-auto"
+          width={100}
+          height={30}
+          className="object-contain"
           priority
         />
       </div>
