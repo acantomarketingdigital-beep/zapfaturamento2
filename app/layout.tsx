@@ -25,7 +25,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "ZapFaturamento",
+  title: "Whats Redirect",
   description:
     "CRM, tracking, WhatsApp, faturamento e ROAS para operacoes que vendem por conversa.",
   alternates: {

@@ -3112,9 +3112,9 @@ code {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(8, 15, 30, 0.92);
   backdrop-filter: blur(18px);
-  border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+  border-bottom: 1px solid rgba(30, 41, 59, 0.8);
 }
 
 .zf-site-header__inner {
@@ -3134,7 +3134,7 @@ code {
 
 .zf-site-header__logo--desktop {
   width: auto;
-  height: 88px;
+  height: 48px;
 }
 
 .zf-site-header__logo--mobile {
@@ -3160,7 +3160,7 @@ code {
 }
 
 .zf-site-header__link {
-  color: #4b5563;
+  color: #94a3b8;
   font-size: 0.92rem;
   font-weight: 600;
   transition: color 0.2s ease;

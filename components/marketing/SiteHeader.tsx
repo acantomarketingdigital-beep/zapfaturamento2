@@ -12,7 +12,7 @@ export function SiteHeader() {
   return (
     <header className="zf-site-header">
       <div className="zf-site-header__inner">
-        <Link href="/" className="zf-site-header__brand" aria-label="Zap Faturamento">
+        <Link href="/" className="zf-site-header__brand" aria-label="Whats Redirect">
           <BrandLogo
             variant="horizontal"
             className="zf-site-header__logo zf-site-header__logo--desktop"

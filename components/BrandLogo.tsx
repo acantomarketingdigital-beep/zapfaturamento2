@@ -15,10 +15,10 @@ export function BrandLogo({
 
   return (
     <Image
-      src={isIcon ? "/images/favicon.png" : "/images/logo-horizontal.png"}
-      alt="Zap Faturamento"
-      width={isIcon ? 52 : 440}
-      height={isIcon ? 52 : 88}
+      src="/images/kreo-logo.png"
+      alt="Whats Redirect"
+      width={isIcon ? 52 : 200}
+      height={isIcon ? 52 : 60}
       priority={priority}
       className={className}
     />

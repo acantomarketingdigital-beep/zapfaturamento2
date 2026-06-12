@@ -158,7 +158,7 @@ export default function HomePage() {
       <section className="zf-hero">
         <div className="zf-container zf-hero__grid">
           <div className="zf-hero__content">
-            <span className="zf-badge">Zap Faturamento</span>
+            <span className="zf-badge">Whats Redirect</span>
             <h1>Do clique no anúncio ao fechamento no WhatsApp.</h1>
             <p className="zf-hero__sub">
               Rastreamento completo, inbox nativo, criativo campeão identificado e múltiplos números por campanha — tudo em um único painel.
@@ -452,7 +452,7 @@ export default function HomePage() {
             <span className="zf-badge zf-badge--soft">Lead Express</span>
             <h2>Formulário de captação que recebe tráfego direto do Meta e do Google</h2>
             <p>
-              Crie formulários hospedados no ZapFaturamento e aponte seus anúncios direto para eles — sem Unbounce, sem Elementor, sem ferramenta extra. O lead entra no Kanban com rastreamento completo e CAPI automático.
+              Crie formulários hospedados no WhatsRedirect e aponte seus anúncios direto para eles — sem Unbounce, sem Elementor, sem ferramenta extra. O lead entra no Kanban com rastreamento completo e CAPI automático.
             </p>
           </div>
 
@@ -527,7 +527,7 @@ export default function HomePage() {
           {/* Benefits grid */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginTop: 32 }}>
             {[
-              { title: "Sem ferramenta externa", text: "Formulário hospedado no ZapFaturamento. Sem Unbounce, Webflow ou Elementor." },
+              { title: "Sem ferramenta externa", text: "Formulário hospedado no WhatsRedirect. Sem Unbounce, Webflow ou Elementor." },
               { title: "Rastreamento completo", text: "UTMs, ad_id e gclid capturados com cada lead automaticamente." },
               { title: "CAPI automático", text: "Evento Lead enviado para o Meta via API de Conversões sem configuração manual." },
               { title: "Funciona no Google Ads", text: "Use o link do formulário como URL de destino. Gclid capturado automaticamente." },
@@ -617,7 +617,7 @@ export default function HomePage() {
               <span className="zf-badge zf-badge--soft">Meta CAPI · Público automático</span>
               <h2 style={{ marginTop: 14 }}>Lead fechado no Kanban cria público de Purchase na Meta automaticamente</h2>
               <p style={{ color: "var(--muted)", lineHeight: 1.7, marginBottom: 20 }}>
-                Quando você marca um lead como <strong>Pago</strong> no Kanban, o ZapFaturamento dispara um evento de Purchase para a Meta via CAPI — sem pixel, sem tag manager, sem configuração manual.
+                Quando você marca um lead como <strong>Pago</strong> no Kanban, o WhatsRedirect dispara um evento de Purchase para a Meta via CAPI — sem pixel, sem tag manager, sem configuração manual.
               </p>
               <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", display: "flex", flexDirection: "column", gap: 10 }}>
                 {[
@@ -706,14 +706,14 @@ export default function HomePage() {
 
             {/* CARD CRM */}
             <div style={{
-              background: "#fff",
+              background: "var(--surface)",
               border: "2.5px solid var(--brand)",
               borderRadius: 20,
               padding: "32px 28px",
               display: "flex",
               flexDirection: "column",
               gap: 18,
-              boxShadow: "0 8px 40px rgba(22,163,74,0.13)",
+              boxShadow: "0 8px 40px rgba(34,211,238,0.13)",
               position: "relative",
             }}>
               <div style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", background: "var(--brand)", color: "#fff", fontSize: "0.62rem", fontWeight: 800, letterSpacing: "0.06em", padding: "3px 14px", borderRadius: 20, whiteSpace: "nowrap" }}>
@@ -776,14 +776,14 @@ export default function HomePage() {
 
             {/* CARD AGÊNCIA */}
             <div style={{
-              background: "#fff",
-              border: "1.5px solid var(--border, #e5e7eb)",
+              background: "var(--surface)",
+              border: "1.5px solid var(--border)",
               borderRadius: 20,
               padding: "32px 28px",
               display: "flex",
               flexDirection: "column",
               gap: 18,
-              boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+              boxShadow: "0 2px 12px rgba(0,0,0,0.3)",
             }}>
               <div>
                 <div style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted)", marginBottom: 6 }}>
