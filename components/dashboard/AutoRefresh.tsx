@@ -88,13 +88,13 @@ export function AutoRefresh({ intervalSeconds = 30 }: Props) {
       <button
         onClick={() => setActive((a) => !a)}
         style={{
-          background: "none",
-          border: "1px solid var(--border)",
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(30,41,59,0.8)",
           borderRadius: 6,
           padding: "2px 8px",
           fontSize: "0.72rem",
           cursor: "pointer",
-          color: "var(--muted)"
+          color: "#64748b"
         }}
       >
         {active ? "Pausar" : "Retomar"}

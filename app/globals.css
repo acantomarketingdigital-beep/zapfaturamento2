@@ -4031,7 +4031,9 @@ code {
   height: 38px;
   border-radius: 14px;
   padding: 0 15px;
-  background: #111827;
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(34,211,238,0.12) !important;
   transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 
@@ -4047,7 +4049,9 @@ code {
 }
 
 .dashboard-button--ghost {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #94a3b8 !important;
+  border: 1px solid rgba(34,211,238,0.12) !important;
 }
 
 .dashboard-notice,
