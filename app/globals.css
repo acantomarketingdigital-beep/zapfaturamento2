@@ -3353,15 +3353,15 @@ code {
 }
 
 .zf-dashboard-mockup__pulse {
-  color: #94a3b8 !important;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 9px 12px;
   border-radius: 999px;
-  background: #f3f4f6;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(30, 41, 59, 0.9);
   font-size: 0.82rem;
-  color: #374151;
+  color: #94a3b8;
   font-weight: 600;
 }
 
@@ -3400,8 +3400,8 @@ code {
   display: grid;
   gap: 8px;
   padding: 18px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid rgba(229, 231, 235, 0.95);
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(30, 41, 59, 0.9);
 }
 
 .zf-metric-card span,
@@ -3430,8 +3430,8 @@ code {
   display: grid;
   gap: 18px;
   padding: 22px;
-  background: linear-gradient(180deg, rgba(34, 197, 94, 0.06) 0%, rgba(255, 255, 255, 0.9) 100%);
-  border: 1px solid rgba(34, 197, 94, 0.16);
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.06) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid rgba(34, 211, 238, 0.16);
 }
 
 .zf-growth-card__tag {
@@ -3493,9 +3493,9 @@ code {
 .zf-trust-strip__chips span {
   padding: 8px 12px;
   border-radius: 999px;
-  background: white;
-  border: 1px solid rgba(229, 231, 235, 0.9);
-  color: #374151;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(34, 211, 238, 0.15);
+  color: #94a3b8;
   font-size: 0.82rem;
   font-weight: 700;
 }
@@ -3763,11 +3763,11 @@ code {
 
 /* Visual card */
 .zf-nolp-card {
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(229, 231, 235, 0.95);
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(30, 41, 59, 0.9);
   border-radius: 20px;
   padding: 28px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -3800,12 +3800,12 @@ code {
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  background: #f3f4f6;
-  border: 1px solid rgba(229, 231, 235, 0.9);
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(30, 41, 59, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .zf-nolp-step__icon svg {
