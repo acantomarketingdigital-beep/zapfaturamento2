@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://zapfaturamento.com.br";
+const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://whats.kreotechnologies.com.br";
 
 export const viewport: Viewport = {
   themeColor: "#06b6d4",
