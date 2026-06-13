@@ -4174,15 +4174,31 @@ code {
 }
 
 .dashboard-table thead tr {
-  background: #f9fafb;
+  background: rgba(255,255,255,0.02) !important;
+}
+.dashboard-table tbody tr {
+  background: transparent !important;
+}
+.dashboard-table tbody tr:hover {
+  background: rgba(255,255,255,0.04) !important;
+}
+.dashboard-table td {
+  color: #e2e8f0 !important;
+}
+.dashboard-table th {
+  color: #64748b !important;
+}
+.dashboard-table th,
+.dashboard-table td {
+  border-bottom: 1px solid rgba(30,41,59,0.8) !important;
 }
 
 .dashboard-inline-code {
   display: block;
   padding: 12px 14px;
   border-radius: 16px;
-  background: #f9fafb;
-  border: 1px solid rgba(229, 231, 235, 0.95);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(30,41,59,0.8);
 }
 
 .dashboard-clinic-card__logo,
@@ -4196,7 +4212,7 @@ code {
 
 .dashboard-columns__track {
   border-radius: 16px 16px 6px 6px;
-  background: #f3f4f6;
+  background: rgba(255,255,255,0.05);
 }
 
 .dashboard-columns__fill,
