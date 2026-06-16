@@ -474,39 +474,40 @@ export async function linkLeadContact(
 // ─── Level-1 cascade: exact ref_code match ───────────────────────────────────
 
 export async function linkLeadByRefCode(
-  clientSlug: string,
+  _clientSlug: string,
   refCode: string,
   contactPhone: string,
   name: string | null
-): Promise<{ leadId: number; meta_capi_success: boolean | null } | null> {
+): Promise<{ leadId: number; clientSlug: string; meta_capi_success: boolean | null } | null> {
   if (!hasDatabaseConfig()) return null;
   const digits = contactPhone.replace(/\D/g, "");
   const code = refCode.trim();
   if (!digits || !code) return null;
   const safeName = name?.trim() || null;
 
-  const updated = await queryDb<{ id: number; lead_status: string; meta_capi_success: boolean | null }>(
+  // ref_code is globally unique — do NOT scope by client_slug so leads are found
+  // even when the webhook arrives on a connection registered to a different client
+  const updated = await queryDb<{ id: number; client_slug: string; lead_status: string; meta_capi_success: boolean | null }>(
     `UPDATE whatsapp_leads
-     SET lead_phone  = $3,
-         lead_name   = COALESCE(lead_name, $4),
+     SET lead_phone  = $2,
+         lead_name   = COALESCE(lead_name, $3),
          has_replied = true,
          replied_at  = COALESCE(replied_at, NOW()),
          lead_status = CASE WHEN lead_status = 'pending_message' THEN 'novo_lead' ELSE lead_status END
-     WHERE client_slug = $1
-       AND ref_code    = $2
-       AND created_at  > NOW() - INTERVAL '7 days'
-     RETURNING id, lead_status, meta_capi_success`,
-    [clientSlug, code, digits, safeName]
+     WHERE ref_code   = $1
+       AND created_at > NOW() - INTERVAL '7 days'
+     RETURNING id, client_slug, lead_status, meta_capi_success`,
+    [code, digits, safeName]
   );
 
   if (updated.rows.length === 0) {
-    console.log("[linkLeadByRefCode] code not found", { clientSlug, code });
+    console.log("[linkLeadByRefCode] code not found", { code });
     return null;
   }
 
   const row = updated.rows[0];
-  console.log("[linkLeadByRefCode] exact match", { leadId: row.id, code });
-  return { leadId: row.id, meta_capi_success: row.meta_capi_success };
+  console.log("[linkLeadByRefCode] exact match", { leadId: row.id, code, clientSlug: row.client_slug });
+  return { leadId: row.id, clientSlug: row.client_slug, meta_capi_success: row.meta_capi_success };
 }
 
 // ─── Level-3 cascade: match by connection's WhatsApp number (campaign route) ─

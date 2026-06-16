@@ -145,11 +145,21 @@ export async function getClientSlugByWhatsappNumber(phone: string): Promise<stri
   if (!hasDatabaseConfig()) return null;
   const digits = phone.replace(/\D/g, "");
   if (!digits) return null;
+
+  // Brazilian mobile numbers: Evolution API sends 12-digit (554198362692),
+  // but wa.me links use 13-digit (5541998362692). Match both.
+  const alt =
+    digits.length === 12 && digits.startsWith("55")
+      ? digits.slice(0, 4) + "9" + digits.slice(4)
+      : digits.length === 13 && digits.startsWith("55") && digits[4] === "9"
+        ? digits.slice(0, 4) + digits.slice(5)
+        : null;
+
   const result = await queryDb<{ client_slug: string }>(
     `SELECT DISTINCT client_slug FROM whatsapp_leads
-     WHERE REGEXP_REPLACE(whatsapp_number, '[^0-9]', '', 'g') = $1
+     WHERE REGEXP_REPLACE(whatsapp_number, '[^0-9]', '', 'g') = ANY($1::text[])
      LIMIT 1`,
-    [digits]
+    [[digits, ...(alt ? [alt] : [])]]
   );
   return result.rows[0]?.client_slug ?? null;
 }

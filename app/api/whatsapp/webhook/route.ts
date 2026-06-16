@@ -182,8 +182,13 @@ async function processInboundCascade(params: {
     const refCode = codeMatch[1];
     const linked = await linkLeadByRefCode(clientSlug, refCode, contactPhone, pushName);
     if (linked) {
-      if (config) await fireCapiForLead(linked.leadId, contactPhone, config, 1);
-      console.log("[WA WEBHOOK] cascade Level-1 match", { refCode, leadId: linked.leadId });
+      // Use lead's actual client_slug for CAPI (may differ from connection's client)
+      const capiConfig =
+        linked.clientSlug !== clientSlug
+          ? await getCapiConfig(linked.clientSlug)
+          : config;
+      if (capiConfig) await fireCapiForLead(linked.leadId, contactPhone, capiConfig, 1);
+      console.log("[WA WEBHOOK] cascade Level-1 match", { refCode, leadId: linked.leadId, leadClient: linked.clientSlug });
       return;
     }
     // Code present but not in DB (deleted/expired) → fall through to Level 2
