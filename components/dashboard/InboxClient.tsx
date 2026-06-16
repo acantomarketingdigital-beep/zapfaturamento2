@@ -22,11 +22,12 @@ function formatTime(iso: string | null) {
   if (!iso) return "";
   const d = new Date(iso);
   const now = new Date();
+  const tz = "America/Sao_Paulo";
   const diff = now.getTime() - d.getTime();
-  if (diff < 86400000 && d.getDate() === now.getDate()) {
-    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  if (diff < 86400000 && d.toLocaleDateString("pt-BR", { timeZone: tz }) === now.toLocaleDateString("pt-BR", { timeZone: tz })) {
+    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: tz });
   }
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: tz });
 }
 
 function formatMsgTime(iso: string) {

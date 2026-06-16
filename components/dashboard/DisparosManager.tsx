@@ -821,7 +821,7 @@ export function DisparosManager({
                         <td><strong>{i.name}</strong></td>
                         <td><code style={{ fontSize: "0.78rem" }}>{i.phone_number_id}</code></td>
                         <td>{i.waba_id ?? "–"}</td>
-                        <td>{new Date(i.created_at).toLocaleDateString("pt-BR")}</td>
+                        <td>{new Date(i.created_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td>
                         <td>
                           <button
                             className="dashboard-button dashboard-button--danger"

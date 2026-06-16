@@ -39,9 +39,13 @@ function cleanUtm(v: string | null | undefined): string | null {
 }
 function formatEntryDate(iso: string): string {
   const d = new Date(iso), now = new Date();
-  const time = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  if (d.toDateString() === now.toDateString()) return `hoje às ${time}`;
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) + ` às ${time}`;
+  const tz = "America/Sao_Paulo";
+  const time = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: tz });
+  const sameDay =
+    d.toLocaleDateString("pt-BR", { timeZone: tz }) ===
+    now.toLocaleDateString("pt-BR", { timeZone: tz });
+  if (sameDay) return `hoje às ${time}`;
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: tz }) + ` às ${time}`;
 }
 function getStaleness(lead: KanbanLead, now: Date): "none" | "stale" | "urgent" {
   if (lead.has_replied) return "none";
@@ -64,11 +68,12 @@ function formatFollowUpTag(iso: string, now: Date): string {
   const d = new Date(iso);
   const tomorrow = new Date(now);
   tomorrow.setDate(now.getDate() + 1);
-  const time = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const tz = "America/Sao_Paulo";
+  const time = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: tz });
   if (d <= now) return "pendente";
-  if (d.toDateString() === now.toDateString()) return `hoje às ${time}`;
-  if (d.toDateString() === tomorrow.toDateString()) return `amanhã às ${time}`;
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) + ` às ${time}`;
+  if (d.toLocaleDateString("pt-BR", { timeZone: tz }) === now.toLocaleDateString("pt-BR", { timeZone: tz })) return `hoje às ${time}`;
+  if (d.toLocaleDateString("pt-BR", { timeZone: tz }) === tomorrow.toLocaleDateString("pt-BR", { timeZone: tz })) return `amanhã às ${time}`;
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: tz }) + ` às ${time}`;
 }
 function toDatetimeLocal(d: Date): string {
   const pad = (n: number) => n.toString().padStart(2, "0");

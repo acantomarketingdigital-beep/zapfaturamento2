@@ -191,8 +191,8 @@ function DealTable({ title, deals, showValue }: { title: string; deals: Financia
                 )}
                 <td style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
                   {d.deal_closed_at
-                    ? new Date(d.deal_closed_at).toLocaleDateString("pt-BR")
-                    : new Date(d.created_at).toLocaleDateString("pt-BR")}
+                    ? new Date(d.deal_closed_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })
+                    : new Date(d.created_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                 </td>
               </tr>
             ))}
