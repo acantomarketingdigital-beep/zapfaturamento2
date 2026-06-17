@@ -6078,7 +6078,7 @@ code {
   gap: 10px;
 }
 .dashboard-creative-card {
-  background: var(--surface-raised, #f9fafb);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px 12px;
