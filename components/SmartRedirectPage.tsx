@@ -331,7 +331,7 @@ export function SmartRedirectPage({ client, campaign, creative, seoContent }: Pr
 
       <div className="smart-body">
         {hasMedia && (
-          <aside className="smart-sidebar">
+          <aside className="smart-sidebar" aria-label="Mídia principal">
             {media1Url && (
               <MediaSlot url={media1Url} type={media1Type} onWaClick={handleClick} disabled={mediaDisabled} />
             )}
@@ -341,7 +341,7 @@ export function SmartRedirectPage({ client, campaign, creative, seoContent }: Pr
         {contentSection}
 
         {hasMedia && (
-          <aside className="smart-sidebar">
+          <aside className="smart-sidebar" aria-label="Mídia secundária">
             {media2Url && (
               <MediaSlot url={media2Url} type={media2Type} onWaClick={handleClick} disabled={mediaDisabled} />
             )}
