@@ -2139,8 +2139,12 @@ code {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--background, #fff);
+  background: #fff;
   font-family: inherit;
+  --text: #111827;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --background: #fff;
 }
 
 .smart-header {
