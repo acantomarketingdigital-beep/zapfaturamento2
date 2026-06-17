@@ -2320,6 +2320,47 @@ code {
   font-size: 0.75rem;
 }
 
+.smart-section {
+  width: 100%;
+  margin-top: 36px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border, #e5e7eb);
+}
+
+.smart-section__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text, #111827);
+  margin: 0 0 18px;
+  line-height: 1.3;
+}
+
+.smart-features,
+.smart-steps,
+.smart-faq {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.smart-feature h3,
+.smart-step h3,
+.smart-faq-item h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text, #111827);
+  margin: 0 0 3px;
+}
+
+.smart-feature p,
+.smart-step p,
+.smart-faq-item p {
+  font-size: 0.85rem;
+  color: var(--text-muted, #6b7280);
+  margin: 0;
+  line-height: 1.6;
+}
+
 .smart-footer {
   padding: 16px 24px;
   border-top: 1px solid var(--border, #e5e7eb);

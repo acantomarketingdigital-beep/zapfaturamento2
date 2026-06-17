@@ -250,6 +250,68 @@ export function SmartRedirectPage({ client, campaign, creative, seoContent }: Pr
           </ul>
         </section>
       )}
+
+      {seoContent && (
+        <>
+          <section className="smart-section">
+            <h2 className="smart-section__title">Por que escolher {client.clientName}?</h2>
+            <div className="smart-features">
+              <div className="smart-feature">
+                <h3>Atendimento na sua região</h3>
+                <p>{seoContent.locations.length > 0
+                  ? `Atendemos clientes em ${seoContent.locations.slice(0, 2).join(", ")} e região com dedicação e qualidade.`
+                  : `Atendemos clientes da sua região com dedicação e qualidade garantida.`}</p>
+              </div>
+              <div className="smart-feature">
+                <h3>Resposta rápida pelo WhatsApp</h3>
+                <p>Nossa equipe responde rapidamente para tirar suas dúvidas e oferecer o melhor atendimento sem complicação.</p>
+              </div>
+              <div className="smart-feature">
+                <h3>Orçamento gratuito e sem compromisso</h3>
+                <p>Solicite seu orçamento sem nenhum custo. Fale com a equipe de {client.clientName} e descubra a melhor solução.</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="smart-section">
+            <h2 className="smart-section__title">Como funciona o atendimento?</h2>
+            <div className="smart-steps">
+              <div className="smart-step">
+                <h3>1. Clique no botão do WhatsApp</h3>
+                <p>Toque no botão verde para iniciar uma conversa direta com nossa equipe, sem espera e sem formulários.</p>
+              </div>
+              <div className="smart-step">
+                <h3>2. Descreva o que você precisa</h3>
+                <p>Conta pra gente sua necessidade. Atendemos {seoContent.title ? seoContent.title.toLowerCase() : "sua demanda"} com agilidade e atenção.</p>
+              </div>
+              <div className="smart-step">
+                <h3>3. Receba seu atendimento</h3>
+                <p>A equipe de {client.clientName} responde rapidamente com as melhores opções e condições para você.</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="smart-section">
+            <h2 className="smart-section__title">Perguntas frequentes</h2>
+            <div className="smart-faq">
+              <div className="smart-faq-item">
+                <h3>Como entro em contato?</h3>
+                <p>Clique no botão "Falar no WhatsApp" nesta página. Você será direcionado diretamente ao atendimento de {client.clientName}.</p>
+              </div>
+              <div className="smart-faq-item">
+                <h3>O primeiro contato é gratuito?</h3>
+                <p>Sim! O atendimento inicial é totalmente gratuito e sem compromisso. Fale agora e tire todas as suas dúvidas.</p>
+              </div>
+              <div className="smart-faq-item">
+                <h3>{seoContent.locations.length > 0 ? `Atendem em ${seoContent.locations[0]}?` : "Qual a área de atendimento?"}</h3>
+                <p>{seoContent.locations.length > 0
+                  ? `Sim! Atendemos ${seoContent.locations.join(", ")}${seoContent.locations.length === 1 ? " e região" : ""}. Entre em contato e confirme disponibilidade.`
+                  : `Atendemos clientes da região. Entre em contato pelo WhatsApp para confirmar disponibilidade na sua localidade.`}</p>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
     </section>
   );
 

@@ -17,6 +17,7 @@ export interface SeoContent {
   description: string;
   bullets: string[];
   keywords: string[];
+  locations: string[];
   badgeText: string;
   ctaText: string;
 }
@@ -66,6 +67,7 @@ export function generateSeoContent(input: SeoInput): SeoContent {
     description,
     bullets,
     keywords: input.seoKeywords,
+    locations: input.seoLocations,
     badgeText,
     ctaText,
   };
