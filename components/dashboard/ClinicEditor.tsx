@@ -278,19 +278,31 @@ export function ClinicEditor({
                 </small>
               </label>
 
-              <label className="dashboard-field">
-                <span>Link do Messenger (opcional)</span>
-                <input
-                  type="url"
-                  name="messengerUrl"
-                  defaultValue={values.messengerUrl}
-                  placeholder="https://m.me/suapagina"
-                  autoComplete="off"
-                />
+              <div className="dashboard-field">
+                <span>Messenger (opcional)</span>
+                <div style={{ display: "flex", alignItems: "stretch" }}>
+                  <span style={{
+                    display: "flex", alignItems: "center",
+                    padding: "0 10px", whiteSpace: "nowrap", userSelect: "none",
+                    background: "var(--surface-raised, #f3f4f6)",
+                    border: "1px solid var(--border, #e5e7eb)", borderRight: "none",
+                    borderRadius: "6px 0 0 6px", fontSize: "0.85rem", color: "var(--muted)"
+                  }}>
+                    https://m.me/
+                  </span>
+                  <input
+                    type="text"
+                    name="messengerUrl"
+                    defaultValue={(values.messengerUrl || "").replace(/^https?:\/\/m\.me\//, "")}
+                    placeholder="suapagina"
+                    autoComplete="off"
+                    style={{ borderRadius: "0 6px 6px 0", flex: 1 }}
+                  />
+                </div>
                 <small className="dashboard-field__help">
-                  Usado em campanhas SMS quando o visitante estiver no desktop. Ex: https://m.me/clinicasaudetotal
+                  Usado em campanhas SMS quando o visitante estiver no desktop.
                 </small>
-              </label>
+              </div>
 
             </div>
           </section>

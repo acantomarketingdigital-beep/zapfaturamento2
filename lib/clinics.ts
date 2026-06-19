@@ -842,7 +842,10 @@ export function parseClinicFormData(formData: FormData): ManagedClinicInput {
       getValue("preserveKommoAccessToken") === "true" &&
       !cleanText(getValue("kommoAccessToken")),
     isActive: formData.get("isActive") === "on",
-    messengerUrl: cleanText(getValue("messengerUrl"))
+    messengerUrl: (() => {
+      const page = cleanText(getValue("messengerUrl"))?.replace(/^https?:\/\/m\.me\//, "");
+      return page ? `https://m.me/${page}` : undefined;
+    })()
   };
 }
 
