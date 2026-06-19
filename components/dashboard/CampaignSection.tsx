@@ -8,6 +8,7 @@ import { CampaignCreativesSection } from "@/components/dashboard/CampaignCreativ
 import { formatCurrency, type Currency } from "@/lib/format";
 
 type CampaignSource = "direct" | "google" | "meta" | "tiktok" | "other";
+type CampaignChannel = "whatsapp" | "sms";
 
 type Campaign = {
   id: string;
@@ -16,6 +17,8 @@ type Campaign = {
   slug: string;
   defaultMessage: string;
   whatsappNumber: string | null;
+  channel: CampaignChannel;
+  smsPhone: string | null;
   isActive: boolean;
   dailyBudgetCents: number;
   currency: Currency;
@@ -51,6 +54,8 @@ type ModalState = {
   slug: string;
   defaultMessage: string;
   whatsappNumber: string;
+  channel: CampaignChannel;
+  smsPhone: string;
   isActive: boolean;
   dailyBudget: string;
   currency: Currency;
@@ -257,6 +262,8 @@ export function CampaignSection({
       slug: "",
       defaultMessage: VIM_DO,
       whatsappNumber: "",
+      channel: "whatsapp",
+      smsPhone: "",
       isActive: true,
       dailyBudget: "",
       currency: "BRL",
@@ -272,17 +279,23 @@ export function CampaignSection({
 
   function openEdit(campaign: Campaign) {
     setError("");
+    const ch = campaign.channel ?? "whatsapp";
+    const defaultMsg = ch === "whatsapp"
+      ? (campaign.defaultMessage.includes(VIM_DO)
+          ? campaign.defaultMessage
+          : campaign.defaultMessage
+            ? `${campaign.defaultMessage} ${VIM_DO}`
+            : VIM_DO)
+      : campaign.defaultMessage;
     setModal({
       mode: "edit",
       id: campaign.id,
       name: campaign.name,
       slug: campaign.slug,
-      defaultMessage: campaign.defaultMessage.includes(VIM_DO)
-        ? campaign.defaultMessage
-        : campaign.defaultMessage
-          ? `${campaign.defaultMessage} ${VIM_DO}`
-          : VIM_DO,
+      defaultMessage: defaultMsg,
       whatsappNumber: campaign.whatsappNumber ?? "",
+      channel: ch,
+      smsPhone: campaign.smsPhone ?? "",
       isActive: campaign.isActive,
       dailyBudget: campaign.dailyBudgetCents > 0
         ? (campaign.dailyBudgetCents / 100).toFixed(2)
@@ -331,7 +344,9 @@ export function CampaignSection({
           name: modal.name,
           slug: modal.slug,
           defaultMessage: modal.defaultMessage,
-          whatsappNumber: modal.whatsappNumber.replace(/\D/g, "") || null,
+          whatsappNumber: modal.channel === "whatsapp" ? (modal.whatsappNumber.replace(/\D/g, "") || null) : null,
+          channel: modal.channel,
+          smsPhone: modal.channel === "sms" ? (modal.smsPhone.trim() || null) : null,
           isActive: modal.isActive,
           dailyBudgetCents: isNaN(dailyBudgetCents) ? 0 : dailyBudgetCents,
           currency: modal.currency,
@@ -462,9 +477,17 @@ export function CampaignSection({
                       {campaign.currency}
                     </span>
                   ) : null}
-                  {campaign.whatsappNumber ? (
+                  <span className={`dashboard-pill ${campaign.channel === "sms" ? "dashboard-pill--neutral" : "dashboard-pill--success"}`} title={campaign.channel === "sms" ? "Campanha SMS" : "Campanha WhatsApp"}>
+                    {campaign.channel === "sms" ? "📱 SMS" : "💬 WhatsApp"}
+                  </span>
+                  {campaign.channel === "whatsapp" && campaign.whatsappNumber ? (
                     <span className="dashboard-pill dashboard-pill--neutral" title="WhatsApp especifico desta campanha">
                       WA: {campaign.whatsappNumber}
+                    </span>
+                  ) : null}
+                  {campaign.channel === "sms" && campaign.smsPhone ? (
+                    <span className="dashboard-pill dashboard-pill--neutral" title="Telefone SMS desta campanha">
+                      SMS: {campaign.smsPhone}
                     </span>
                   ) : null}
                 </div>
@@ -485,6 +508,7 @@ export function CampaignSection({
                   baseUrl={baseUrl}
                   canManage={canManage}
                   hasGoogleAds={hasGoogleAds}
+                  channel={campaign.channel ?? "whatsapp"}
                 />
 
                 <CampaignMediaSection
@@ -515,13 +539,59 @@ export function CampaignSection({
             <h3>{modal.mode === "create" ? "Nova campanha" : "Editar campanha"}</h3>
 
             <div className="dashboard-form-stack">
+              {/* Seletor de canal */}
+              <div className="dashboard-field">
+                <span>Canal da campanha</span>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {([["whatsapp", "💬 WhatsApp"], ["sms", "📱 SMS"]] as const).map(([val, label]) => (
+                    <label
+                      key={val}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "8px 16px",
+                        borderRadius: 8,
+                        border: `2px solid ${modal.channel === val ? "var(--brand)" : "var(--border)"}`,
+                        background: modal.channel === val ? "rgba(var(--brand-rgb,0,102,204),0.07)" : "transparent",
+                        cursor: "pointer",
+                        fontSize: "0.9rem",
+                        fontWeight: modal.channel === val ? 700 : 400,
+                        transition: "all 0.12s",
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="channel"
+                        value={val}
+                        checked={modal.channel === val}
+                        onChange={() => setModal({
+                          ...modal,
+                          channel: val,
+                          defaultMessage: val === "whatsapp" && !modal.defaultMessage.includes(VIM_DO)
+                            ? VIM_DO
+                            : modal.defaultMessage,
+                        })}
+                        style={{ display: "none" }}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+                <span className="dashboard-helper">
+                  {modal.channel === "sms"
+                    ? `URL gerada: ${baseUrl}/s/${clientSlug}/${modal.slug || "slug-da-campanha"}`
+                    : `URL gerada: ${baseUrl}/w/${clientSlug}/${modal.slug || "slug-da-campanha"}`}
+                </span>
+              </div>
+
               <div className="dashboard-field">
                 <span>Nome da campanha</span>
                 <input
                   type="text"
                   value={modal.name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder="Ex.: Vasinhos, Botox, Preenchimento"
+                  placeholder={modal.channel === "sms" ? "Ex.: Sofa Cleaning NYC, Google US" : "Ex.: Vasinhos, Botox, Preenchimento"}
                   autoFocus
                 />
               </div>
@@ -532,37 +602,39 @@ export function CampaignSection({
                   type="text"
                   value={modal.slug}
                   onChange={(e) => setModal({ ...modal, slug: e.target.value, slugTouched: true })}
-                  placeholder="vasinhos"
+                  placeholder={modal.channel === "sms" ? "sofa-cleaning-nyc" : "vasinhos"}
                 />
                 <span className="dashboard-helper">
-                  URL: {baseUrl}/w/{clientSlug}/{modal.slug || "slug-da-campanha"}
+                  URL: {baseUrl}/{modal.channel === "sms" ? "s" : "w"}/{clientSlug}/{modal.slug || "slug-da-campanha"}
                 </span>
               </div>
 
-              <div className="dashboard-field">
-                <span>Mensagem padrao no WhatsApp</span>
-                <textarea
-                  rows={3}
-                  value={modal.defaultMessage}
-                  onChange={(e) =>
-                    setModal({ ...modal, defaultMessage: enforceVimDo(e.target.value, modal.defaultMessage) })
-                  }
-                  placeholder={`Ola! Tenho interesse em... ${VIM_DO}`}
-                />
-                <span className="dashboard-helper">
-                  Esta mensagem sera enviada automaticamente ao abrir o WhatsApp.
-                  A frase <strong>&ldquo;{VIM_DO}&rdquo;</strong> e obrigatoria e nao pode ser removida.
-                </span>
-              </div>
+              {modal.channel === "whatsapp" ? (
+                <>
+                  <div className="dashboard-field">
+                    <span>Mensagem padrao no WhatsApp</span>
+                    <textarea
+                      rows={3}
+                      value={modal.defaultMessage}
+                      onChange={(e) =>
+                        setModal({ ...modal, defaultMessage: enforceVimDo(e.target.value, modal.defaultMessage) })
+                      }
+                      placeholder={`Ola! Tenho interesse em... ${VIM_DO}`}
+                    />
+                    <span className="dashboard-helper">
+                      Esta mensagem sera enviada automaticamente ao abrir o WhatsApp.
+                      A frase <strong>&ldquo;{VIM_DO}&rdquo;</strong> e obrigatoria e nao pode ser removida.
+                    </span>
+                  </div>
 
-              <div className="dashboard-field">
-                <span>WhatsApp desta campanha</span>
-                <input
-                  type="text"
-                  value={modal.whatsappNumber}
-                  onChange={(e) => setModal({ ...modal, whatsappNumber: e.target.value })}
-                  placeholder="5511999999999 (deixe vazio para usar o padrao do cliente)"
-                />
+                  <div className="dashboard-field">
+                    <span>WhatsApp desta campanha</span>
+                    <input
+                      type="text"
+                      value={modal.whatsappNumber}
+                      onChange={(e) => setModal({ ...modal, whatsappNumber: e.target.value })}
+                      placeholder="5511999999999 (deixe vazio para usar o padrao do cliente)"
+                    />
                 {savedNumbers.length > 0 ? (
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
                     <button
@@ -590,6 +662,44 @@ export function CampaignSection({
                   Deixe vazio para usar o numero padrao do cliente.
                 </span>
               </div>
+                </>
+              ) : (
+                /* Bloco SMS */
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10 }}>
+                  <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1d4ed8", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                    Configuração SMS — EUA
+                  </div>
+                  <div className="dashboard-field" style={{ margin: 0 }}>
+                    <span>Telefone SMS (formato internacional)</span>
+                    <input
+                      type="text"
+                      value={modal.smsPhone}
+                      onChange={(e) => setModal({ ...modal, smsPhone: e.target.value })}
+                      placeholder="+12125551234"
+                    />
+                    <span className="dashboard-helper">
+                      Formato: +1 seguido de 10 dígitos. Ex: +12125551234
+                    </span>
+                  </div>
+                  <div className="dashboard-field" style={{ margin: 0 }}>
+                    <span>Mensagem padrão do SMS</span>
+                    <textarea
+                      rows={3}
+                      value={modal.defaultMessage}
+                      onChange={(e) => setModal({ ...modal, defaultMessage: e.target.value })}
+                      placeholder="Hi, I want a quote for sofa cleaning"
+                    />
+                    <span className="dashboard-helper">
+                      Esta mensagem será pré-preenchida no app de SMS do usuário. Use apenas texto simples.
+                    </span>
+                  </div>
+                  {modal.smsPhone && modal.defaultMessage ? (
+                    <div className="dashboard-helper" style={{ wordBreak: "break-all" }}>
+                      Preview do link: <code style={{ fontSize: "0.78rem" }}>sms:{modal.smsPhone}?body={encodeURIComponent(modal.defaultMessage)}</code>
+                    </div>
+                  ) : null}
+                </div>
+              )}
 
               {/* Currency selector — above the budget field */}
               <div className="dashboard-field">

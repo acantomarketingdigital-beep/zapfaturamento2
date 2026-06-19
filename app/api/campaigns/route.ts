@@ -37,7 +37,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { clientSlug, name, slug, defaultMessage, isActive, dailyBudgetCents, currency, creativeUrl,
-            campaignSource, seoKeywords, seoLocations, seoTitle, seoDescription, seoBullets } = body as Record<string, unknown>;
+            campaignSource, seoKeywords, seoLocations, seoTitle, seoDescription, seoBullets,
+            channel, smsPhone } = body as Record<string, unknown>;
 
     if (typeof clientSlug !== "string" || !clientSlug) {
       return NextResponse.json({ error: "clientSlug e obrigatorio." }, { status: 400 });
@@ -67,6 +68,8 @@ export async function POST(request: Request) {
       seoTitle: typeof seoTitle === "string" ? seoTitle : null,
       seoDescription: typeof seoDescription === "string" ? seoDescription : null,
       seoBullets: Array.isArray(seoBullets) ? seoBullets.filter((b): b is string => typeof b === "string") : null,
+      channel: typeof channel === "string" ? channel as import("@/lib/campaigns").CampaignChannel : "whatsapp",
+      smsPhone: typeof smsPhone === "string" ? smsPhone : null,
     });
 
     return NextResponse.json({ campaign }, { status: 201 });

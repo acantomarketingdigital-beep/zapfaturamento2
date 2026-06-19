@@ -50,19 +50,21 @@ type Props = {
   baseUrl: string;
   canManage: boolean;
   hasGoogleAds?: boolean;
+  channel?: "whatsapp" | "sms";
 };
 
-function buildCreativeUrl(baseUrl: string, clientSlug: string, campaignSlug: string, creativeSlug: string) {
-  return `${baseUrl}/w/${encodeURIComponent(clientSlug)}/${encodeURIComponent(campaignSlug)}/${encodeURIComponent(creativeSlug)}`;
+function buildCreativeUrl(baseUrl: string, clientSlug: string, campaignSlug: string, creativeSlug: string, channel: "whatsapp" | "sms" = "whatsapp") {
+  const prefix = channel === "sms" ? "s" : "w";
+  return `${baseUrl}/${prefix}/${encodeURIComponent(clientSlug)}/${encodeURIComponent(campaignSlug)}/${encodeURIComponent(creativeSlug)}`;
 }
 
-function buildCreativeMetaUrl(baseUrl: string, clientSlug: string, campaignSlug: string, creativeSlug: string) {
-  const base = buildCreativeUrl(baseUrl, clientSlug, campaignSlug, creativeSlug);
+function buildCreativeMetaUrl(baseUrl: string, clientSlug: string, campaignSlug: string, creativeSlug: string, channel: "whatsapp" | "sms" = "whatsapp") {
+  const base = buildCreativeUrl(baseUrl, clientSlug, campaignSlug, creativeSlug, channel);
   return `${base}?utm_source=facebook&utm_medium=cpc&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}&campaign_id={{campaign.id}}&adset_id={{adset.id}}&ad_id={{ad.id}}&placement={{placement}}`;
 }
 
-function buildCreativeGoogleUrl(baseUrl: string, clientSlug: string, campaignSlug: string, creativeSlug: string) {
-  const base = buildCreativeUrl(baseUrl, clientSlug, campaignSlug, creativeSlug);
+function buildCreativeGoogleUrl(baseUrl: string, clientSlug: string, campaignSlug: string, creativeSlug: string, channel: "whatsapp" | "sms" = "whatsapp") {
+  const base = buildCreativeUrl(baseUrl, clientSlug, campaignSlug, creativeSlug, channel);
   return `${base}?utm_source=google&utm_medium=cpc&utm_campaign={campaignid}&utm_content={creative}&utm_term={keyword}&gclid={gclid}&device={device}&network={network}&matchtype={matchtype}`;
 }
 
@@ -84,7 +86,7 @@ function CharCounter({ value, max }: { value: string; max: number }) {
   );
 }
 
-export function CampaignCreativesSection({ campaignId, campaignName, campaignSlug, clientSlug, baseUrl, canManage, hasGoogleAds = false }: Props) {
+export function CampaignCreativesSection({ campaignId, campaignName, campaignSlug, clientSlug, baseUrl, canManage, hasGoogleAds = false, channel = "whatsapp" }: Props) {
   const [creatives, setCreatives] = useState<Creative[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalState | null>(null);
@@ -276,9 +278,9 @@ export function CampaignCreativesSection({ campaignId, campaignName, campaignSlu
       ) : (
         <div className="dashboard-creatives-list">
           {regularCreatives.map((c) => {
-            const baseLink   = buildCreativeUrl(baseUrl, clientSlug, campaignSlug, c.slug);
-            const metaLink   = buildCreativeMetaUrl(baseUrl, clientSlug, campaignSlug, c.slug);
-            const googleLink = buildCreativeGoogleUrl(baseUrl, clientSlug, campaignSlug, c.slug);
+            const baseLink   = buildCreativeUrl(baseUrl, clientSlug, campaignSlug, c.slug, channel);
+            const metaLink   = buildCreativeMetaUrl(baseUrl, clientSlug, campaignSlug, c.slug, channel);
+            const googleLink = buildCreativeGoogleUrl(baseUrl, clientSlug, campaignSlug, c.slug, channel);
 
             return (
               <div key={c.id} className="dashboard-creative-card">
@@ -364,7 +366,7 @@ export function CampaignCreativesSection({ campaignId, campaignName, campaignSlu
       ) : (
         <div className="dashboard-creatives-list">
           {sitelinks.map((c) => {
-            const googleLink = buildCreativeGoogleUrl(baseUrl, clientSlug, campaignSlug, c.slug);
+            const googleLink = buildCreativeGoogleUrl(baseUrl, clientSlug, campaignSlug, c.slug, channel);
             return (
               <div key={c.id} className="dashboard-creative-card">
                 <div className="dashboard-inline-actions">
