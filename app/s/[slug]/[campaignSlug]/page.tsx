@@ -83,6 +83,10 @@ export default async function SmsCampaignRedirectPage({ params }: PageProps) {
     slug: campaign.slug,
     name: campaign.name,
     defaultMessage: campaign.defaultMessage,
+    media1Url: campaign.media1Url,
+    media1Type: campaign.media1Type,
+    media2Url: campaign.media2Url,
+    media2Type: campaign.media2Type,
   };
 
   return (

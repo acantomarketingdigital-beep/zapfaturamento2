@@ -117,6 +117,10 @@ export default async function SmsCampaignCreativeRedirectPage({ params }: PagePr
     slug: campaign.slug,
     name: campaign.name,
     defaultMessage: smsMessage,
+    media1Url: campaign.media1Url,
+    media1Type: campaign.media1Type,
+    media2Url: campaign.media2Url,
+    media2Type: campaign.media2Type,
   };
 
   const creativeCtx = { id: creative.id, slug: creative.slug };
