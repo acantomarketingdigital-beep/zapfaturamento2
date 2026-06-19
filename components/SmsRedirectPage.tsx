@@ -53,6 +53,33 @@ async function sendLeadToBackend(payload: Record<string, unknown>) {
   }
 }
 
+type Locale = "en" | "pt";
+
+function detectLocale(phone: string): Locale {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("1") && (digits.length === 11 || digits.length === 10)) return "en";
+  return "pt";
+}
+
+const STRINGS = {
+  en: {
+    heading: "Send us a text message",
+    subheading: "Send us a text",
+    description: (name: string) => `Tap the button below to open your SMS app and start a conversation with ${name}.`,
+    cta: "Send us a text",
+    ctaLoading: "Opening SMS app...",
+    trust: "🔒 Free, no commitment — your carrier's standard SMS rates may apply",
+  },
+  pt: {
+    heading: "Fale com a gente via SMS",
+    subheading: "Envie uma mensagem",
+    description: (name: string) => `Toque no botão abaixo para abrir o seu app de SMS e iniciar uma conversa com ${name}.`,
+    cta: "Enviar mensagem",
+    ctaLoading: "Abrindo app de SMS...",
+    trust: "🔒 Gratuito e sem compromisso — tarifas padrão da sua operadora podem ser aplicadas",
+  },
+};
+
 function MediaSlot({ url, type }: { url: string; type: "image" | "video" | null }) {
   if (!url) return null;
   if (type === "video") {
@@ -79,6 +106,9 @@ function MediaSlot({ url, type }: { url: string; type: "image" | "video" | null 
 export function SmsRedirectPage({ client, campaign, creative, smsPhone, smsMessage }: Props) {
   const [clicked, setClicked] = useState(false);
   const payloadRef = useRef<Record<string, unknown> | null>(null);
+
+  const locale = detectLocale(smsPhone);
+  const t = STRINGS[locale];
 
   const smsUrl = `sms:${smsPhone}${smsMessage ? `?body=${encodeURIComponent(smsMessage)}` : ""}`;
 
@@ -176,7 +206,7 @@ export function SmsRedirectPage({ client, campaign, creative, smsPhone, smsMessa
               lineHeight: 1.3,
               margin: "0 0 8px",
             }}>
-              Fale com a gente via SMS
+              {t.heading}
             </h2>
 
             <h3 style={{
@@ -186,7 +216,7 @@ export function SmsRedirectPage({ client, campaign, creative, smsPhone, smsMessa
               lineHeight: 1.6,
               margin: "0 0 8px",
             }}>
-              Toque no botão abaixo para abrir o seu app de SMS e iniciar uma conversa com <strong>{client.clientName}</strong>.
+              {t.description(client.clientName)}
             </h3>
 
             <p style={{ fontSize: "0.85rem", color: "var(--text-muted, #9ca3af)", margin: "0 0 28px" }}>
@@ -220,11 +250,11 @@ export function SmsRedirectPage({ client, campaign, creative, smsPhone, smsMessa
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
-              {clicked ? "Abrindo app de SMS..." : "Enviar mensagem"}
+              {clicked ? t.ctaLoading : t.cta}
             </button>
 
             <p style={{ fontSize: "0.78rem", color: "var(--text-muted, #9ca3af)", margin: 0 }}>
-              🔒 Gratuito e sem compromisso — tarifas padrão da sua operadora podem ser aplicadas
+              {t.trust}
             </p>
           </div>
         </section>
