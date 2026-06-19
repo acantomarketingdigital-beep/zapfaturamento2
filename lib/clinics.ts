@@ -62,6 +62,7 @@ export type ManagedClinicInput = {
   kommoAccessToken?: string;
   preserveKommoAccessToken?: boolean;
   isActive: boolean;
+  messengerUrl?: string;
 };
 
 export type ManagedClinicFormValues = ManagedClinicInput & {
@@ -96,6 +97,7 @@ type DatabaseClinicRow = {
   kommo_access_token: string | null;
   is_active: boolean;
   workspace_slug: string | null;
+  messenger_url: string | null;
 };
 
 type ClinicMetricsRow = {
@@ -199,6 +201,7 @@ function resolveClientConfig(
     kommoStatusId: toOptionalNumber(client.kommoStatusId),
     kommoCustomFields: normalizeCustomFieldMap(client.kommoCustomFields),
     kommoSubdomain: cleanText(client.kommoSubdomain),
+    messengerUrl: cleanText(client.messengerUrl),
     id: metadata?.id || client.clientSlug,
     createdAt: metadata?.createdAt,
     updatedAt: metadata?.updatedAt,
@@ -229,7 +232,8 @@ function mapDatabaseRow(
       kommoPipelineId: toOptionalNumber(row.kommo_pipeline_id),
       kommoStatusId: toOptionalNumber(row.kommo_status_id),
       kommoCustomFields: normalizeCustomFieldMap(row.kommo_custom_fields),
-      kommoSubdomain: row.kommo_subdomain || undefined
+      kommoSubdomain: row.kommo_subdomain || undefined,
+      messengerUrl: row.messenger_url || undefined
     },
     "database",
     {
@@ -292,7 +296,8 @@ async function fetchDatabaseClinicBySlug(
         kommo_subdomain,
         kommo_access_token,
         is_active,
-        workspace_slug
+        workspace_slug,
+        messenger_url
       FROM clients
       WHERE client_slug = $1
       LIMIT 1
@@ -332,7 +337,8 @@ async function fetchDatabaseClinicByIdOrSlug(value: string) {
         kommo_status_id,
         kommo_custom_fields,
         is_active,
-        workspace_slug
+        workspace_slug,
+        messenger_url
       FROM clients
       WHERE id::text = $1 OR client_slug = $1
       ORDER BY CASE WHEN client_slug = $1 THEN 0 ELSE 1 END
@@ -483,7 +489,8 @@ export async function listManagedClinics(query = "", scopeClientSlug?: string | 
             kommo_status_id,
             kommo_custom_fields,
             is_active,
-            workspace_slug
+            workspace_slug,
+            messenger_url
           FROM clients
           WHERE workspace_slug IS NOT DISTINCT FROM $1
              OR ($1 IS NOT NULL AND $1 = ANY(COALESCE(shared_with_workspaces, '{}'::text[])))
@@ -606,10 +613,11 @@ export async function saveClinic(input: ManagedClinicInput, workspaceSlug?: stri
         kommo_subdomain,
         kommo_access_token,
         is_active,
-        workspace_slug
+        workspace_slug,
+        messenger_url
       )
       VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, $18, $19, $20, $21
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, $18, $19, $20, $21, $22
       )
       ON CONFLICT (client_slug)
       DO UPDATE SET
@@ -632,7 +640,8 @@ export async function saveClinic(input: ManagedClinicInput, workspaceSlug?: stri
         kommo_subdomain = EXCLUDED.kommo_subdomain,
         kommo_access_token = EXCLUDED.kommo_access_token,
         is_active = EXCLUDED.is_active,
-        workspace_slug = COALESCE(clients.workspace_slug, EXCLUDED.workspace_slug)
+        workspace_slug = COALESCE(clients.workspace_slug, EXCLUDED.workspace_slug),
+        messenger_url = EXCLUDED.messenger_url
       RETURNING
         id,
         created_at,
@@ -656,7 +665,8 @@ export async function saveClinic(input: ManagedClinicInput, workspaceSlug?: stri
         kommo_custom_fields,
         kommo_subdomain,
         kommo_access_token,
-        is_active
+        is_active,
+        messenger_url
     `,
     [
       clientSlug,
@@ -683,7 +693,8 @@ export async function saveClinic(input: ManagedClinicInput, workspaceSlug?: stri
       input.kommoEnabled ? cleanText(input.kommoSubdomain) || null : null,
       input.kommoEnabled ? kommoAccessToken : null,
       input.isActive,
-      workspaceSlug ?? null
+      workspaceSlug ?? null,
+      cleanText(input.messengerUrl) || null
     ]
   );
 
@@ -731,7 +742,8 @@ export async function setClinicActiveStatus(slug: string, isActive: boolean) {
     kommoPipelineId: clinic.kommoPipelineId,
     kommoStatusId: clinic.kommoStatusId,
     kommoCustomFields: clinic.kommoCustomFields,
-    isActive
+    isActive,
+    messengerUrl: clinic.messengerUrl
   });
 }
 
@@ -762,6 +774,7 @@ export function toClinicFormValues(
     kommoAccessToken: "",
     preserveKommoAccessToken: false,
     isActive: clinic?.isActive ?? true,
+    messengerUrl: clinic?.messengerUrl || "",
     source: clinic?.source || "database",
     metaCapiConfigured: clinic?.metaCapiConfigured ?? false,
     metaCapiAccessTokenConfigured: clinic?.metaCapiConfigured ?? false,
@@ -828,7 +841,8 @@ export function parseClinicFormData(formData: FormData): ManagedClinicInput {
     preserveKommoAccessToken:
       getValue("preserveKommoAccessToken") === "true" &&
       !cleanText(getValue("kommoAccessToken")),
-    isActive: formData.get("isActive") === "on"
+    isActive: formData.get("isActive") === "on",
+    messengerUrl: cleanText(getValue("messengerUrl"))
   };
 }
 

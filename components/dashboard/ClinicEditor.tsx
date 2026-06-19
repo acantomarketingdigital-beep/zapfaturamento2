@@ -278,6 +278,20 @@ export function ClinicEditor({
                 </small>
               </label>
 
+              <label className="dashboard-field">
+                <span>Link do Messenger (opcional)</span>
+                <input
+                  type="url"
+                  name="messengerUrl"
+                  defaultValue={values.messengerUrl}
+                  placeholder="https://m.me/suapagina"
+                  autoComplete="off"
+                />
+                <small className="dashboard-field__help">
+                  Usado em campanhas SMS quando o visitante estiver no desktop. Ex: https://m.me/clinicasaudetotal
+                </small>
+              </label>
+
             </div>
           </section>
 

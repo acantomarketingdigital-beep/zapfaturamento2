@@ -41,6 +41,7 @@ export type ClientConfig = {
   kommoStatusId?: number;
   kommoCustomFields?: KommoCustomFieldMap;
   kommoSubdomain?: string;
+  messengerUrl?: string;
 };
 
 export type ResolvedClientConfig = Required<

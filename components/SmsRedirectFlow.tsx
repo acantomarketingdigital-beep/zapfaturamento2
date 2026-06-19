@@ -61,20 +61,16 @@ async function sendLeadToBackend(payload: Record<string, unknown>) {
   finally { window.clearTimeout(timeoutId); }
 }
 
-const LOCALE_STRINGS = {
-  en: {
-    statusInitial: "Preparing your conversation...",
-    statusMid: "Almost there! Opening SMS...",
-    statusLate: "Opening the conversation...",
-    statusFinal: "Opening SMS app...",
-  },
-  pt: {
-    statusInitial: "Preparando seu atendimento...",
-    statusMid: "Quase lá! Abrindo o SMS...",
-    statusLate: "Abrindo a conversa...",
-    statusFinal: "Abrindo o app de SMS...",
-  },
-};
+function getLocaleStrings(locale: "en" | "pt", isMessenger: boolean) {
+  if (isMessenger) {
+    return locale === "en"
+      ? { statusInitial: "Preparing your conversation...", statusMid: "Almost there! Opening Messenger...", statusLate: "Opening the conversation...", statusFinal: "Opening Messenger..." }
+      : { statusInitial: "Preparando seu atendimento...", statusMid: "Quase lá! Abrindo o Messenger...", statusLate: "Abrindo a conversa...", statusFinal: "Abrindo o Messenger..." };
+  }
+  return locale === "en"
+    ? { statusInitial: "Preparing your conversation...", statusMid: "Almost there! Opening SMS...", statusLate: "Opening the conversation...", statusFinal: "Opening SMS app..." }
+    : { statusInitial: "Preparando seu atendimento...", statusMid: "Quase lá! Abrindo o SMS...", statusLate: "Abrindo a conversa...", statusFinal: "Abrindo o app de SMS..." };
+}
 
 function detectLocale(phone: string) {
   const digits = phone.replace(/\D/g, "");
@@ -84,11 +80,10 @@ function detectLocale(phone: string) {
 
 export function SmsRedirectFlow({ client, campaign, creative, smsPhone, smsMessage }: Props) {
   const [statusText, setStatusText] = useState("");
-  const [smsUrl, setSmsUrl] = useState<string | undefined>(undefined);
+  const [redirectUrl, setRedirectUrl] = useState<string | undefined>(undefined);
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
 
   const locale = detectLocale(smsPhone);
-  const t = LOCALE_STRINGS[locale];
 
   const stableDelay = useMemo(() => {
     const candidate = client.redirectDelay ?? 2000;
@@ -101,13 +96,20 @@ export function SmsRedirectFlow({ client, campaign, creative, smsPhone, smsMessa
     const mobile = isMobileDevice();
     setIsMobile(mobile);
 
-    // Build SMS URL
     const digits = smsPhone.replace(/\D/g, "");
     const resolvedSmsUrl = `sms:+${digits}${smsMessage ? `?body=${encodeURIComponent(smsMessage)}` : ""}`;
-    setSmsUrl(resolvedSmsUrl);
-    setStatusText(t.statusInitial);
 
-    if (!mobile) return; // Desktop: just show the landing page (see render below)
+    // Desktop with Messenger configured → redirect to Messenger
+    // Desktop without Messenger → show landing page (no effect needed)
+    const isMessenger = !mobile && Boolean(client.messengerUrl);
+    const resolvedRedirectUrl = mobile ? resolvedSmsUrl : (client.messengerUrl || null);
+
+    if (!resolvedRedirectUrl) return;
+
+    const t = getLocaleStrings(locale, isMessenger);
+
+    setRedirectUrl(resolvedRedirectUrl);
+    setStatusText(t.statusInitial);
 
     let cancelled = false;
 
@@ -116,7 +118,7 @@ export function SmsRedirectFlow({ client, campaign, creative, smsPhone, smsMessa
 
     const basePayload = buildLeadCapturePayload({
       client, url,
-      redirectUrl: resolvedSmsUrl,
+      redirectUrl: resolvedRedirectUrl,
       referrer: document.referrer,
       userAgent: navigator.userAgent,
       language: navigator.language,
@@ -127,7 +129,7 @@ export function SmsRedirectFlow({ client, campaign, creative, smsPhone, smsMessa
 
     const payload = {
       ...basePayload,
-      redirectUrl: resolvedSmsUrl,
+      redirectUrl: resolvedRedirectUrl,
       fbp: readCookie("_fbp"),
       fbc: readCookie("_fbc"),
     };
@@ -150,7 +152,7 @@ export function SmsRedirectFlow({ client, campaign, creative, smsPhone, smsMessa
       await wait(120);
 
       if (!cancelled) {
-        window.location.href = resolvedSmsUrl;
+        window.location.href = resolvedRedirectUrl;
       }
     })();
 
@@ -167,10 +169,10 @@ export function SmsRedirectFlow({ client, campaign, creative, smsPhone, smsMessa
       window.clearTimeout(midTimer);
       window.clearTimeout(lateTimer);
     };
-  }, [client, campaign, creative, smsPhone, smsMessage, stableDelay, t]);
+  }, [client, campaign, creative, smsPhone, smsMessage, stableDelay, locale]);
 
-  // Desktop: show the full landing page with button (no auto-redirect)
-  if (isMobile === false) {
+  // Desktop without Messenger: show the full landing page with button
+  if (isMobile === false && !client.messengerUrl) {
     return (
       <SmsRedirectPage
         client={client}
@@ -182,14 +184,17 @@ export function SmsRedirectFlow({ client, campaign, creative, smsPhone, smsMessa
     );
   }
 
-  // Mobile (or still detecting): show the connecting screen
+  // Mobile → SMS screen | Desktop with Messenger → Messenger screen
+  const channel = isMobile === false ? "messenger" : "sms";
+
   return (
     <SmsRedirectScreen
       clientName={client.clientName}
       logoUrl={client.logoUrl}
-      smsUrl={smsUrl}
+      smsUrl={redirectUrl}
       smsPhone={smsPhone}
       statusText={statusText}
+      channel={channel}
     />
   );
 }
