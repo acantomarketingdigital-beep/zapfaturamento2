@@ -1,3 +1,4 @@
+import { SmsRedirectFlow } from "@/components/SmsRedirectFlow";
 import { SmsRedirectPage } from "@/components/SmsRedirectPage";
 import { WhatsAppRedirectScreen } from "@/components/WhatsAppRedirectScreen";
 import { getCampaignBySlug } from "@/lib/campaigns";
@@ -8,10 +9,18 @@ export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ slug: string; campaignSlug: string; creativeSlug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function SmsCampaignCreativeRedirectPage({ params }: PageProps) {
+function isMetaTraffic(sp: { [key: string]: string | string[] | undefined }) {
+  const fbclid = sp.fbclid;
+  const src = typeof sp.utm_source === "string" ? sp.utm_source.toLowerCase() : "";
+  return !!(fbclid || src.includes("facebook") || src.includes("instagram") || src.includes("meta"));
+}
+
+export default async function SmsCampaignCreativeRedirectPage({ params, searchParams }: PageProps) {
   const { slug, campaignSlug, creativeSlug } = await params;
+  const sp = await searchParams;
   const client = await getClinicBySlug(slug);
 
   if (!client) {
@@ -124,6 +133,18 @@ export default async function SmsCampaignCreativeRedirectPage({ params }: PagePr
   };
 
   const creativeCtx = { id: creative.id, slug: creative.slug };
+
+  if (isMetaTraffic(sp)) {
+    return (
+      <SmsRedirectFlow
+        client={client}
+        campaign={campaignCtx}
+        creative={creativeCtx}
+        smsPhone={campaign.smsPhone}
+        smsMessage={smsMessage}
+      />
+    );
+  }
 
   return (
     <SmsRedirectPage
