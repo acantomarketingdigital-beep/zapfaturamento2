@@ -127,11 +127,12 @@ function CheckIcon() {
 
 // ─── MediaSlot ────────────────────────────────────────────────────────────────
 
-function MediaSlot({ url, type, onSmsClick, disabled }: {
+function MediaSlot({ url, type, onSmsClick, disabled, ctaLabel }: {
   url: string;
   type: "image" | "video" | null;
   onSmsClick: () => void;
   disabled: boolean;
+  ctaLabel: string;
 }) {
   if (!url) return null;
   if (type === "video") {
@@ -141,7 +142,7 @@ function MediaSlot({ url, type, onSmsClick, disabled }: {
           <video src={url} autoPlay muted loop playsInline className="smart-media-video" />
         </div>
         <button type="button" className="smart-media-wa-btn" onClick={onSmsClick} disabled={disabled}>
-          <SmsIcon /> Enviar mensagem
+          <SmsIcon /> {ctaLabel}
         </button>
       </div>
     );
@@ -150,7 +151,7 @@ function MediaSlot({ url, type, onSmsClick, disabled }: {
     <div className="smart-media-slot">
       <img src={url} alt="Mídia da campanha" className="smart-media-img" />
       <button type="button" className="smart-media-wa-btn" onClick={onSmsClick} disabled={disabled}>
-        <SmsIcon /> Enviar mensagem
+        <SmsIcon /> {ctaLabel}
       </button>
     </div>
   );
@@ -316,7 +317,7 @@ export function SmsRedirectPage({ client, campaign, creative, smsPhone, smsMessa
         {hasMedia && (
           <aside className="smart-sidebar" aria-label="Mídia principal">
             {media1Url && (
-              <MediaSlot url={media1Url} type={media1Type} onSmsClick={handleClick} disabled={mediaDisabled} />
+              <MediaSlot url={media1Url} type={media1Type} onSmsClick={handleClick} disabled={mediaDisabled} ctaLabel={t.cta} />
             )}
           </aside>
         )}
@@ -326,7 +327,7 @@ export function SmsRedirectPage({ client, campaign, creative, smsPhone, smsMessa
         {hasMedia && (
           <aside className="smart-sidebar" aria-label="Mídia secundária">
             {media2Url && (
-              <MediaSlot url={media2Url} type={media2Type} onSmsClick={handleClick} disabled={mediaDisabled} />
+              <MediaSlot url={media2Url} type={media2Type} onSmsClick={handleClick} disabled={mediaDisabled} ctaLabel={t.cta} />
             )}
           </aside>
         )}
@@ -336,10 +337,10 @@ export function SmsRedirectPage({ client, campaign, creative, smsPhone, smsMessa
       {hasMedia && (
         <div className="smart-media-mobile">
           {media1Url && (
-            <MediaSlot url={media1Url} type={media1Type} onSmsClick={handleClick} disabled={mediaDisabled} />
+            <MediaSlot url={media1Url} type={media1Type} onSmsClick={handleClick} disabled={mediaDisabled} ctaLabel={t.cta} />
           )}
           {media2Url && (
-            <MediaSlot url={media2Url} type={media2Type} onSmsClick={handleClick} disabled={mediaDisabled} />
+            <MediaSlot url={media2Url} type={media2Type} onSmsClick={handleClick} disabled={mediaDisabled} ctaLabel={t.cta} />
           )}
         </div>
       )}

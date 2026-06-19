@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 const AUTH_PREFIXES = [
   "/login", "/register", "/redefinir", "/nova-senha", "/ativar",
-  "/w/", "/g/", "/r/", "/f/", "/invite/", "/reconectar/",
+  "/w/", "/g/", "/r/", "/f/", "/s/", "/p/", "/invite/", "/reconectar/",
   "/billing/", "/politica", "/termos",
 ];
 

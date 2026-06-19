@@ -58,6 +58,8 @@ export default function SidebarClient({
     pathname.startsWith("/g/") ||
     pathname.startsWith("/r/") ||
     pathname.startsWith("/f/") ||
+    pathname.startsWith("/s/") ||
+    pathname.startsWith("/p/") ||
     pathname.startsWith("/invite/") ||
     pathname.startsWith("/reconectar/") ||
     pathname.startsWith("/billing/") ||
