@@ -412,3 +412,50 @@ export function trackRedirectEvent(
     // Falhas de terceiros não interrompem o redirecionamento.
   }
 }
+
+export function trackSmsRedirectEvent(
+  client: ResolvedClientConfig,
+  payload: LeadCapturePayload
+) {
+  try {
+    const eventPayload = buildSharedEventPayload(payload);
+
+    window.dataLayer.push({
+      event: "sms_redirect",
+      event_category: "lead",
+      event_action: "redirect_to_sms",
+      google_conversion_id: client.googleAdsId || undefined,
+      google_conversion_label: client.googleAdsConversionLabel || undefined,
+      ...eventPayload
+    });
+
+    if (client.metaPixelId && window.fbq) {
+      window.fbq("trackCustom", "SmsRedirectClick", {
+        ...buildMetaLeadPayload(payload),
+        eventID: payload.eventId
+      });
+    }
+
+    if (client.ga4Id && window.gtag) {
+      window.gtag("event", "sms_lead_click", {
+        client_name: payload.clientName,
+        client_slug: payload.clientSlug,
+        utm_source: payload.utm_source,
+        utm_medium: payload.utm_medium,
+        utm_campaign: payload.utm_campaign,
+        utm_content: payload.utm_content,
+        utm_term: payload.utm_term,
+        gclid: payload.gclid,
+        source_platform: payload.sourcePlatform
+      });
+    }
+
+    if (client.googleAdsId && client.googleAdsConversionLabel && window.gtag) {
+      window.gtag("event", "conversion", {
+        send_to: `${client.googleAdsId}/${client.googleAdsConversionLabel}`
+      });
+    }
+  } catch {
+    // Falhas de terceiros não interrompem o redirecionamento.
+  }
+}

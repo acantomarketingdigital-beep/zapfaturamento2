@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ResolvedClientConfig } from "@/lib/clients";
 import { buildLeadCapturePayload } from "@/lib/utm";
-import { initializeTracking, trackRedirectEvent, trackRedirectPageView } from "@/lib/tracking";
+import { initializeTracking, trackSmsRedirectEvent, trackRedirectPageView } from "@/lib/tracking";
 
 type CampaignContext = {
   id: string;
@@ -214,7 +214,7 @@ export function SmsRedirectPage({ client, campaign, creative, smsPhone, smsMessa
 
   function handleClick() {
     if (payloadRef.current) {
-      trackRedirectEvent(client, payloadRef.current as Parameters<typeof trackRedirectEvent>[1]);
+      trackSmsRedirectEvent(client, payloadRef.current as Parameters<typeof trackSmsRedirectEvent>[1]);
     }
     setClicked(true);
     window.location.href = smsUrl;

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ResolvedClientConfig } from "@/lib/clients";
 import { buildLeadCapturePayload } from "@/lib/utm";
-import { initializeTracking, trackRedirectEvent, trackRedirectPageView } from "@/lib/tracking";
+import { initializeTracking, trackSmsRedirectEvent, trackRedirectPageView } from "@/lib/tracking";
 import { SmsRedirectScreen } from "./SmsRedirectScreen";
 import { SmsRedirectPage } from "./SmsRedirectPage";
 
@@ -148,7 +148,7 @@ export function SmsRedirectFlow({ client, campaign, creative, smsPhone, smsMessa
       if (cancelled) return;
 
       setStatusText(t.statusFinal);
-      trackRedirectEvent(client, payload as Parameters<typeof trackRedirectEvent>[1]);
+      trackSmsRedirectEvent(client, payload as Parameters<typeof trackSmsRedirectEvent>[1]);
       await wait(120);
 
       if (!cancelled) {
